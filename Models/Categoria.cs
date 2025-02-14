@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibroManager.Models;
 
+[Index(nameof(Nombre), IsUnique = true)]
 public class Categoria
 {
     [Key]

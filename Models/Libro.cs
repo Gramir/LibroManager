@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibroManager.Models;
 
+[Index(nameof(ISBN), IsUnique = true)]
 public class Libro
 {
     [Key]
