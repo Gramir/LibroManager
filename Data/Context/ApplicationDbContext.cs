@@ -24,31 +24,31 @@ namespace LibroManager.Data.Context
             modelBuilder.Entity<Libro>()
                 .HasOne(l => l.Autor)
                 .WithMany(a => a.Libros)
-                .OnDelete(DeleteBehavior.Restrict) // Evita el borrado en cascada de libros al eliminar un autor
+                .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired();
 
             modelBuilder.Entity<Libro>()
                 .HasOne(l => l.Categoria)
                 .WithMany(c => c.Libros)
-                .OnDelete(DeleteBehavior.Restrict) // Evita el borrado en cascada de libros al eliminar una categoría
+                .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired();
 
             modelBuilder.Entity<Prestamo>()
                 .HasOne(p => p.Libro)
                 .WithMany(l => l.Prestamos)
-                .OnDelete(DeleteBehavior.Restrict) // Evita el borrado en cascada de préstamos al eliminar un libro
+                .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired();
 
             modelBuilder.Entity<Prestamo>()
                 .HasOne(p => p.Estudiante)
                 .WithMany(e => e.Prestamos)
-                .OnDelete(DeleteBehavior.Restrict) // Evita el borrado en cascada de préstamos al eliminar un estudiante
+                .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired();
 
             // Configuración de valores por defecto
             modelBuilder.Entity<Estudiante>()
                 .Property(e => e.FechaInscripcion)
-                .HasDefaultValueSql("GETDATE()"); // Establece la fecha actual como valor por defecto
+                .HasDefaultValueSql("GETDATE()");
 
             modelBuilder.Entity<Prestamo>()
                 .Property(p => p.FechaPrestamo)
@@ -57,14 +57,14 @@ namespace LibroManager.Data.Context
             // Configuración de índices compuestos
             modelBuilder.Entity<Prestamo>()
                 .HasIndex(p => new { p.LibroId, p.EstudianteId, p.FechaPrestamo })
-                .IsUnique(); // Asegura que no haya préstamos duplicados del mismo libro al mismo estudiante en la misma fecha
+                .IsUnique();
 
             // Configuraciones específicas de columnas
             modelBuilder.Entity<Libro>()
                 .Property(l => l.ISBN)
-                .IsUnicode(false); // Configura la columna ISBN como VARCHAR en lugar de NVARCHAR para optimizar espacio
+                .IsUnicode(false);
 
-            // Validaciones adicionales a nivel de base de datos usando la nueva sintaxis
+            // Validaciones adicionales a nivel de base de datos
             modelBuilder.Entity<Prestamo>()
                 .ToTable(tb => tb.HasCheckConstraint(
                     "CK_Prestamo_FechaVencimiento",
