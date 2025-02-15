@@ -20,6 +20,8 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Add Services
 builder.Services.AddScoped<LibroValidationService>();
+builder.Services.AddScoped<LibroService>();
+builder.Services.AddScoped<AutorService>();
 
 var app = builder.Build();
 
