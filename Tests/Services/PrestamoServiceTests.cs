@@ -391,4 +391,146 @@ public class PrestamoServiceTests
         _mockUnitOfWork.Verify(uow => uow.Prestamos.Update(prestamo), Times.Never);
         _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Never);
     }
+
+    [Fact]
+    public async Task GetByIdAsync_ReturnsNull_WhenException()
+    {
+        // Arrange
+        var prestamoId = 1;
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamoId))
+            .ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _service.GetByIdAsync(prestamoId);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetPrestamosActivosAsync_ReturnsEmpty_WhenException()
+    {
+        // Arrange
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosActivosAsync())
+            .ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _service.GetPrestamosActivosAsync();
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ReturnsFalse_WhenFechaPrestamoPosteriorAVencimiento()
+    {
+        // Arrange
+        var prestamo = new Prestamo 
+        { 
+            LibroId = 1, 
+            EstudianteId = 1,
+            FechaPrestamo = DateTime.Now.AddDays(7),
+            FechaVencimiento = DateTime.Now.AddDays(1)
+        };
+
+        // Act
+        var result = await _service.CreateAsync(prestamo);
+
+        // Assert
+        Assert.False(result);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.AddAsync(prestamo), Times.Never);
+        _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ReturnsFalse_WhenFechaPrestamoEsFutura()
+    {
+        // Arrange
+        var prestamo = new Prestamo 
+        { 
+            LibroId = 1, 
+            EstudianteId = 1,
+            FechaPrestamo = DateTime.Now.AddDays(1),
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        // Act
+        var result = await _service.CreateAsync(prestamo);
+
+        // Assert
+        Assert.False(result);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.AddAsync(prestamo), Times.Never);
+        _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ReturnsFalse_WhenFechaVencimientoEsPasada()
+    {
+        // Arrange
+        var prestamo = new Prestamo 
+        { 
+            LibroId = 1, 
+            EstudianteId = 1,
+            FechaPrestamo = DateTime.Now.AddDays(-7),
+            FechaVencimiento = DateTime.Now.AddDays(-1)
+        };
+
+        // Act
+        var result = await _service.CreateAsync(prestamo);
+
+        // Assert
+        Assert.False(result);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.AddAsync(prestamo), Times.Never);
+        _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReturnsFalse_WhenFechasInvalidas()
+    {
+        // Arrange
+        var prestamo = new Prestamo 
+        { 
+            PrestamoId = 1,
+            LibroId = 1, 
+            EstudianteId = 1,
+            FechaPrestamo = DateTime.Now.AddDays(1),
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamo.PrestamoId))
+            .ReturnsAsync(new Prestamo { PrestamoId = prestamo.PrestamoId });
+
+        // Act
+        var result = await _service.UpdateAsync(prestamo);
+
+        // Assert
+        Assert.False(result);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.Update(prestamo), Times.Never);
+        _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReturnsFalse_WhenException()
+    {
+        // Arrange
+        var prestamo = new Prestamo 
+        { 
+            PrestamoId = 1,
+            LibroId = 1, 
+            EstudianteId = 1,
+            FechaPrestamo = DateTime.Now,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamo.PrestamoId))
+            .ReturnsAsync(new Prestamo { PrestamoId = prestamo.PrestamoId });
+        _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
+            .ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _service.UpdateAsync(prestamo);
+
+        // Assert
+        Assert.False(result);
+    }
 }
