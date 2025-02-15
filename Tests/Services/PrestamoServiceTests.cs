@@ -1,6 +1,8 @@
 using LibroManager.Models;
+using LibroManager.DTOs;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
+using AutoMapper;
 using Moq;
 using Xunit;
 
@@ -9,32 +11,50 @@ namespace LibroManager.Tests.Services;
 public class PrestamoServiceTests
 {
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
+    private readonly Mock<IMapper> _mockMapper;
     private readonly PrestamoService _service;
 
     public PrestamoServiceTests()
     {
         _mockUnitOfWork = new Mock<IUnitOfWork>();
-        _service = new PrestamoService(_mockUnitOfWork.Object);
+        _mockMapper = new Mock<IMapper>();
+        _service = new PrestamoService(_mockUnitOfWork.Object, _mockMapper.Object);
     }
 
     [Fact]
     public async Task GetAllAsync_ReturnsAllPrestamos()
     {
         // Arrange
-        var expectedPrestamos = new List<Prestamo>
+        var prestamos = new List<Prestamo>
         {
-            new() { PrestamoId = 1, LibroId = 1, EstudianteId = 1 },
-            new() { PrestamoId = 2, LibroId = 2, EstudianteId = 2 }
+            new() { 
+                PrestamoId = 1, 
+                LibroId = 1, 
+                EstudianteId = 1,
+                Libro = new Libro { Titulo = "Libro 1" },
+                Estudiante = new Estudiante { Nombre = "Estudiante 1" }
+            }
+        };
+
+        var prestamosDto = new List<PrestamoDTO>
+        {
+            new() { 
+                PrestamoId = 1,
+                LibroTitulo = "Libro 1",
+                EstudianteNombre = "Estudiante 1"
+            }
         };
 
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetAllAsync())
-            .ReturnsAsync(expectedPrestamos);
+            .ReturnsAsync(prestamos);
+        _mockMapper.Setup(m => m.Map<IEnumerable<PrestamoDTO>>(prestamos))
+            .Returns(prestamosDto);
 
         // Act
         var result = await _service.GetAllAsync();
 
         // Assert
-        Assert.Equal(expectedPrestamos.Count, result.Count());
+        Assert.Equal(prestamosDto.Count, result.Count());
     }
 
     [Fact]
@@ -42,20 +62,37 @@ public class PrestamoServiceTests
     {
         // Arrange
         var estudianteId = 1;
-        var expectedPrestamos = new List<Prestamo>
+        var prestamos = new List<Prestamo>
         {
-            new() { PrestamoId = 1, LibroId = 1, EstudianteId = estudianteId }
+            new() { 
+                PrestamoId = 1, 
+                LibroId = 1, 
+                EstudianteId = estudianteId,
+                Libro = new Libro { Titulo = "Libro 1" },
+                Estudiante = new Estudiante { Nombre = "Estudiante 1" }
+            }
+        };
+
+        var prestamosDto = new List<PrestamoDTO>
+        {
+            new() { 
+                PrestamoId = 1,
+                LibroTitulo = "Libro 1",
+                EstudianteNombre = "Estudiante 1"
+            }
         };
 
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByEstudianteAsync(estudianteId))
-            .ReturnsAsync(expectedPrestamos);
+            .ReturnsAsync(prestamos);
+        _mockMapper.Setup(m => m.Map<IEnumerable<PrestamoDTO>>(prestamos))
+            .Returns(prestamosDto);
 
         // Act
         var result = await _service.GetPrestamosByEstudianteAsync(estudianteId);
 
         // Assert
         Assert.Single(result);
-        Assert.Equal(estudianteId, result.First().EstudianteId);
+        Assert.Equal("Libro 1", result.First().LibroTitulo);
     }
 
     [Fact]
@@ -63,42 +100,65 @@ public class PrestamoServiceTests
     {
         // Arrange
         var libroId = 1;
-        var expectedPrestamos = new List<Prestamo>
+        var prestamos = new List<Prestamo>
         {
-            new() { PrestamoId = 1, LibroId = libroId, EstudianteId = 1 }
+            new() { 
+                PrestamoId = 1, 
+                LibroId = libroId, 
+                EstudianteId = 1,
+                Libro = new Libro { Titulo = "Libro 1" },
+                Estudiante = new Estudiante { Nombre = "Estudiante 1" }
+            }
+        };
+
+        var prestamosDto = new List<PrestamoDTO>
+        {
+            new() { 
+                PrestamoId = 1,
+                LibroTitulo = "Libro 1",
+                EstudianteNombre = "Estudiante 1"
+            }
         };
 
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(libroId))
-            .ReturnsAsync(expectedPrestamos);
+            .ReturnsAsync(prestamos);
+        _mockMapper.Setup(m => m.Map<IEnumerable<PrestamoDTO>>(prestamos))
+            .Returns(prestamosDto);
 
         // Act
         var result = await _service.GetPrestamosByLibroAsync(libroId);
 
         // Assert
         Assert.Single(result);
-        Assert.Equal(libroId, result.First().LibroId);
+        Assert.Equal("Libro 1", result.First().LibroTitulo);
     }
 
     [Fact]
     public async Task CreateAsync_ReturnsTrue_WhenSuccessful()
     {
         // Arrange
-        var prestamo = new Prestamo { 
+        var prestamoCreateDto = new PrestamoCreateDTO 
+        { 
             LibroId = 1, 
+            EstudianteId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaPrestamo = DateTime.Now,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
 
-        // Mock libro exists
+        // Mock libro existe y está disponible
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
             .ReturnsAsync(new Libro { LibroId = prestamo.LibroId });
-
-        // Mock libro no está prestado
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(prestamo.LibroId))
             .ReturnsAsync(new List<Prestamo>());
 
-        // Mock estudiante exists
+        // Mock estudiante existe
         _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByIdAsync(prestamo.EstudianteId))
             .ReturnsAsync(new Estudiante { EstudianteId = prestamo.EstudianteId });
 
@@ -106,11 +166,14 @@ public class PrestamoServiceTests
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByEstudianteAsync(prestamo.EstudianteId))
             .ReturnsAsync(new List<Prestamo>());
 
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
+            .Returns(prestamo);
+
         _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
             .ReturnsAsync(1);
 
         // Act
-        var result = await _service.CreateAsync(prestamo);
+        var result = await _service.CreateAsync(prestamoCreateDto);
 
         // Assert
         Assert.True(result);
@@ -122,12 +185,29 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenException()
     {
         // Arrange
-        var prestamo = new Prestamo { LibroId = 1, EstudianteId = 1 };
+        var prestamoCreateDto = new PrestamoCreateDTO 
+        { 
+            LibroId = 1, 
+            EstudianteId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo
+        {
+            LibroId = 1,
+            EstudianteId = 1,
+            FechaPrestamo = DateTime.Now,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
+            .Returns(prestamo);
+
         _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
             .ThrowsAsync(new Exception());
 
         // Act
-        var result = await _service.CreateAsync(prestamo);
+        var result = await _service.CreateAsync(prestamoCreateDto);
 
         // Assert
         Assert.False(result);
@@ -137,9 +217,16 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_ReturnsTrue_WhenSuccessful()
     {
         // Arrange
-        var prestamo = new Prestamo { 
-            PrestamoId = 1, 
-            LibroId = 1, 
+        var prestamoUpdateDto = new PrestamoUpdateDTO 
+        { 
+            PrestamoId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo 
+        { 
+            PrestamoId = 1,
+            LibroId = 1,
             EstudianteId = 1,
             FechaPrestamo = DateTime.Now,
             FechaVencimiento = DateTime.Now.AddDays(7)
@@ -148,19 +235,20 @@ public class PrestamoServiceTests
         // Mock existing prestamo
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamo.PrestamoId))
             .ReturnsAsync(new Prestamo { 
-                PrestamoId = prestamo.PrestamoId, 
-                LibroId = prestamo.LibroId 
+                PrestamoId = prestamo.PrestamoId,
+                LibroId = 1,
+                EstudianteId = 1,
+                FechaPrestamo = DateTime.Now
             });
 
-        // Mock no hay préstamos activos para el libro
-        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(prestamo.LibroId))
-            .ReturnsAsync(new List<Prestamo>());
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoUpdateDto))
+            .Returns(prestamo);
 
         _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
             .ReturnsAsync(1);
 
         // Act
-        var result = await _service.UpdateAsync(prestamo);
+        var result = await _service.UpdateAsync(prestamoUpdateDto);
 
         // Assert
         Assert.True(result);
@@ -174,6 +262,7 @@ public class PrestamoServiceTests
         // Arrange
         var prestamoId = 1;
         var prestamo = new Prestamo { PrestamoId = prestamoId };
+
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamoId))
             .ReturnsAsync(prestamo);
         _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
@@ -209,8 +298,16 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenLibroDoesNotExist()
     {
         // Arrange
-        var prestamo = new Prestamo { 
+        var prestamoCreateDto = new PrestamoCreateDTO 
+        { 
             LibroId = 1, 
+            EstudianteId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaPrestamo = DateTime.Now,
             FechaVencimiento = DateTime.Now.AddDays(7)
@@ -220,8 +317,11 @@ public class PrestamoServiceTests
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
             .ReturnsAsync((Libro?)null);
 
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
+            .Returns(prestamo);
+
         // Act
-        var result = await _service.CreateAsync(prestamo);
+        var result = await _service.CreateAsync(prestamoCreateDto);
 
         // Assert
         Assert.False(result);
@@ -233,8 +333,16 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenLibroYaEstaPrestado()
     {
         // Arrange
-        var prestamo = new Prestamo { 
+        var prestamoCreateDto = new PrestamoCreateDTO 
+        { 
             LibroId = 1, 
+            EstudianteId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaPrestamo = DateTime.Now,
             FechaVencimiento = DateTime.Now.AddDays(7)
@@ -254,8 +362,11 @@ public class PrestamoServiceTests
                 } 
             });
 
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
+            .Returns(prestamo);
+
         // Act
-        var result = await _service.CreateAsync(prestamo);
+        var result = await _service.CreateAsync(prestamoCreateDto);
 
         // Assert
         Assert.False(result);
@@ -267,8 +378,16 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenEstudianteDoesNotExist()
     {
         // Arrange
-        var prestamo = new Prestamo { 
+        var prestamoCreateDto = new PrestamoCreateDTO 
+        { 
             LibroId = 1, 
+            EstudianteId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaPrestamo = DateTime.Now,
             FechaVencimiento = DateTime.Now.AddDays(7)
@@ -284,8 +403,11 @@ public class PrestamoServiceTests
         _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByIdAsync(prestamo.EstudianteId))
             .ReturnsAsync((Estudiante?)null);
 
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
+            .Returns(prestamo);
+
         // Act
-        var result = await _service.CreateAsync(prestamo);
+        var result = await _service.CreateAsync(prestamoCreateDto);
 
         // Assert
         Assert.False(result);
@@ -297,8 +419,16 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenEstudianteTienePrestamosVencidos()
     {
         // Arrange
-        var prestamo = new Prestamo { 
+        var prestamoCreateDto = new PrestamoCreateDTO 
+        { 
             LibroId = 1, 
+            EstudianteId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaPrestamo = DateTime.Now,
             FechaVencimiento = DateTime.Now.AddDays(7)
@@ -324,8 +454,11 @@ public class PrestamoServiceTests
                 } 
             });
 
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
+            .Returns(prestamo);
+
         // Act
-        var result = await _service.CreateAsync(prestamo);
+        var result = await _service.CreateAsync(prestamoCreateDto);
 
         // Assert
         Assert.False(result);
@@ -337,18 +470,30 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenPrestamoNoExiste()
     {
         // Arrange
-        var prestamo = new Prestamo { 
-            PrestamoId = 1, 
-            LibroId = 1, 
-            EstudianteId = 1 
+        var prestamoUpdateDto = new PrestamoUpdateDTO 
+        { 
+            PrestamoId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo 
+        { 
+            PrestamoId = 1,
+            LibroId = 1,
+            EstudianteId = 1,
+            FechaPrestamo = DateTime.Now,
+            FechaVencimiento = DateTime.Now.AddDays(7)
         };
 
         // Mock prestamo no existe
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamo.PrestamoId))
             .ReturnsAsync((Prestamo?)null);
 
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoUpdateDto))
+            .Returns(prestamo);
+
         // Act
-        var result = await _service.UpdateAsync(prestamo);
+        var result = await _service.UpdateAsync(prestamoUpdateDto);
 
         // Assert
         Assert.False(result);
@@ -360,10 +505,19 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenNuevoLibroYaEstaPrestado()
     {
         // Arrange
-        var prestamo = new Prestamo { 
-            PrestamoId = 1, 
+        var prestamoUpdateDto = new PrestamoUpdateDTO 
+        { 
+            PrestamoId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo 
+        { 
+            PrestamoId = 1,
             LibroId = 2,  // Nuevo libro diferente al original
-            EstudianteId = 1 
+            EstudianteId = 1,
+            FechaPrestamo = DateTime.Now,
+            FechaVencimiento = DateTime.Now.AddDays(7)
         };
 
         // Mock prestamo existe con libro diferente
@@ -383,8 +537,11 @@ public class PrestamoServiceTests
                 } 
             });
 
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoUpdateDto))
+            .Returns(prestamo);
+
         // Act
-        var result = await _service.UpdateAsync(prestamo);
+        var result = await _service.UpdateAsync(prestamoUpdateDto);
 
         // Assert
         Assert.False(result);
@@ -425,16 +582,26 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenFechaPrestamoPosteriorAVencimiento()
     {
         // Arrange
-        var prestamo = new Prestamo 
+        var prestamoCreateDto = new PrestamoCreateDTO 
         { 
             LibroId = 1, 
             EstudianteId = 1,
-            FechaPrestamo = DateTime.Now.AddDays(7),
-            FechaVencimiento = DateTime.Now.AddDays(1)
+            FechaVencimiento = DateTime.Now.AddDays(-1)
         };
 
+        var prestamo = new Prestamo
+        {
+            LibroId = 1,
+            EstudianteId = 1,
+            FechaPrestamo = DateTime.Now,
+            FechaVencimiento = DateTime.Now.AddDays(-1)
+        };
+
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
+            .Returns(prestamo);
+
         // Act
-        var result = await _service.CreateAsync(prestamo);
+        var result = await _service.CreateAsync(prestamoCreateDto);
 
         // Assert
         Assert.False(result);
@@ -446,16 +613,26 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenFechaPrestamoEsFutura()
     {
         // Arrange
-        var prestamo = new Prestamo 
+        var prestamoCreateDto = new PrestamoCreateDTO 
         { 
             LibroId = 1, 
+            EstudianteId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaPrestamo = DateTime.Now.AddDays(1),
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
 
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
+            .Returns(prestamo);
+
         // Act
-        var result = await _service.CreateAsync(prestamo);
+        var result = await _service.CreateAsync(prestamoCreateDto);
 
         // Assert
         Assert.False(result);
@@ -467,16 +644,26 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenFechaVencimientoEsPasada()
     {
         // Arrange
-        var prestamo = new Prestamo 
+        var prestamoCreateDto = new PrestamoCreateDTO 
         { 
             LibroId = 1, 
+            EstudianteId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(-1)
+        };
+
+        var prestamo = new Prestamo
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaPrestamo = DateTime.Now.AddDays(-7),
             FechaVencimiento = DateTime.Now.AddDays(-1)
         };
 
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
+            .Returns(prestamo);
+
         // Act
-        var result = await _service.CreateAsync(prestamo);
+        var result = await _service.CreateAsync(prestamoCreateDto);
 
         // Assert
         Assert.False(result);
@@ -488,10 +675,16 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenFechasInvalidas()
     {
         // Arrange
+        var prestamoUpdateDto = new PrestamoUpdateDTO 
+        { 
+            PrestamoId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
         var prestamo = new Prestamo 
         { 
             PrestamoId = 1,
-            LibroId = 1, 
+            LibroId = 1,
             EstudianteId = 1,
             FechaPrestamo = DateTime.Now.AddDays(1),
             FechaVencimiento = DateTime.Now.AddDays(7)
@@ -500,8 +693,11 @@ public class PrestamoServiceTests
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamo.PrestamoId))
             .ReturnsAsync(new Prestamo { PrestamoId = prestamo.PrestamoId });
 
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoUpdateDto))
+            .Returns(prestamo);
+
         // Act
-        var result = await _service.UpdateAsync(prestamo);
+        var result = await _service.UpdateAsync(prestamoUpdateDto);
 
         // Assert
         Assert.False(result);
@@ -513,10 +709,16 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenException()
     {
         // Arrange
+        var prestamoUpdateDto = new PrestamoUpdateDTO 
+        { 
+            PrestamoId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
         var prestamo = new Prestamo 
         { 
             PrestamoId = 1,
-            LibroId = 1, 
+            LibroId = 1,
             EstudianteId = 1,
             FechaPrestamo = DateTime.Now,
             FechaVencimiento = DateTime.Now.AddDays(7)
@@ -527,8 +729,11 @@ public class PrestamoServiceTests
         _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
             .ThrowsAsync(new Exception());
 
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoUpdateDto))
+            .Returns(prestamo);
+
         // Act
-        var result = await _service.UpdateAsync(prestamo);
+        var result = await _service.UpdateAsync(prestamoUpdateDto);
 
         // Assert
         Assert.False(result);

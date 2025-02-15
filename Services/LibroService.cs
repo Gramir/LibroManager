@@ -1,3 +1,5 @@
+using AutoMapper;
+using LibroManager.DTOs;
 using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services.Interfaces;
@@ -8,25 +10,31 @@ public class LibroService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILibroValidationService _validationService;
+    private readonly IMapper _mapper;
 
-    public LibroService(IUnitOfWork unitOfWork, ILibroValidationService validationService)
+    public LibroService(IUnitOfWork unitOfWork, ILibroValidationService validationService, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
         _validationService = validationService;
+        _mapper = mapper;
     }
 
-    public async Task<IEnumerable<Libro>> GetAllLibrosAsync()
+    public async Task<IEnumerable<LibroDTO>> GetAllLibrosAsync()
     {
-        return await _unitOfWork.Libros.GetLibrosWithAutorAndCategoriaAsync();
+        var libros = await _unitOfWork.Libros.GetLibrosWithAutorAndCategoriaAsync();
+        return _mapper.Map<IEnumerable<LibroDTO>>(libros);
     }
 
-    public async Task<Libro?> GetLibroByIdAsync(int id)
+    public async Task<LibroDTO?> GetLibroByIdAsync(int id)
     {
-        return await _unitOfWork.Libros.GetLibroWithDetailsAsync(id);
+        var libro = await _unitOfWork.Libros.GetLibroWithDetailsAsync(id);
+        return _mapper.Map<LibroDTO>(libro);
     }
 
-    public async Task<bool> CreateLibroAsync(Libro libro)
+    public async Task<bool> CreateLibroAsync(LibroCreateDTO libroDto)
     {
+        var libro = _mapper.Map<Libro>(libroDto);
+        
         if (!await _validationService.LibroEsValido(libro))
             return false;
 
@@ -38,8 +46,10 @@ public class LibroService
         return true;
     }
 
-    public async Task<bool> UpdateLibroAsync(Libro libro)
+    public async Task<bool> UpdateLibroAsync(LibroUpdateDTO libroDto)
     {
+        var libro = _mapper.Map<Libro>(libroDto);
+        
         if (!await _validationService.LibroEsValido(libro))
             return false;
 

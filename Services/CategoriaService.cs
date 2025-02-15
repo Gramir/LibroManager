@@ -1,3 +1,5 @@
+using AutoMapper;
+using LibroManager.DTOs;
 using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services.Interfaces;
@@ -7,45 +9,34 @@ namespace LibroManager.Services;
 public class CategoriaService : ICategoriaService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
     private const int MAX_NOMBRE_LENGTH = 50;
 
-    public CategoriaService(IUnitOfWork unitOfWork)
+    public CategoriaService(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
-    public async Task<IEnumerable<Categoria>> GetAllAsync()
+    public async Task<IEnumerable<CategoriaDTO>> GetAllAsync()
     {
         try
         {
-            return await _unitOfWork.Categorias.GetAllAsync();
+            var categorias = await _unitOfWork.Categorias.GetAllAsync();
+            return _mapper.Map<IEnumerable<CategoriaDTO>>(categorias);
         }
         catch
         {
-            return Enumerable.Empty<Categoria>();
+            return Enumerable.Empty<CategoriaDTO>();
         }
     }
 
-    public async Task<Categoria?> GetByIdAsync(int id)
+    public async Task<CategoriaDTO?> GetByIdAsync(int id)
     {
         try
         {
-            return await _unitOfWork.Categorias.GetByIdAsync(id);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    public async Task<Categoria?> GetByNombreAsync(string nombre)
-    {
-        try
-        {
-            if (!ValidateNombre(nombre))
-                return null;
-
-            return await _unitOfWork.Categorias.GetByNombreAsync(nombre);
+            var categoria = await _unitOfWork.Categorias.GetByIdAsync(id);
+            return _mapper.Map<CategoriaDTO>(categoria);
         }
         catch
         {
@@ -53,28 +44,43 @@ public class CategoriaService : ICategoriaService
         }
     }
 
-    public async Task<IEnumerable<Categoria>> GetCategoriasWithLibrosAsync()
+    public async Task<CategoriaDTO?> GetByNombreAsync(string nombre)
     {
         try
         {
-            return await _unitOfWork.Categorias.GetCategoriasWithLibrosAsync();
+            var categoria = await _unitOfWork.Categorias.GetByNombreAsync(nombre);
+            return _mapper.Map<CategoriaDTO>(categoria);
         }
         catch
         {
-            return Enumerable.Empty<Categoria>();
+            return null;
         }
     }
 
-    public async Task<bool> CreateAsync(Categoria categoria)
+    public async Task<IEnumerable<CategoriaDTO>> GetCategoriasWithLibrosAsync()
     {
         try
         {
-            if (!ValidateCategoriaData(categoria))
+            var categorias = await _unitOfWork.Categorias.GetCategoriasWithLibrosAsync();
+            return _mapper.Map<IEnumerable<CategoriaDTO>>(categorias);
+        }
+        catch
+        {
+            return Enumerable.Empty<CategoriaDTO>();
+        }
+    }
+
+    public async Task<bool> CreateAsync(CategoriaCreateDTO categoriaDto)
+    {
+        try
+        {
+            if (!ValidateCategoriaData(categoriaDto))
                 return false;
 
-            if (await _unitOfWork.Categorias.GetByNombreAsync(categoria.Nombre) != null)
+            if (await _unitOfWork.Categorias.GetByNombreAsync(categoriaDto.Nombre) != null)
                 return false;
 
+            var categoria = _mapper.Map<Categoria>(categoriaDto);
             await _unitOfWork.Categorias.AddAsync(categoria);
             await _unitOfWork.SaveChangesAsync();
             return true;
@@ -85,26 +91,21 @@ public class CategoriaService : ICategoriaService
         }
     }
 
-    public async Task<bool> UpdateAsync(Categoria categoria)
+    public async Task<bool> UpdateAsync(CategoriaUpdateDTO categoriaDto)
     {
         try
         {
-            if (!ValidateCategoriaData(categoria))
+            if (!ValidateCategoriaData(categoriaDto))
                 return false;
 
-            var categoriaConMismoNombre = await _unitOfWork.Categorias.GetByNombreAsync(categoria.Nombre);
-            if (categoriaConMismoNombre != null && categoriaConMismoNombre.CategoriaId != categoria.CategoriaId)
-            {
-                return false;
-            }
-
-            var existingCategoria = await _unitOfWork.Categorias.GetByIdAsync(categoria.CategoriaId);
+            var existingCategoria = await _unitOfWork.Categorias.GetByIdAsync(categoriaDto.CategoriaId);
             if (existingCategoria == null)
                 return false;
 
+            var categoria = _mapper.Map<Categoria>(categoriaDto);
             _unitOfWork.Categorias.Update(categoria);
-            var result = await _unitOfWork.SaveChangesAsync();
-            return result > 0;
+            await _unitOfWork.SaveChangesAsync();
+            return true;
         }
         catch
         {
@@ -120,12 +121,9 @@ public class CategoriaService : ICategoriaService
             if (categoria == null)
                 return false;
 
-            if (categoria.Libros?.Any() == true)
-                return false;
-
             _unitOfWork.Categorias.Remove(categoria);
-            var result = await _unitOfWork.SaveChangesAsync();
-            return result > 0;
+            await _unitOfWork.SaveChangesAsync();
+            return true;
         }
         catch
         {
@@ -133,20 +131,9 @@ public class CategoriaService : ICategoriaService
         }
     }
 
-    private bool ValidateCategoriaData(Categoria categoria)
+    private bool ValidateCategoriaData(CategoriaCreateDTO categoria)
     {
-        if (categoria == null)
-            return false;
-
-        return ValidateNombre(categoria.Nombre);
-    }
-
-    private bool ValidateNombre(string nombre)
-    {
-        if (string.IsNullOrWhiteSpace(nombre))
-            return false;
-
-        if (nombre.Length > MAX_NOMBRE_LENGTH)
+        if (string.IsNullOrWhiteSpace(categoria.Nombre) || categoria.Nombre.Length > MAX_NOMBRE_LENGTH)
             return false;
 
         return true;

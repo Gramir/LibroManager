@@ -1,5 +1,7 @@
+using AutoMapper;
 using System.Text.RegularExpressions;
 using LibroManager.Models;
+using LibroManager.DTOs;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services.Interfaces;
 
@@ -8,77 +10,52 @@ namespace LibroManager.Services;
 public class EstudianteService : IEstudianteService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private static readonly Regex EmailRegex = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
+    private readonly IMapper _mapper;
+    private const int MAX_NOMBRE_LENGTH = 100;
 
-    public EstudianteService(IUnitOfWork unitOfWork)
+    public EstudianteService(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
-    public async Task<IEnumerable<Estudiante>> GetAllAsync()
+    public async Task<IEnumerable<EstudianteDTO>> GetAllAsync()
+    {
+        var estudiantes = await _unitOfWork.Estudiantes.GetAllAsync();
+        return _mapper.Map<IEnumerable<EstudianteDTO>>(estudiantes);
+    }
+
+    public async Task<EstudianteDTO?> GetByIdAsync(int id)
+    {
+        var estudiante = await _unitOfWork.Estudiantes.GetByIdAsync(id);
+        return _mapper.Map<EstudianteDTO>(estudiante);
+    }
+
+    public async Task<EstudianteDTO?> GetByEmailAsync(string email)
+    {
+        var estudiante = await _unitOfWork.Estudiantes.GetByEmailAsync(email);
+        return _mapper.Map<EstudianteDTO>(estudiante);
+    }
+
+    public async Task<IEnumerable<EstudianteDTO>> GetEstudiantesWithPrestamosActivosAsync()
+    {
+        var estudiantes = await _unitOfWork.Estudiantes.GetEstudiantesWithPrestamosActivosAsync();
+        return _mapper.Map<IEnumerable<EstudianteDTO>>(estudiantes);
+    }
+
+    public async Task<bool> CreateAsync(EstudianteCreateDTO estudianteDto)
     {
         try
         {
-            return await _unitOfWork.Estudiantes.GetAllAsync();
-        }
-        catch
-        {
-            return Enumerable.Empty<Estudiante>();
-        }
-    }
-
-    public async Task<Estudiante?> GetByIdAsync(int id)
-    {
-        try
-        {
-            return await _unitOfWork.Estudiantes.GetByIdAsync(id);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    public async Task<Estudiante?> GetByEmailAsync(string email)
-    {
-        try
-        {
-            if (!IsValidEmail(email))
-                return null;
-
-            return await _unitOfWork.Estudiantes.GetByEmailAsync(email);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    public async Task<IEnumerable<Estudiante>> GetEstudiantesWithPrestamosActivosAsync()
-    {
-        try
-        {
-            return await _unitOfWork.Estudiantes.GetEstudiantesWithPrestamosActivosAsync();
-        }
-        catch
-        {
-            return Enumerable.Empty<Estudiante>();
-        }
-    }
-
-    public async Task<bool> CreateAsync(Estudiante estudiante)
-    {
-        try
-        {
-            if (!ValidateEstudianteData(estudiante))
+            if (!ValidateEstudianteData(estudianteDto))
                 return false;
 
-            var existingEstudiante = await _unitOfWork.Estudiantes.GetByEmailAsync(estudiante.Email);
+            var existingEstudiante = await _unitOfWork.Estudiantes.GetByEmailAsync(estudianteDto.Email);
             if (existingEstudiante != null)
                 return false;
 
-            if (estudiante.FechaInscripcion == default)
-                estudiante.FechaInscripcion = DateTime.Now;
+            var estudiante = _mapper.Map<Estudiante>(estudianteDto);
+            estudiante.FechaInscripcion = DateTime.Now;
 
             await _unitOfWork.Estudiantes.AddAsync(estudiante);
             await _unitOfWork.SaveChangesAsync();
@@ -90,20 +67,19 @@ public class EstudianteService : IEstudianteService
         }
     }
 
-    public async Task<bool> UpdateAsync(Estudiante estudiante)
+    public async Task<bool> UpdateAsync(EstudianteUpdateDTO estudianteDto)
     {
         try
         {
-            if (!ValidateEstudianteData(estudiante))
+            if (!ValidateEstudianteData(estudianteDto))
                 return false;
 
-            var estudianteActual = await _unitOfWork.Estudiantes.GetByIdAsync(estudiante.EstudianteId);
-            if (estudianteActual == null)
+            var existingEstudiante = await _unitOfWork.Estudiantes.GetByIdAsync(estudianteDto.EstudianteId);
+            if (existingEstudiante == null)
                 return false;
 
-            var estudianteConEmail = await _unitOfWork.Estudiantes.GetByEmailAsync(estudiante.Email);
-            if (estudianteConEmail != null && estudianteConEmail.EstudianteId != estudiante.EstudianteId)
-                return false;
+            var estudiante = _mapper.Map<Estudiante>(estudianteDto);
+            estudiante.FechaInscripcion = existingEstudiante.FechaInscripcion;
 
             _unitOfWork.Estudiantes.Update(estudiante);
             await _unitOfWork.SaveChangesAsync();
@@ -137,18 +113,12 @@ public class EstudianteService : IEstudianteService
         }
     }
 
-    private bool ValidateEstudianteData(Estudiante estudiante)
+    private bool ValidateEstudianteData(EstudianteCreateDTO estudiante)
     {
-        if (estudiante == null)
+        if (string.IsNullOrWhiteSpace(estudiante.Nombre) || estudiante.Nombre.Length > MAX_NOMBRE_LENGTH)
             return false;
 
-        if (string.IsNullOrWhiteSpace(estudiante.Nombre) || estudiante.Nombre.Length > 100)
-            return false;
-
-        if (!IsValidEmail(estudiante.Email))
-            return false;
-
-        if (estudiante.FechaInscripcion > DateTime.Now)
+        if (string.IsNullOrWhiteSpace(estudiante.Email) || !IsValidEmail(estudiante.Email))
             return false;
 
         return true;
@@ -156,9 +126,7 @@ public class EstudianteService : IEstudianteService
 
     private bool IsValidEmail(string email)
     {
-        if (string.IsNullOrWhiteSpace(email))
-            return false;
-
-        return EmailRegex.IsMatch(email);
+        var pattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+        return Regex.IsMatch(email, pattern);
     }
 }

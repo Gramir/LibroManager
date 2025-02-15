@@ -1,14 +1,14 @@
-using LibroManager.Models;
+using LibroManager.DTOs;
 
 namespace LibroManager.Services.Interfaces;
 
 public interface ICategoriaService
 {
-    Task<IEnumerable<Categoria>> GetAllAsync();
-    Task<Categoria?> GetByIdAsync(int id);
-    Task<Categoria?> GetByNombreAsync(string nombre);
-    Task<IEnumerable<Categoria>> GetCategoriasWithLibrosAsync();
-    Task<bool> CreateAsync(Categoria categoria);
-    Task<bool> UpdateAsync(Categoria categoria);
+    Task<IEnumerable<CategoriaDTO>> GetAllAsync();
+    Task<CategoriaDTO?> GetByIdAsync(int id);
+    Task<CategoriaDTO?> GetByNombreAsync(string nombre);
+    Task<IEnumerable<CategoriaDTO>> GetCategoriasWithLibrosAsync();
+    Task<bool> CreateAsync(CategoriaCreateDTO categoria);
+    Task<bool> UpdateAsync(CategoriaUpdateDTO categoria);
     Task<bool> DeleteAsync(int id);
 }

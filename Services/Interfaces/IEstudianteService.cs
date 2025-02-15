@@ -1,14 +1,14 @@
-using LibroManager.Models;
+using LibroManager.DTOs;
 
 namespace LibroManager.Services.Interfaces;
 
 public interface IEstudianteService
 {
-    Task<IEnumerable<Estudiante>> GetAllAsync();
-    Task<Estudiante?> GetByIdAsync(int id);
-    Task<Estudiante?> GetByEmailAsync(string email);
-    Task<IEnumerable<Estudiante>> GetEstudiantesWithPrestamosActivosAsync();
-    Task<bool> CreateAsync(Estudiante estudiante);
-    Task<bool> UpdateAsync(Estudiante estudiante);
+    Task<IEnumerable<EstudianteDTO>> GetAllAsync();
+    Task<EstudianteDTO?> GetByIdAsync(int id);
+    Task<EstudianteDTO?> GetByEmailAsync(string email);
+    Task<IEnumerable<EstudianteDTO>> GetEstudiantesWithPrestamosActivosAsync();
+    Task<bool> CreateAsync(EstudianteCreateDTO estudiante);
+    Task<bool> UpdateAsync(EstudianteUpdateDTO estudiante);
     Task<bool> DeleteAsync(int id);
 }

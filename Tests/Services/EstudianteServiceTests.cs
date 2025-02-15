@@ -1,6 +1,8 @@
 using LibroManager.Models;
+using LibroManager.DTOs;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
+using AutoMapper;
 using Moq;
 using Xunit;
 
@@ -9,32 +11,53 @@ namespace LibroManager.Tests.Services;
 public class EstudianteServiceTests
 {
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
+    private readonly Mock<IMapper> _mockMapper;
     private readonly EstudianteService _service;
 
     public EstudianteServiceTests()
     {
         _mockUnitOfWork = new Mock<IUnitOfWork>();
-        _service = new EstudianteService(_mockUnitOfWork.Object);
+        _mockMapper = new Mock<IMapper>();
+        _service = new EstudianteService(_mockUnitOfWork.Object, _mockMapper.Object);
     }
 
     [Fact]
     public async Task GetAllAsync_ReturnsAllEstudiantes()
     {
         // Arrange
-        var expectedEstudiantes = new List<Estudiante>
+        var estudiantes = new List<Estudiante>
         {
-            new() { EstudianteId = 1, Nombre = "Estudiante 1", Email = "email1@test.com" },
-            new() { EstudianteId = 2, Nombre = "Estudiante 2", Email = "email2@test.com" }
+            new() 
+            { 
+                EstudianteId = 1, 
+                Nombre = "Estudiante 1",
+                Email = "estudiante1@test.com",
+                FechaInscripcion = DateTime.Now 
+            }
+        };
+
+        var estudiantesDto = new List<EstudianteDTO>
+        {
+            new() 
+            { 
+                EstudianteId = 1, 
+                Nombre = "Estudiante 1",
+                Email = "estudiante1@test.com",
+                FechaInscripcion = DateTime.Now 
+            }
         };
 
         _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetAllAsync())
-            .ReturnsAsync(expectedEstudiantes);
+            .ReturnsAsync(estudiantes);
+        _mockMapper.Setup(m => m.Map<IEnumerable<EstudianteDTO>>(estudiantes))
+            .Returns(estudiantesDto);
 
         // Act
         var result = await _service.GetAllAsync();
 
         // Assert
-        Assert.Equal(expectedEstudiantes.Count, result.Count());
+        Assert.Single(result);
+        Assert.Equal("Estudiante 1", result.First().Nombre);
     }
 
     [Fact]
@@ -42,10 +65,24 @@ public class EstudianteServiceTests
     {
         // Arrange
         var email = "test@test.com";
-        var expectedEstudiante = new Estudiante { EstudianteId = 1, Email = email };
+        var estudiante = new Estudiante 
+        { 
+            EstudianteId = 1, 
+            Nombre = "Test Estudiante",
+            Email = email 
+        };
+
+        var estudianteDto = new EstudianteDTO
+        {
+            EstudianteId = 1,
+            Nombre = "Test Estudiante",
+            Email = email
+        };
 
         _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByEmailAsync(email))
-            .ReturnsAsync(expectedEstudiante);
+            .ReturnsAsync(estudiante);
+        _mockMapper.Setup(m => m.Map<EstudianteDTO>(estudiante))
+            .Returns(estudianteDto);
 
         // Act
         var result = await _service.GetByEmailAsync(email);
@@ -59,33 +96,67 @@ public class EstudianteServiceTests
     public async Task GetEstudiantesWithPrestamosActivosAsync_ReturnsEstudiantesWithActivePrestamos()
     {
         // Arrange
-        var expectedEstudiantes = new List<Estudiante>
+        var estudiantes = new List<Estudiante>
         {
-            new() { EstudianteId = 1, Nombre = "Estudiante 1", Email = "email1@test.com" }
+            new() 
+            { 
+                EstudianteId = 1, 
+                Nombre = "Estudiante 1",
+                Prestamos = new List<Prestamo>
+                {
+                    new() { FechaVencimiento = DateTime.Now.AddDays(7) }
+                }
+            }
+        };
+
+        var estudiantesDto = new List<EstudianteDTO>
+        {
+            new()
+            {
+                EstudianteId = 1,
+                Nombre = "Estudiante 1",
+                PrestamosActivos = 1
+            }
         };
 
         _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetEstudiantesWithPrestamosActivosAsync())
-            .ReturnsAsync(expectedEstudiantes);
+            .ReturnsAsync(estudiantes);
+        _mockMapper.Setup(m => m.Map<IEnumerable<EstudianteDTO>>(estudiantes))
+            .Returns(estudiantesDto);
 
         // Act
         var result = await _service.GetEstudiantesWithPrestamosActivosAsync();
 
         // Assert
         Assert.Single(result);
+        Assert.Equal(1, result.First().PrestamosActivos);
     }
 
     [Fact]
     public async Task CreateAsync_ReturnsTrue_WhenEmailDoesNotExist()
     {
         // Arrange
-        var estudiante = new Estudiante { Email = "new@test.com", Nombre = "Test Name" };
+        var estudianteCreateDto = new EstudianteCreateDTO 
+        { 
+            Nombre = "Nuevo Estudiante",
+            Email = "nuevo@test.com"
+        };
+
+        var estudiante = new Estudiante
+        {
+            Nombre = "Nuevo Estudiante",
+            Email = "nuevo@test.com"
+        };
+
         _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByEmailAsync(estudiante.Email))
             .ReturnsAsync((Estudiante?)null);
+        _mockMapper.Setup(m => m.Map<Estudiante>(estudianteCreateDto))
+            .Returns(estudiante);
         _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
             .ReturnsAsync(1);
 
         // Act
-        var result = await _service.CreateAsync(estudiante);
+        var result = await _service.CreateAsync(estudianteCreateDto);
 
         // Assert
         Assert.True(result);
@@ -97,12 +168,25 @@ public class EstudianteServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenEmailExists()
     {
         // Arrange
-        var estudiante = new Estudiante { Email = "existing@test.com" };
+        var estudianteCreateDto = new EstudianteCreateDTO 
+        { 
+            Nombre = "Estudiante Existente",
+            Email = "existente@test.com"
+        };
+
+        var estudiante = new Estudiante
+        {
+            Nombre = "Estudiante Existente",
+            Email = "existente@test.com"
+        };
+
         _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByEmailAsync(estudiante.Email))
             .ReturnsAsync(new Estudiante { EstudianteId = 1, Email = estudiante.Email });
+        _mockMapper.Setup(m => m.Map<Estudiante>(estudianteCreateDto))
+            .Returns(estudiante);
 
         // Act
-        var result = await _service.CreateAsync(estudiante);
+        var result = await _service.CreateAsync(estudianteCreateDto);
 
         // Assert
         Assert.False(result);
@@ -114,16 +198,38 @@ public class EstudianteServiceTests
     public async Task UpdateAsync_ReturnsTrue_WhenEmailDoesNotExist()
     {
         // Arrange
-        var estudiante = new Estudiante { EstudianteId = 1, Email = "update@test.com", Nombre = "Test Name" };
-        _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByIdAsync(estudiante.EstudianteId))
-            .ReturnsAsync(estudiante);
-        _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByEmailAsync(estudiante.Email))
-            .ReturnsAsync((Estudiante)null!);
+        var estudianteUpdateDto = new EstudianteUpdateDTO 
+        { 
+            EstudianteId = 1,
+            Nombre = "Estudiante Actualizado",
+            Email = "actualizado@test.com"
+        };
+
+        var estudiante = new Estudiante
+        {
+            EstudianteId = 1,
+            Nombre = "Estudiante Actualizado",
+            Email = "actualizado@test.com",
+            FechaInscripcion = DateTime.Now
+        };
+
+        var existingEstudiante = new Estudiante
+        {
+            EstudianteId = 1,
+            Nombre = "Estudiante Original",
+            Email = "original@test.com",
+            FechaInscripcion = DateTime.Now
+        };
+
+        _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByIdAsync(estudianteUpdateDto.EstudianteId))
+            .ReturnsAsync(existingEstudiante);
+        _mockMapper.Setup(m => m.Map<Estudiante>(estudianteUpdateDto))
+            .Returns(estudiante);
         _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
             .ReturnsAsync(1);
 
         // Act
-        var result = await _service.UpdateAsync(estudiante);
+        var result = await _service.UpdateAsync(estudianteUpdateDto);
 
         // Assert
         Assert.True(result);
@@ -135,12 +241,27 @@ public class EstudianteServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenEmailExistsForDifferentEstudiante()
     {
         // Arrange
-        var estudiante = new Estudiante { EstudianteId = 1, Email = "existing@test.com" };
+        var estudianteUpdateDto = new EstudianteUpdateDTO 
+        { 
+            EstudianteId = 1,
+            Nombre = "Estudiante Actualizado",
+            Email = "existente@test.com"
+        };
+
+        var estudiante = new Estudiante
+        {
+            EstudianteId = 1,
+            Nombre = "Estudiante Actualizado",
+            Email = "existente@test.com"
+        };
+
         _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByEmailAsync(estudiante.Email))
             .ReturnsAsync(new Estudiante { EstudianteId = 2, Email = estudiante.Email });
+        _mockMapper.Setup(m => m.Map<Estudiante>(estudianteUpdateDto))
+            .Returns(estudiante);
 
         // Act
-        var result = await _service.UpdateAsync(estudiante);
+        var result = await _service.UpdateAsync(estudianteUpdateDto);
 
         // Assert
         Assert.False(result);
@@ -191,18 +312,18 @@ public class EstudianteServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenEmailIsInvalid()
     {
         // Arrange
-        var estudiante = new Estudiante { 
-            Email = "invalid-email",
-            Nombre = "Test",
-            FechaInscripcion = DateTime.Now 
+        var estudianteCreateDto = new EstudianteCreateDTO 
+        { 
+            Nombre = "Test Estudiante",
+            Email = "emailinvalido"
         };
 
         // Act
-        var result = await _service.CreateAsync(estudiante);
+        var result = await _service.CreateAsync(estudianteCreateDto);
 
         // Assert
         Assert.False(result);
-        _mockUnitOfWork.Verify(uow => uow.Estudiantes.AddAsync(estudiante), Times.Never);
+        _mockUnitOfWork.Verify(uow => uow.Estudiantes.AddAsync(It.IsAny<Estudiante>()), Times.Never);
         _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Never);
     }
 
@@ -210,19 +331,27 @@ public class EstudianteServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenExceptionOccurs()
     {
         // Arrange
-        var estudiante = new Estudiante { 
-            Email = "test@test.com",
-            Nombre = "Test",
-            FechaInscripcion = DateTime.Now 
+        var estudianteCreateDto = new EstudianteCreateDTO 
+        { 
+            Nombre = "Test Estudiante",
+            Email = "test@test.com"
+        };
+
+        var estudiante = new Estudiante
+        {
+            Nombre = "Test Estudiante",
+            Email = "test@test.com"
         };
 
         _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByEmailAsync(estudiante.Email))
             .ReturnsAsync((Estudiante?)null);
+        _mockMapper.Setup(m => m.Map<Estudiante>(estudianteCreateDto))
+            .Returns(estudiante);
         _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
             .ThrowsAsync(new Exception("DB Error"));
 
         // Act
-        var result = await _service.CreateAsync(estudiante);
+        var result = await _service.CreateAsync(estudianteCreateDto);
 
         // Assert
         Assert.False(result);
@@ -232,19 +361,19 @@ public class EstudianteServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenEmailFormatIsInvalid()
     {
         // Arrange
-        var estudiante = new Estudiante { 
+        var estudianteUpdateDto = new EstudianteUpdateDTO 
+        { 
             EstudianteId = 1,
-            Email = "invalid-email",
-            Nombre = "Test",
-            FechaInscripcion = DateTime.Now 
+            Nombre = "Test Estudiante",
+            Email = "emailinvalido"
         };
 
         // Act
-        var result = await _service.UpdateAsync(estudiante);
+        var result = await _service.UpdateAsync(estudianteUpdateDto);
 
         // Assert
         Assert.False(result);
-        _mockUnitOfWork.Verify(uow => uow.Estudiantes.Update(estudiante), Times.Never);
+        _mockUnitOfWork.Verify(uow => uow.Estudiantes.Update(It.IsAny<Estudiante>()), Times.Never);
         _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Never);
     }
 
