@@ -8,6 +8,9 @@ public class UnitOfWork : IUnitOfWork
     private readonly ApplicationDbContext _context;
     private ILibroRepository? _libroRepository;
     private IAutorRepository? _autorRepository;
+    private IPrestamoRepository? _prestamoRepository;
+    private IEstudianteRepository? _estudianteRepository;
+    private ICategoriaRepository? _categoriaRepository;
 
     public UnitOfWork(ApplicationDbContext context)
     {
@@ -31,6 +34,15 @@ public class UnitOfWork : IUnitOfWork
             return _autorRepository;
         }
     }
+
+    public IPrestamoRepository Prestamos => 
+        _prestamoRepository ??= new PrestamoRepository(_context);
+
+    public IEstudianteRepository Estudiantes =>
+        _estudianteRepository ??= new EstudianteRepository(_context);
+
+    public ICategoriaRepository Categorias =>
+        _categoriaRepository ??= new CategoriaRepository(_context);
 
     public async Task<int> SaveChangesAsync()
     {
