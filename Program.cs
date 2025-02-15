@@ -1,6 +1,7 @@
 using LibroManager.Components;
 using LibroManager.Data.Context;
 using LibroManager.Services;
+using LibroManager.Services.Interfaces;
 using LibroManager.Repositories;
 using LibroManager.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +20,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Add Services
-builder.Services.AddScoped<LibroValidationService>();
+builder.Services.AddScoped<ILibroValidationService, LibroValidationService>();
 builder.Services.AddScoped<LibroService>();
 builder.Services.AddScoped<AutorService>();
 

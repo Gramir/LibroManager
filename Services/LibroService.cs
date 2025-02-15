@@ -1,14 +1,15 @@
 using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
+using LibroManager.Services.Interfaces;
 
 namespace LibroManager.Services;
 
 public class LibroService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly LibroValidationService _validationService;
+    private readonly ILibroValidationService _validationService;
 
-    public LibroService(IUnitOfWork unitOfWork, LibroValidationService validationService)
+    public LibroService(IUnitOfWork unitOfWork, ILibroValidationService validationService)
     {
         _unitOfWork = unitOfWork;
         _validationService = validationService;
