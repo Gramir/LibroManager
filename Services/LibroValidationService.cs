@@ -41,9 +41,29 @@ public class LibroValidationService : ILibroValidationService
             .AnyAsync(p => p.LibroId == libroId && p.FechaVencimiento > DateTime.Now);
     }
 
+    public bool FechasPrestamoSonValidas(DateTime fechaPrestamo, DateTime fechaVencimiento)
+    {
+        var hoy = DateTime.Today;
+        
+        // La fecha de préstamo no puede ser futura
+        if (fechaPrestamo.Date > hoy)
+            return false;
+
+        // La fecha de vencimiento debe ser posterior a la fecha de préstamo
+        // y no puede ser más de 30 días después
+        if (fechaVencimiento.Date <= fechaPrestamo.Date || 
+            fechaVencimiento.Date > fechaPrestamo.Date.AddDays(30))
+            return false;
+
+        return true;
+    }
+
     public async Task<bool> PrestamoEsValido(Prestamo prestamo)
     {
         if (prestamo.LibroId <= 0 || prestamo.EstudianteId <= 0)
+            return false;
+
+        if (!FechasPrestamoSonValidas(prestamo.FechaPrestamo, prestamo.FechaVencimiento))
             return false;
 
         var libroExiste = await _context.Libros.AnyAsync(l => l.LibroId == prestamo.LibroId);

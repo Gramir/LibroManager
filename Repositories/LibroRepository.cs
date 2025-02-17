@@ -47,7 +47,7 @@ public class LibroRepository : ILibroRepository
 
     public async Task<bool> IsbnExistsAsync(string isbn)
     {
-        return await _context.Libros.AnyAsync(l => l.ISBN == isbn);
+        return await _context.Libros.AnyAsync(l => l.ISBN.ToUpper() == isbn.ToUpper());
     }
 
     public async Task<IEnumerable<Libro>> GetLibrosWithAutorAndCategoriaAsync()

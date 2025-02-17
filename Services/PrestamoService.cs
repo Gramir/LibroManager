@@ -87,6 +87,7 @@ public class PrestamoService : IPrestamoService
         try
         {
             var prestamo = _mapper.Map<Prestamo>(prestamoDto);
+            prestamo.FechaPrestamo = DateTime.Now;  // Asegurar que la fecha de préstamo sea ahora
             
             if (!ValidatePrestamoData(prestamo))
                 return false;
@@ -123,16 +124,22 @@ public class PrestamoService : IPrestamoService
         {
             var prestamo = _mapper.Map<Prestamo>(prestamoDto);
             
-            if (!ValidatePrestamoData(prestamo))
-                return false;
-
             var existingPrestamo = await _unitOfWork.Prestamos.GetByIdAsync(prestamo.PrestamoId);
             if (existingPrestamo == null)
                 return false;
 
+            // Mantener los valores originales que no deben cambiar
             prestamo.LibroId = existingPrestamo.LibroId;
             prestamo.EstudianteId = existingPrestamo.EstudianteId;
             prestamo.FechaPrestamo = existingPrestamo.FechaPrestamo;
+
+            if (!ValidatePrestamoData(prestamo))
+                return false;
+
+            // Verificar que la nueva fecha de vencimiento sea válida
+            if (prestamo.FechaVencimiento <= prestamo.FechaPrestamo ||
+                prestamo.FechaVencimiento < DateTime.Now)
+                return false;
 
             _unitOfWork.Prestamos.Update(prestamo);
             await _unitOfWork.SaveChangesAsync();
@@ -164,13 +171,21 @@ public class PrestamoService : IPrestamoService
 
     private bool ValidatePrestamoData(Prestamo prestamo)
     {
-        if (prestamo.FechaPrestamo > prestamo.FechaVencimiento)
+        // Normalizamos las fechas para comparar solo las fechas sin tiempo
+        var fechaPrestamo = prestamo.FechaPrestamo.Date;
+        var fechaVencimiento = prestamo.FechaVencimiento.Date;
+        var hoy = DateTime.Today;
+
+        if (fechaPrestamo > fechaVencimiento)
             return false;
 
-        if (prestamo.FechaPrestamo > DateTime.Now)
+        if (fechaPrestamo > hoy)
             return false;
 
-        if (prestamo.FechaVencimiento < DateTime.Now)
+        if (fechaVencimiento <= hoy)
+            return false;
+
+        if (fechaVencimiento > fechaPrestamo.AddDays(30))
             return false;
 
         return true;

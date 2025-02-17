@@ -33,8 +33,15 @@ public class EstudianteService : IEstudianteService
 
     public async Task<EstudianteDTO?> GetByEmailAsync(string email)
     {
-        var estudiante = await _unitOfWork.Estudiantes.GetByEmailAsync(email);
-        return _mapper.Map<EstudianteDTO>(estudiante);
+        try
+        {
+            var estudiante = await _unitOfWork.Estudiantes.GetByEmailAsync(email);
+            return _mapper.Map<EstudianteDTO>(estudiante);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public async Task<IEnumerable<EstudianteDTO>> GetEstudiantesWithPrestamosActivosAsync()

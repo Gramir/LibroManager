@@ -9,4 +9,5 @@ public interface ILibroValidationService
     Task<bool> PuedeEliminarCategoria(int categoriaId);
     Task<bool> LibroEstaPrestado(int libroId);
     Task<bool> PrestamoEsValido(Prestamo prestamo);
+    bool FechasPrestamoSonValidas(DateTime fechaPrestamo, DateTime fechaVencimiento);
 }

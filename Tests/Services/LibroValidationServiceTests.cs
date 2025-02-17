@@ -183,7 +183,12 @@ public class LibroValidationServiceTests
         await _context.Estudiantes.AddAsync(estudiante);
         await _context.SaveChangesAsync();
 
-        var prestamo = new Prestamo { LibroId = libro.LibroId, EstudianteId = estudiante.EstudianteId };
+        var prestamo = new Prestamo { 
+            LibroId = libro.LibroId, 
+            EstudianteId = estudiante.EstudianteId,
+            FechaPrestamo = DateTime.Today,
+            FechaVencimiento = DateTime.Today.AddDays(7)
+        };
 
         // Act
         var result = await _validationService.PrestamoEsValido(prestamo);
