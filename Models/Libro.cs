@@ -4,6 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibroManager.Models;
 
+public enum EstadoLibro
+{
+    Disponible,
+    Prestado,
+    Perdido
+}
+
 [Index(nameof(ISBN), IsUnique = true)]
 public class Libro
 {
@@ -28,8 +35,15 @@ public class Libro
     [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar una categoría válida")]
     public int CategoriaId { get; set; }
 
+    [Required]
+    public EstadoLibro Estado { get; set; } = EstadoLibro.Disponible;
+    
+    [Required]
+    [DataType(DataType.Date)]
+    public DateTime FechaCreacion { get; set; } = DateTime.Now;
+
     [NotMapped]
-    public bool EstaPrestado { get; set; }
+    public bool EstaPrestado => Estado == EstadoLibro.Prestado;
 
     // Navigation properties
     [ForeignKey("AutorId")]

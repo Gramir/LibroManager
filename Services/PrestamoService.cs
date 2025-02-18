@@ -87,17 +87,15 @@ public class PrestamoService : IPrestamoService
         try
         {
             var prestamo = _mapper.Map<Prestamo>(prestamoDto);
-            prestamo.FechaPrestamo = DateTime.Now;  // Asegurar que la fecha de préstamo sea ahora
+            prestamo.FechaPrestamo = DateTime.Now;
+            prestamo.Estado = EstadoPrestamo.Activo;
+            prestamo.FechaCreacion = DateTime.Now;
             
             if (!ValidatePrestamoData(prestamo))
                 return false;
 
             var libro = await _unitOfWork.Libros.GetByIdAsync(prestamo.LibroId);
-            if (libro == null)
-                return false;
-
-            var prestamosActivos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(prestamo.LibroId);
-            if (prestamosActivos.Any(p => p.FechaVencimiento >= DateTime.Now))
+            if (libro == null || libro.Estado != EstadoLibro.Disponible)
                 return false;
 
             var estudiante = await _unitOfWork.Estudiantes.GetByIdAsync(prestamo.EstudianteId);
@@ -105,8 +103,12 @@ public class PrestamoService : IPrestamoService
                 return false;
 
             var prestamosEstudiante = await _unitOfWork.Prestamos.GetPrestamosByEstudianteAsync(prestamo.EstudianteId);
-            if (prestamosEstudiante.Any(p => p.FechaVencimiento < DateTime.Now))
+            if (prestamosEstudiante.Any(p => p.Estado == EstadoPrestamo.Expirado))
                 return false;
+
+            // Actualizar el estado del libro según el estado del préstamo
+            libro.Estado = prestamo.Estado == EstadoPrestamo.Expirado ? EstadoLibro.Perdido : EstadoLibro.Prestado;
+            _unitOfWork.Libros.Update(libro);
 
             await _unitOfWork.Prestamos.AddAsync(prestamo);
             await _unitOfWork.SaveChangesAsync();
@@ -132,15 +134,27 @@ public class PrestamoService : IPrestamoService
             prestamo.LibroId = existingPrestamo.LibroId;
             prestamo.EstudianteId = existingPrestamo.EstudianteId;
             prestamo.FechaPrestamo = existingPrestamo.FechaPrestamo;
+            prestamo.FechaCreacion = existingPrestamo.FechaCreacion;
 
             if (!ValidatePrestamoData(prestamo))
                 return false;
 
-            // Verificar que la nueva fecha de vencimiento sea válida
-            if (prestamo.FechaVencimiento <= prestamo.FechaPrestamo ||
-                prestamo.FechaVencimiento < DateTime.Now)
+            var libro = await _unitOfWork.Libros.GetByIdAsync(prestamo.LibroId);
+            if (libro == null)
                 return false;
 
+            // Actualizar estado del libro según el estado del préstamo
+            if (prestamo.Estado == EstadoPrestamo.Concluido && !prestamo.FechaDevolucion.HasValue)
+            {
+                prestamo.FechaDevolucion = DateTime.Now;
+                libro.Estado = EstadoLibro.Disponible;
+            }
+            else if (prestamo.Estado == EstadoPrestamo.Expirado)
+            {
+                libro.Estado = EstadoLibro.Perdido;
+            }
+
+            _unitOfWork.Libros.Update(libro);
             _unitOfWork.Prestamos.Update(prestamo);
             await _unitOfWork.SaveChangesAsync();
             return true;
@@ -182,11 +196,22 @@ public class PrestamoService : IPrestamoService
         if (fechaPrestamo > hoy)
             return false;
 
-        if (fechaVencimiento <= hoy)
-            return false;
+        // Si la fecha de vencimiento es pasada, marcar como expirado
+        if (fechaVencimiento < hoy && prestamo.Estado != EstadoPrestamo.Concluido)
+        {
+            prestamo.Estado = EstadoPrestamo.Expirado;
+        }
 
         if (fechaVencimiento > fechaPrestamo.AddDays(30))
             return false;
+
+        if (prestamo.FechaDevolucion.HasValue)
+        {
+            if (prestamo.FechaDevolucion.Value < fechaPrestamo)
+                return false;
+            
+            prestamo.Estado = EstadoPrestamo.Concluido;
+        }
 
         return true;
     }

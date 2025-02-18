@@ -3,6 +3,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LibroManager.Models;
 
+public enum EstadoPrestamo
+{
+    Activo,
+    Concluido,
+    Expirado
+}
+
 public class Prestamo
 {
     [Key]
@@ -26,8 +33,18 @@ public class Prestamo
     [CustomValidation(typeof(Prestamo), nameof(ValidateFechaVencimiento))]
     public DateTime FechaVencimiento { get; set; }
 
+    [Required]
+    public EstadoPrestamo Estado { get; set; }
+    
+    [DataType(DataType.Date)]
+    public DateTime? FechaDevolucion { get; set; }
+    
+    [Required]
+    [DataType(DataType.Date)]
+    public DateTime FechaCreacion { get; set; } = DateTime.Now;
+
     [NotMapped]
-    public bool EstaActivo => FechaVencimiento >= DateTime.Now;
+    public bool EstaActivo => Estado == EstadoPrestamo.Activo;
 
     // Navigation properties
     [ForeignKey("LibroId")]

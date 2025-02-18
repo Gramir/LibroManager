@@ -22,6 +22,10 @@ public class Estudiante
     [Required(ErrorMessage = "La fecha de inscripción es requerida")]
     public DateTime FechaInscripcion { get; set; }
 
+    [Required]
+    [DataType(DataType.Date)]
+    public DateTime FechaCreacion { get; set; } = DateTime.Now;
+
     // Navigation property
     public ICollection<Prestamo>? Prestamos { get; set; }
 }
