@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LibroManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250214223754_SeedData")]
+    [Migration("20250219001257_SeedData")]
     partial class SeedData
     {
         /// <inheritdoc />
@@ -33,6 +33,9 @@ namespace LibroManager.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AutorId"));
 
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -50,6 +53,9 @@ namespace LibroManager.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoriaId"));
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -75,6 +81,9 @@ namespace LibroManager.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("FechaInscripcion")
                         .ValueGeneratedOnAdd()
@@ -107,6 +116,12 @@ namespace LibroManager.Migrations
 
                     b.Property<int>("CategoriaId")
                         .HasColumnType("int");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ISBN")
                         .IsRequired()
@@ -142,8 +157,17 @@ namespace LibroManager.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PrestamoId"));
 
+                    b.Property<int>("Estado")
+                        .HasColumnType("int");
+
                     b.Property<int>("EstudianteId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaDevolucion")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("FechaPrestamo")
                         .ValueGeneratedOnAdd()
