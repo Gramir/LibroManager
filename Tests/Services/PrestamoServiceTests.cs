@@ -2,6 +2,7 @@ using LibroManager.Models;
 using LibroManager.DTOs;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
+using LibroManager.Services.Interfaces;
 using AutoMapper;
 using Moq;
 using Xunit;
@@ -12,13 +13,15 @@ public class PrestamoServiceTests
 {
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<IMapper> _mockMapper;
+    private readonly Mock<ILibroValidationService> _mockLibroValidationService;
     private readonly PrestamoService _service;
 
     public PrestamoServiceTests()
     {
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockMapper = new Mock<IMapper>();
-        _service = new PrestamoService(_mockUnitOfWork.Object, _mockMapper.Object);
+        _mockLibroValidationService = new Mock<ILibroValidationService>();
+        _service = new PrestamoService(_mockUnitOfWork.Object, _mockMapper.Object, _mockLibroValidationService.Object);
     }
 
     [Fact]
@@ -152,9 +155,15 @@ public class PrestamoServiceTests
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
 
+        // Configure LibroValidationService mock
+        _mockLibroValidationService.Setup(s => s.FechasPrestamoSonValidas(
+            It.IsAny<DateTime>(), 
+            It.IsAny<DateTime>()))
+            .Returns(true);
+
         // Mock libro existe y está disponible
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
-            .ReturnsAsync(new Libro { LibroId = prestamo.LibroId });
+            .ReturnsAsync(new Libro { LibroId = prestamo.LibroId, NumeroEjemplares = 1 });
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(prestamo.LibroId))
             .ReturnsAsync(new List<Prestamo>());
 
@@ -838,6 +847,12 @@ public class PrestamoServiceTests
             FechaVencimiento = DateTime.Now.AddDays(dias)
         };
 
+        // Configure LibroValidationService mock
+        _mockLibroValidationService.Setup(s => s.FechasPrestamoSonValidas(
+            It.IsAny<DateTime>(), 
+            It.IsAny<DateTime>()))
+            .Returns(true);
+
         // Mock libro existe y está disponible
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
             .ReturnsAsync(new Libro { LibroId = prestamo.LibroId });
@@ -980,7 +995,17 @@ public class PrestamoServiceTests
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
 
-        var libro = new Libro { LibroId = 1, Estado = EstadoLibro.Disponible };
+        var libro = new Libro { 
+            LibroId = 1, 
+            Estado = EstadoLibro.Disponible,
+            NumeroEjemplares = 1
+        };
+
+        // Configure LibroValidationService mock
+        _mockLibroValidationService.Setup(s => s.FechasPrestamoSonValidas(
+            It.IsAny<DateTime>(), 
+            It.IsAny<DateTime>()))
+            .Returns(true);
 
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
             .ReturnsAsync(libro);
@@ -1002,6 +1027,170 @@ public class PrestamoServiceTests
         Assert.Equal(EstadoPrestamo.Activo, prestamo.Estado);
         Assert.Equal(EstadoLibro.Prestado, libro.Estado);
         _mockUnitOfWork.Verify(uow => uow.Libros.Update(libro), Times.Once);
+        _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ReturnsFalse_WhenNoHayEjemplaresDisponibles()
+    {
+        // Arrange
+        var prestamoCreateDto = new PrestamoCreateDTO 
+        { 
+            LibroId = 1, 
+            EstudianteId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo
+        {
+            LibroId = 1,
+            EstudianteId = 1,
+            FechaPrestamo = DateTime.Now,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
+            .Returns(prestamo);
+
+        _mockLibroValidationService.Setup(s => s.HayEjemplaresDisponibles(prestamo.LibroId))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _service.CreateAsync(prestamoCreateDto);
+
+        // Assert
+        Assert.False(result);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.AddAsync(prestamo), Times.Never);
+        _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ActualizaEstadoLibro_CuandoTodosEjemplaresPrestados()
+    {
+        // Arrange
+        var prestamoCreateDto = new PrestamoCreateDTO 
+        { 
+            LibroId = 1, 
+            EstudianteId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo
+        {
+            LibroId = 1,
+            EstudianteId = 1,
+            FechaPrestamo = DateTime.Now,
+            FechaVencimiento = DateTime.Now.AddDays(7),
+            Estado = EstadoPrestamo.Activo
+        };
+
+        var libro = new Libro { 
+            LibroId = 1, 
+            Estado = EstadoLibro.Disponible,
+            NumeroEjemplares = 2
+        };
+
+        
+        var prestamosActivos = new List<Prestamo> { 
+            new Prestamo { 
+                LibroId = 1, 
+                Estado = EstadoPrestamo.Activo 
+            } 
+        };
+
+        
+        _mockLibroValidationService.Setup(s => s.FechasPrestamoSonValidas(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .Returns(true);
+
+        _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
+            .ReturnsAsync(libro);
+        
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(prestamo.LibroId))
+            .ReturnsAsync(prestamosActivos);
+        
+        
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByEstudianteAsync(prestamo.EstudianteId))
+            .ReturnsAsync(new List<Prestamo>()); 
+        
+        _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByIdAsync(prestamo.EstudianteId))
+            .ReturnsAsync(new Estudiante { EstudianteId = prestamo.EstudianteId });
+
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
+            .Returns(prestamo);
+
+        // Act
+        var result = await _service.CreateAsync(prestamoCreateDto);
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal(EstadoLibro.Prestado, libro.Estado);
+        _mockUnitOfWork.Verify(uow => uow.Libros.Update(libro), Times.Once);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.AddAsync(prestamo), Times.Once);
+        _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAsync_NoActualizaEstadoLibro_CuandoHayEjemplaresDisponibles()
+    {
+        // Arrange
+        var prestamoCreateDto = new PrestamoCreateDTO 
+        { 
+            LibroId = 1, 
+            EstudianteId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+
+        var prestamo = new Prestamo
+        {
+            LibroId = 1,
+            EstudianteId = 1,
+            FechaPrestamo = DateTime.Now,
+            FechaVencimiento = DateTime.Now.AddDays(7),
+            Estado = EstadoPrestamo.Activo
+        };
+
+        var libro = new Libro { 
+            LibroId = 1, 
+            Estado = EstadoLibro.Disponible,
+            NumeroEjemplares = 3 
+        };
+
+        
+        var prestamosActivos = new List<Prestamo> { 
+            new Prestamo { 
+                LibroId = 1, 
+                Estado = EstadoPrestamo.Activo 
+            } 
+        };
+
+       
+        _mockLibroValidationService.Setup(s => s.FechasPrestamoSonValidas(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .Returns(true);
+
+        _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
+            .ReturnsAsync(libro);
+        
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(prestamo.LibroId))
+            .ReturnsAsync(prestamosActivos);
+        
+        
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByEstudianteAsync(prestamo.EstudianteId))
+            .ReturnsAsync(new List<Prestamo>());
+        
+        _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByIdAsync(prestamo.EstudianteId))
+            .ReturnsAsync(new Estudiante { EstudianteId = prestamo.EstudianteId });
+
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
+            .Returns(prestamo);
+
+        // Act
+        var result = await _service.CreateAsync(prestamoCreateDto);
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal(EstadoLibro.Disponible, libro.Estado);
+        _mockUnitOfWork.Verify(uow => uow.Libros.Update(It.IsAny<Libro>()), Times.Never);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.AddAsync(prestamo), Times.Once);
         _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Once);
     }
 }

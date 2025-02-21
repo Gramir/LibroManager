@@ -27,13 +27,10 @@ public class LibroValidationServiceTests
         _mockEstudiantes = MockDbSet<Estudiante>();
 
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestLibroManagerDb")
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // Usar un nombre único para cada test
             .Options;
 
         _context = new ApplicationDbContext(options);
-        _context.Database.EnsureDeleted();
-        _context.Database.EnsureCreated();
-
         _validationService = new LibroValidationService(_context);
     }
 
@@ -51,8 +48,8 @@ public class LibroValidationServiceTests
     public async Task LibroEsValido_ConAutorYCategoriaValidos_ReturnTrue()
     {
         // Arrange
-        var autor = new Autor { AutorId = 1, Nombre = "Test Autor" };
-        var categoria = new Categoria { CategoriaId = 1, Nombre = "Test Categoria" };
+        var autor = new Autor { AutorId = 100, Nombre = "Test Autor" }; // Usar ID diferente a los datos semilla
+        var categoria = new Categoria { CategoriaId = 100, Nombre = "Test Categoria" }; // Usar ID diferente a los datos semilla
         await _context.Autores.AddAsync(autor);
         await _context.Categorias.AddAsync(categoria);
         await _context.SaveChangesAsync();
@@ -70,7 +67,7 @@ public class LibroValidationServiceTests
     public async Task LibroEsValido_ConAutorInvalido_ReturnFalse()
     {
         // Arrange
-        var categoria = new Categoria { CategoriaId = 1, Nombre = "Test Categoria" };
+        var categoria = new Categoria { CategoriaId = 100, Nombre = "Test Categoria" }; // Usar ID diferente a los datos semilla
         await _context.Categorias.AddAsync(categoria);
         await _context.SaveChangesAsync();
 

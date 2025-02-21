@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LibroManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250218234159_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250221014618_AddPrestamosSeeds")]
+    partial class AddPrestamosSeeds
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -44,6 +44,26 @@ namespace LibroManager.Migrations
                     b.HasKey("AutorId");
 
                     b.ToTable("Autores");
+
+                    b.HasData(
+                        new
+                        {
+                            AutorId = 1,
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Gabriel García Márquez"
+                        },
+                        new
+                        {
+                            AutorId = 2,
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Mario Vargas Llosa"
+                        },
+                        new
+                        {
+                            AutorId = 3,
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Isabel Allende"
+                        });
                 });
 
             modelBuilder.Entity("LibroManager.Models.Categoria", b =>
@@ -68,6 +88,26 @@ namespace LibroManager.Migrations
                         .IsUnique();
 
                     b.ToTable("Categorias");
+
+                    b.HasData(
+                        new
+                        {
+                            CategoriaId = 1,
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Novela"
+                        },
+                        new
+                        {
+                            CategoriaId = 2,
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Historia"
+                        },
+                        new
+                        {
+                            CategoriaId = 3,
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Ciencia Ficción"
+                        });
                 });
 
             modelBuilder.Entity("LibroManager.Models.Estudiante", b =>
@@ -101,6 +141,24 @@ namespace LibroManager.Migrations
                         .IsUnique();
 
                     b.ToTable("Estudiantes");
+
+                    b.HasData(
+                        new
+                        {
+                            EstudianteId = 1,
+                            Email = "juan.perez@ejemplo.com",
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaInscripcion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Juan Pérez"
+                        },
+                        new
+                        {
+                            EstudianteId = 2,
+                            Email = "maria.garcia@ejemplo.com",
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaInscripcion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "María García"
+                        });
                 });
 
             modelBuilder.Entity("LibroManager.Models.Libro", b =>
@@ -129,6 +187,9 @@ namespace LibroManager.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(13)");
 
+                    b.Property<int>("NumeroEjemplares")
+                        .HasColumnType("int");
+
                     b.Property<string>("Titulo")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -146,6 +207,41 @@ namespace LibroManager.Migrations
                     b.ToTable("Libros", t =>
                         {
                             t.HasCheckConstraint("CK_Libro_ISBN", "LEN([ISBN]) >= 10 AND LEN([ISBN]) <= 13");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            LibroId = 1,
+                            AutorId = 1,
+                            CategoriaId = 1,
+                            Estado = 0,
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ISBN = "9780307474728",
+                            NumeroEjemplares = 3,
+                            Titulo = "Cien años de soledad"
+                        },
+                        new
+                        {
+                            LibroId = 2,
+                            AutorId = 2,
+                            CategoriaId = 1,
+                            Estado = 0,
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ISBN = "9788420471839",
+                            NumeroEjemplares = 2,
+                            Titulo = "La ciudad y los perros"
+                        },
+                        new
+                        {
+                            LibroId = 3,
+                            AutorId = 3,
+                            CategoriaId = 1,
+                            Estado = 0,
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ISBN = "9780525433477",
+                            NumeroEjemplares = 4,
+                            Titulo = "La casa de los espíritus"
                         });
                 });
 
@@ -190,6 +286,49 @@ namespace LibroManager.Migrations
                     b.ToTable("Prestamos", t =>
                         {
                             t.HasCheckConstraint("CK_Prestamo_FechaVencimiento", "[FechaVencimiento] > [FechaPrestamo]");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            PrestamoId = 1,
+                            Estado = 0,
+                            EstudianteId = 1,
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaPrestamo = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaVencimiento = new DateTime(2024, 2, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            LibroId = 1
+                        },
+                        new
+                        {
+                            PrestamoId = 2,
+                            Estado = 0,
+                            EstudianteId = 2,
+                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaPrestamo = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaVencimiento = new DateTime(2024, 3, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            LibroId = 1
+                        },
+                        new
+                        {
+                            PrestamoId = 3,
+                            Estado = 2,
+                            EstudianteId = 1,
+                            FechaCreacion = new DateTime(2024, 2, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaPrestamo = new DateTime(2024, 2, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaVencimiento = new DateTime(2024, 2, 18, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            LibroId = 2
+                        },
+                        new
+                        {
+                            PrestamoId = 4,
+                            Estado = 1,
+                            EstudianteId = 2,
+                            FechaCreacion = new DateTime(2024, 2, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaDevolucion = new DateTime(2024, 2, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaPrestamo = new DateTime(2024, 2, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaVencimiento = new DateTime(2024, 2, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            LibroId = 3
                         });
                 });
 

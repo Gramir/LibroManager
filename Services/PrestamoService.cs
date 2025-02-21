@@ -10,11 +10,13 @@ public class PrestamoService : IPrestamoService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly ILibroValidationService _libroValidationService;
 
-    public PrestamoService(IUnitOfWork unitOfWork, IMapper mapper)
+    public PrestamoService(IUnitOfWork unitOfWork, IMapper mapper, ILibroValidationService libroValidationService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _libroValidationService = libroValidationService;
     }
 
     public async Task<IEnumerable<PrestamoDTO>> GetAllAsync()
@@ -90,26 +92,39 @@ public class PrestamoService : IPrestamoService
             prestamo.FechaPrestamo = DateTime.Now;
             prestamo.Estado = EstadoPrestamo.Activo;
             prestamo.FechaCreacion = DateTime.Now;
-            
-            if (!ValidatePrestamoData(prestamo))
+
+            // Validate dates
+            if (!_libroValidationService.FechasPrestamoSonValidas(prestamo.FechaPrestamo, prestamo.FechaVencimiento))
                 return false;
 
+            // Get libro and estudiante
             var libro = await _unitOfWork.Libros.GetByIdAsync(prestamo.LibroId);
-            if (libro == null || libro.Estado != EstadoLibro.Disponible)
-                return false;
-
             var estudiante = await _unitOfWork.Estudiantes.GetByIdAsync(prestamo.EstudianteId);
-            if (estudiante == null)
+            
+            if (libro == null || estudiante == null)
                 return false;
 
+            // Check for expired prestamos
             var prestamosEstudiante = await _unitOfWork.Prestamos.GetPrestamosByEstudianteAsync(prestamo.EstudianteId);
             if (prestamosEstudiante.Any(p => p.Estado == EstadoPrestamo.Expirado))
                 return false;
 
-            // Actualizar el estado del libro según el estado del préstamo
-            libro.Estado = prestamo.Estado == EstadoPrestamo.Expirado ? EstadoLibro.Perdido : EstadoLibro.Prestado;
-            _unitOfWork.Libros.Update(libro);
-
+            // Check ejemplares availability
+            var prestamosActivos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(libro.LibroId);
+            var prestamosCount = prestamosActivos.Count(p => p.Estado == EstadoPrestamo.Activo);
+            
+            if (prestamosCount >= libro.NumeroEjemplares)
+                return false;
+            
+            prestamo.Estado = EstadoPrestamo.Activo;
+            
+            // Update libro estado only if all ejemplares will be borrowed
+            if (prestamosCount + 1 >= libro.NumeroEjemplares)
+            {
+                libro.Estado = EstadoLibro.Prestado;
+                _unitOfWork.Libros.Update(libro);
+            }
+            
             await _unitOfWork.Prestamos.AddAsync(prestamo);
             await _unitOfWork.SaveChangesAsync();
             return true;

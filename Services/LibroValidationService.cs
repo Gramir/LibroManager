@@ -66,10 +66,28 @@ public class LibroValidationService : ILibroValidationService
         if (!FechasPrestamoSonValidas(prestamo.FechaPrestamo, prestamo.FechaVencimiento))
             return false;
 
-        var libroExiste = await _context.Libros.AnyAsync(l => l.LibroId == prestamo.LibroId);
+        var libro = await _context.Libros.FindAsync(prestamo.LibroId);
         var estudianteExiste = await _context.Estudiantes.AnyAsync(e => e.EstudianteId == prestamo.EstudianteId);
-        var libroPrestado = await LibroEstaPrestado(prestamo.LibroId);
+        
+        if (libro == null || !estudianteExiste)
+            return false;
 
-        return libroExiste && estudianteExiste && !libroPrestado;
+        // Verificar si hay ejemplares disponibles para préstamo
+        var prestamosActivos = await _context.Prestamos
+            .CountAsync(p => p.LibroId == prestamo.LibroId && p.FechaVencimiento > DateTime.Now);
+            
+        return prestamosActivos < libro.NumeroEjemplares;
+    }
+
+    public async Task<bool> HayEjemplaresDisponibles(int libroId)
+    {
+        var libro = await _context.Libros.FindAsync(libroId);
+        if (libro == null)
+            return false;
+
+        var prestamosActivos = await _context.Prestamos
+            .CountAsync(p => p.LibroId == libroId && p.FechaVencimiento > DateTime.Now);
+            
+        return prestamosActivos < libro.NumeroEjemplares;
     }
 }

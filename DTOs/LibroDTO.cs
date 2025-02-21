@@ -9,6 +9,7 @@ public class LibroDTO
     public string ISBN { get; set; } = string.Empty;
     public string AutorNombre { get; set; } = string.Empty;
     public string CategoriaNombre { get; set; } = string.Empty;
+    public int NumeroEjemplares { get; set; }
     public bool EstaPrestado { get; set; }
 }
 
@@ -27,6 +28,10 @@ public class LibroCreateDTO
 
     [Required(ErrorMessage = "La categoría es requerida")]
     public int CategoriaId { get; set; }
+
+    [Required(ErrorMessage = "El número de ejemplares es requerido")]
+    [Range(1, int.MaxValue, ErrorMessage = "El número de ejemplares debe ser mayor a 0")]
+    public int NumeroEjemplares { get; set; } = 1;
 }
 
 public class LibroUpdateDTO : LibroCreateDTO

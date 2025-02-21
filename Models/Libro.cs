@@ -35,6 +35,10 @@ public class Libro
     [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar una categoría válida")]
     public int CategoriaId { get; set; }
 
+    [Required(ErrorMessage = "El número de ejemplares es requerido")]
+    [Range(1, int.MaxValue, ErrorMessage = "El número de ejemplares debe ser mayor a 0")]
+    public int NumeroEjemplares { get; set; } = 1;
+
     [Required]
     public EstadoLibro Estado { get; set; } = EstadoLibro.Disponible;
     
