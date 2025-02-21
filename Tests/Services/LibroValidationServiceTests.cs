@@ -210,4 +210,146 @@ public class LibroValidationServiceTests
         // Assert
         Assert.False(result);
     }
+
+    [Theory]
+    [InlineData("2024-02-21", "2024-02-25", true)]  // Caso válido normal
+    [InlineData("2024-02-21", "2024-02-21", false)] // Fecha vencimiento igual a préstamo
+    [InlineData("2024-02-21", "2024-03-25", false)] // Más de 30 días
+    [InlineData("2025-02-21", "2025-02-25", false)] // Fecha préstamo futura
+    public void FechasPrestamoSonValidas_VariosEscenarios(string fechaPrestamo, string fechaVencimiento, bool expectedResult)
+    {
+        // Arrange
+        var prestamo = DateTime.Parse(fechaPrestamo);
+        var vencimiento = DateTime.Parse(fechaVencimiento);
+
+        // Act
+        var result = _validationService.FechasPrestamoSonValidas(prestamo, vencimiento);
+
+        // Assert
+        Assert.Equal(expectedResult, result);
+    }
+
+    [Fact]
+    public async Task PuedeEliminarCategoria_SinLibros_ReturnTrue()
+    {
+        // Arrange
+        var categoria = new Categoria { Nombre = "Test Categoria" };
+        await _context.Categorias.AddAsync(categoria);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _validationService.PuedeEliminarCategoria(categoria.CategoriaId);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task PuedeEliminarCategoria_ConLibros_ReturnFalse()
+    {
+        // Arrange
+        var categoria = new Categoria { Nombre = "Test Categoria" };
+        await _context.Categorias.AddAsync(categoria);
+        await _context.SaveChangesAsync();
+
+        var libro = new Libro { Titulo = "Test Libro", CategoriaId = categoria.CategoriaId };
+        await _context.Libros.AddAsync(libro);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _validationService.PuedeEliminarCategoria(categoria.CategoriaId);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task HayEjemplaresDisponibles_ConEjemplaresLibres_ReturnTrue()
+    {
+        // Arrange
+        var libro = new Libro { 
+            Titulo = "Test Libro", 
+            NumeroEjemplares = 2 
+        };
+        await _context.Libros.AddAsync(libro);
+        await _context.SaveChangesAsync();
+
+        var prestamo = new Prestamo {
+            LibroId = libro.LibroId,
+            FechaPrestamo = DateTime.Now,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+        await _context.Prestamos.AddAsync(prestamo);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _validationService.HayEjemplaresDisponibles(libro.LibroId);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task HayEjemplaresDisponibles_SinEjemplaresLibres_ReturnFalse()
+    {
+        // Arrange
+        var libro = new Libro { 
+            Titulo = "Test Libro", 
+            NumeroEjemplares = 1 
+        };
+        await _context.Libros.AddAsync(libro);
+        await _context.SaveChangesAsync();
+
+        var prestamo = new Prestamo {
+            LibroId = libro.LibroId,
+            FechaPrestamo = DateTime.Now,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+        await _context.Prestamos.AddAsync(prestamo);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _validationService.HayEjemplaresDisponibles(libro.LibroId);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task PrestamoEsValido_SinEjemplaresDisponibles_ReturnFalse()
+    {
+        // Arrange
+        var libro = new Libro { 
+            Titulo = "Test Libro", 
+            NumeroEjemplares = 1 
+        };
+        var estudiante = new Estudiante { Nombre = "Test Estudiante" };
+        await _context.Libros.AddAsync(libro);
+        await _context.Estudiantes.AddAsync(estudiante);
+        await _context.SaveChangesAsync();
+
+        // Crear un préstamo existente que ocupa el único ejemplar
+        var prestamoExistente = new Prestamo {
+            LibroId = libro.LibroId,
+            EstudianteId = estudiante.EstudianteId,
+            FechaPrestamo = DateTime.Now,
+            FechaVencimiento = DateTime.Now.AddDays(7)
+        };
+        await _context.Prestamos.AddAsync(prestamoExistente);
+        await _context.SaveChangesAsync();
+
+        // Intentar crear otro préstamo
+        var nuevoPrestamo = new Prestamo {
+            LibroId = libro.LibroId,
+            EstudianteId = estudiante.EstudianteId,
+            FechaPrestamo = DateTime.Today,
+            FechaVencimiento = DateTime.Today.AddDays(7)
+        };
+
+        // Act
+        var result = await _validationService.PrestamoEsValido(nuevoPrestamo);
+
+        // Assert
+        Assert.False(result);
+    }
 }
