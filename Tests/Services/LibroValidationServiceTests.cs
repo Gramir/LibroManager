@@ -139,11 +139,12 @@ public class LibroValidationServiceTests
         await _context.Libros.AddAsync(libro);
         await _context.SaveChangesAsync();
 
+        var fechaActual = DateTime.Today;
         var prestamo = new Prestamo 
         { 
             LibroId = libro.LibroId,
-            FechaPrestamo = DateTime.Now,
-            FechaVencimiento = DateTime.Now.AddDays(7)
+            FechaPrestamo = fechaActual,
+            FechaVencimiento = fechaActual.AddDays(7)
         };
         await _context.Prestamos.AddAsync(prestamo);
         await _context.SaveChangesAsync();
@@ -212,21 +213,29 @@ public class LibroValidationServiceTests
     }
 
     [Theory]
-    [InlineData("2024-02-21", "2024-02-25", true)]  // Caso válido normal
-    [InlineData("2024-02-21", "2024-02-21", false)] // Fecha vencimiento igual a préstamo
-    [InlineData("2024-02-21", "2024-03-25", false)] // Más de 30 días
-    [InlineData("2025-02-21", "2025-02-25", false)] // Fecha préstamo futura
-    public void FechasPrestamoSonValidas_VariosEscenarios(string fechaPrestamo, string fechaVencimiento, bool expectedResult)
+    [MemberData(nameof(GetFechasPrestamoData))]
+    public void FechasPrestamoSonValidas_VariosEscenarios(DateTime fechaPrestamo, DateTime fechaVencimiento, bool expectedResult)
     {
-        // Arrange
-        var prestamo = DateTime.Parse(fechaPrestamo);
-        var vencimiento = DateTime.Parse(fechaVencimiento);
-
         // Act
-        var result = _validationService.FechasPrestamoSonValidas(prestamo, vencimiento);
+        var result = _validationService.FechasPrestamoSonValidas(fechaPrestamo, fechaVencimiento);
 
         // Assert
         Assert.Equal(expectedResult, result);
+    }
+
+    public static IEnumerable<object[]> GetFechasPrestamoData()
+    {
+        var today = DateTime.Today;
+        var yesterday = today.AddDays(-1);
+        var tomorrow = today.AddDays(1);
+        
+        return new List<object[]>
+        {
+            new object[] { yesterday, today.AddDays(5), true },  // Caso válido normal
+            new object[] { yesterday, yesterday, false }, // Fecha vencimiento igual a préstamo
+            new object[] { yesterday, yesterday.AddDays(31), false }, // Más de 30 días
+            new object[] { tomorrow, tomorrow.AddDays(5), false } // Fecha préstamo futura
+        };
     }
 
     [Fact]
@@ -274,10 +283,11 @@ public class LibroValidationServiceTests
         await _context.Libros.AddAsync(libro);
         await _context.SaveChangesAsync();
 
+        var fechaActual = DateTime.Today;
         var prestamo = new Prestamo {
             LibroId = libro.LibroId,
-            FechaPrestamo = DateTime.Now,
-            FechaVencimiento = DateTime.Now.AddDays(7)
+            FechaPrestamo = fechaActual,
+            FechaVencimiento = fechaActual.AddDays(7)
         };
         await _context.Prestamos.AddAsync(prestamo);
         await _context.SaveChangesAsync();
@@ -300,10 +310,11 @@ public class LibroValidationServiceTests
         await _context.Libros.AddAsync(libro);
         await _context.SaveChangesAsync();
 
+        var fechaActual = DateTime.Today;
         var prestamo = new Prestamo {
             LibroId = libro.LibroId,
-            FechaPrestamo = DateTime.Now,
-            FechaVencimiento = DateTime.Now.AddDays(7)
+            FechaPrestamo = fechaActual,
+            FechaVencimiento = fechaActual.AddDays(7)
         };
         await _context.Prestamos.AddAsync(prestamo);
         await _context.SaveChangesAsync();
@@ -328,12 +339,13 @@ public class LibroValidationServiceTests
         await _context.Estudiantes.AddAsync(estudiante);
         await _context.SaveChangesAsync();
 
+        var fechaActual = DateTime.Today;
         // Crear un préstamo existente que ocupa el único ejemplar
         var prestamoExistente = new Prestamo {
             LibroId = libro.LibroId,
             EstudianteId = estudiante.EstudianteId,
-            FechaPrestamo = DateTime.Now,
-            FechaVencimiento = DateTime.Now.AddDays(7)
+            FechaPrestamo = fechaActual,
+            FechaVencimiento = fechaActual.AddDays(7)
         };
         await _context.Prestamos.AddAsync(prestamoExistente);
         await _context.SaveChangesAsync();
@@ -342,12 +354,63 @@ public class LibroValidationServiceTests
         var nuevoPrestamo = new Prestamo {
             LibroId = libro.LibroId,
             EstudianteId = estudiante.EstudianteId,
-            FechaPrestamo = DateTime.Today,
-            FechaVencimiento = DateTime.Today.AddDays(7)
+            FechaPrestamo = fechaActual,
+            FechaVencimiento = fechaActual.AddDays(7)
         };
 
         // Act
         var result = await _validationService.PrestamoEsValido(nuevoPrestamo);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task LibroEstaPrestado_ConPrestamoExpirado_ReturnFalse()
+    {
+        // Arrange
+        var libro = new Libro { Titulo = "Test Libro" };
+        await _context.Libros.AddAsync(libro);
+        await _context.SaveChangesAsync();
+
+        var fechaActual = DateTime.Today;
+        var prestamo = new Prestamo 
+        { 
+            LibroId = libro.LibroId,
+            FechaPrestamo = fechaActual.AddDays(-14),
+            FechaVencimiento = fechaActual.AddDays(-7), // Fecha vencida
+            Estado = EstadoPrestamo.Expirado
+        };
+        await _context.Prestamos.AddAsync(prestamo);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _validationService.LibroEstaPrestado(libro.LibroId);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task PrestamoEsValido_ConFechaVencimientoPasada_ReturnFalse()
+    {
+        // Arrange
+        var libro = new Libro { Titulo = "Test Libro" };
+        var estudiante = new Estudiante { Nombre = "Test Estudiante" };
+        await _context.Libros.AddAsync(libro);
+        await _context.Estudiantes.AddAsync(estudiante);
+        await _context.SaveChangesAsync();
+
+        var fechaActual = DateTime.Today;
+        var prestamo = new Prestamo { 
+            LibroId = libro.LibroId, 
+            EstudianteId = estudiante.EstudianteId,
+            FechaPrestamo = fechaActual.AddDays(-14),
+            FechaVencimiento = fechaActual.AddDays(-7) // Fecha vencida
+        };
+
+        // Act
+        var result = await _validationService.PrestamoEsValido(prestamo);
 
         // Assert
         Assert.False(result);

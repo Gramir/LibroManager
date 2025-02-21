@@ -55,6 +55,10 @@ public class LibroValidationService : ILibroValidationService
             fechaVencimiento.Date > fechaPrestamo.Date.AddDays(30))
             return false;
 
+        // La fecha de vencimiento no puede ser pasada
+        if (fechaVencimiento.Date < hoy)
+            return false;
+
         return true;
     }
 
