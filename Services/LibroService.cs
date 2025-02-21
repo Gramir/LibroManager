@@ -6,7 +6,7 @@ using LibroManager.Services.Interfaces;
 
 namespace LibroManager.Services;
 
-public class LibroService
+public class LibroService : ILibroService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILibroValidationService _validationService;
