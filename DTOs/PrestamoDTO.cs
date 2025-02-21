@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using LibroManager.Models;
 
 namespace LibroManager.DTOs;
 
@@ -32,4 +33,6 @@ public class PrestamoUpdateDTO
     [Required(ErrorMessage = "La fecha de vencimiento es requerida")]
     [DataType(DataType.Date)]
     public DateTime FechaVencimiento { get; set; }
+    public DateTime? FechaDevolucion { get; set; }
+    public EstadoPrestamo Estado { get; set; }
 }

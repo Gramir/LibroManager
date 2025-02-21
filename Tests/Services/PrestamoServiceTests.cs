@@ -935,7 +935,8 @@ public class PrestamoServiceTests
         var prestamoUpdateDto = new PrestamoUpdateDTO 
         { 
             PrestamoId = 1,
-            FechaVencimiento = DateTime.Now.AddDays(7)
+            FechaVencimiento = DateTime.Now.AddDays(7),
+            FechaDevolucion = DateTime.Now.AddDays(3)
         };
 
         var prestamo = new Prestamo 
@@ -945,7 +946,8 @@ public class PrestamoServiceTests
             EstudianteId = 1,
             FechaPrestamo = DateTime.Now,
             FechaVencimiento = DateTime.Now.AddDays(7),
-            Estado = EstadoPrestamo.Concluido
+            Estado = EstadoPrestamo.Concluido,
+            FechaDevolucion = DateTime.Now.AddDays(3)
         };
 
         var libro = new Libro { LibroId = 1, Estado = EstadoLibro.Prestado };
@@ -1191,6 +1193,171 @@ public class PrestamoServiceTests
         Assert.Equal(EstadoLibro.Disponible, libro.Estado);
         _mockUnitOfWork.Verify(uow => uow.Libros.Update(It.IsAny<Libro>()), Times.Never);
         _mockUnitOfWork.Verify(uow => uow.Prestamos.AddAsync(prestamo), Times.Once);
+        _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPrestamosByEstudianteAsync_ReturnsEmpty_WhenException()
+    {
+        // Arrange
+        var estudianteId = 1;
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByEstudianteAsync(estudianteId))
+            .ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _service.GetPrestamosByEstudianteAsync(estudianteId);
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetPrestamosByLibroAsync_ReturnsEmpty_WhenException()
+    {
+        // Arrange
+        var libroId = 1;
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(libroId))
+            .ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _service.GetPrestamosByLibroAsync(libroId);
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ReturnsEmpty_WhenException()
+    {
+        // Arrange
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetAllAsync())
+            .ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _service.GetAllAsync();
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ReturnsFalse_WhenException()
+    {
+        // Arrange
+        var prestamoId = 1;
+        var prestamo = new Prestamo { PrestamoId = prestamoId };
+
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamoId))
+            .ReturnsAsync(prestamo);
+        _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
+            .ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _service.DeleteAsync(prestamoId);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ValidaFechaDevolucion_CuandoPrestamoDevuelto()
+    {
+        // Arrange
+        var fechaPrestamo = DateTime.Now;
+        var prestamoUpdateDto = new PrestamoUpdateDTO 
+        { 
+            PrestamoId = 1,
+            FechaVencimiento = DateTime.Now.AddDays(7),
+            FechaDevolucion = DateTime.Now.AddDays(3)  // Fecha de devolución posterior al préstamo
+        };
+
+        var prestamo = new Prestamo 
+        { 
+            PrestamoId = 1,
+            LibroId = 1,
+            EstudianteId = 1,
+            FechaPrestamo = fechaPrestamo,
+            FechaVencimiento = DateTime.Now.AddDays(7),
+            FechaDevolucion = DateTime.Now.AddDays(3)
+        };
+
+        var libro = new Libro { LibroId = 1, Estado = EstadoLibro.Prestado };
+
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamo.PrestamoId))
+            .ReturnsAsync(new Prestamo { 
+                PrestamoId = prestamo.PrestamoId,
+                LibroId = 1,
+                EstudianteId = 1,
+                FechaPrestamo = fechaPrestamo
+            });
+
+        _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
+            .ReturnsAsync(libro);
+
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoUpdateDto))
+            .Returns(prestamo);
+
+        // Act
+        var result = await _service.UpdateAsync(prestamoUpdateDto);
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal(EstadoPrestamo.Concluido, prestamo.Estado);
+        Assert.Equal(EstadoLibro.Disponible, libro.Estado);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.Update(prestamo), Times.Once);
+        _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_CambiaEstadoAExpirado_CuandoFechaVencimientoPasada()
+    {
+        // Arrange
+        var fechaPrestamo = DateTime.Now.AddDays(-14);
+        var fechaVencimiento = DateTime.Now.AddDays(-7);
+        var prestamoUpdateDto = new PrestamoUpdateDTO 
+        { 
+            PrestamoId = 1,
+            FechaVencimiento = fechaVencimiento
+        };
+
+        var prestamo = new Prestamo 
+        { 
+            PrestamoId = 1,
+            LibroId = 1,
+            EstudianteId = 1,
+            FechaPrestamo = fechaPrestamo,
+            FechaVencimiento = fechaVencimiento,
+            Estado = EstadoPrestamo.Activo
+        };
+
+        var libro = new Libro { LibroId = 1, Estado = EstadoLibro.Prestado };
+
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamo.PrestamoId))
+            .ReturnsAsync(new Prestamo { 
+                PrestamoId = prestamo.PrestamoId,
+                LibroId = 1,
+                EstudianteId = 1,
+                FechaPrestamo = fechaPrestamo,
+                Estado = EstadoPrestamo.Activo
+            });
+
+        _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
+            .ReturnsAsync(libro);
+
+        _mockMapper.Setup(m => m.Map<Prestamo>(prestamoUpdateDto))
+            .Returns(prestamo);
+
+        _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
+            .ReturnsAsync(1);
+
+        // Act
+        var result = await _service.UpdateAsync(prestamoUpdateDto);
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal(EstadoPrestamo.Expirado, prestamo.Estado);
+        Assert.Equal(EstadoLibro.Perdido, libro.Estado);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.Update(prestamo), Times.Once);
         _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Once);
     }
 }

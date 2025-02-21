@@ -159,9 +159,9 @@ public class PrestamoService : IPrestamoService
                 return false;
 
             // Actualizar estado del libro según el estado del préstamo
-            if (prestamo.Estado == EstadoPrestamo.Concluido && !prestamo.FechaDevolucion.HasValue)
+            if (prestamo.FechaDevolucion.HasValue)
             {
-                prestamo.FechaDevolucion = DateTime.Now;
+                prestamo.Estado = EstadoPrestamo.Concluido;
                 libro.Estado = EstadoLibro.Disponible;
             }
             else if (prestamo.Estado == EstadoPrestamo.Expirado)
