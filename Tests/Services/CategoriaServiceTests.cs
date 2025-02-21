@@ -11,14 +11,18 @@ namespace LibroManager.Tests.Services;
 public class CategoriaServiceTests
 {
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
+    private readonly Mock<ICategoriaRepository> _mockCategoriaRepository;
     private readonly Mock<IMapper> _mockMapper;
-    private readonly CategoriaService _service;
+    private readonly CategoriaService _categoriaService;
 
     public CategoriaServiceTests()
     {
         _mockUnitOfWork = new Mock<IUnitOfWork>();
+        _mockCategoriaRepository = new Mock<ICategoriaRepository>();
         _mockMapper = new Mock<IMapper>();
-        _service = new CategoriaService(_mockUnitOfWork.Object, _mockMapper.Object);
+
+        _mockUnitOfWork.Setup(u => u.Categorias).Returns(_mockCategoriaRepository.Object);
+        _categoriaService = new CategoriaService(_mockUnitOfWork.Object, _mockMapper.Object);
     }
 
     [Fact]
@@ -43,7 +47,7 @@ public class CategoriaServiceTests
             .Returns(categoriasDto);
 
         // Act
-        var result = await _service.GetAllAsync();
+        var result = await _categoriaService.GetAllAsync();
 
         // Assert
         Assert.Equal(categoriasDto.Count, result.Count());
@@ -63,7 +67,7 @@ public class CategoriaServiceTests
             .Returns(categoriaDto);
 
         // Act
-        var result = await _service.GetByNombreAsync(nombre);
+        var result = await _categoriaService.GetByNombreAsync(nombre);
 
         // Assert
         Assert.NotNull(result);
@@ -104,7 +108,7 @@ public class CategoriaServiceTests
             .Returns(categoriasDto);
 
         // Act
-        var result = await _service.GetCategoriasWithLibrosAsync();
+        var result = await _categoriaService.GetCategoriasWithLibrosAsync();
 
         // Assert
         Assert.Single(result);
@@ -126,7 +130,7 @@ public class CategoriaServiceTests
             .ReturnsAsync(1);
 
         // Act
-        var result = await _service.CreateAsync(categoriaCreateDto);
+        var result = await _categoriaService.CreateAsync(categoriaCreateDto);
 
         // Assert
         Assert.True(result);
@@ -147,7 +151,7 @@ public class CategoriaServiceTests
             .Returns(categoria);
 
         // Act
-        var result = await _service.CreateAsync(categoriaCreateDto);
+        var result = await _categoriaService.CreateAsync(categoriaCreateDto);
 
         // Assert
         Assert.False(result);
@@ -170,7 +174,7 @@ public class CategoriaServiceTests
             .ReturnsAsync(1);
 
         // Act
-        var result = await _service.UpdateAsync(categoriaUpdateDto);
+        var result = await _categoriaService.UpdateAsync(categoriaUpdateDto);
 
         // Assert
         Assert.True(result);
@@ -192,7 +196,7 @@ public class CategoriaServiceTests
             .ReturnsAsync((Categoria?)null);
 
         // Act
-        var result = await _service.UpdateAsync(categoriaUpdateDto);
+        var result = await _categoriaService.UpdateAsync(categoriaUpdateDto);
 
         // Assert
         Assert.False(result);
@@ -213,7 +217,7 @@ public class CategoriaServiceTests
             .ReturnsAsync(1);
 
         // Act
-        var result = await _service.DeleteAsync(categoriaId);
+        var result = await _categoriaService.DeleteAsync(categoriaId);
 
         // Assert
         Assert.True(result);
@@ -230,7 +234,7 @@ public class CategoriaServiceTests
             .ReturnsAsync((Categoria?)null);
 
         // Act
-        var result = await _service.DeleteAsync(categoriaId);
+        var result = await _categoriaService.DeleteAsync(categoriaId);
 
         // Assert
         Assert.False(result);
@@ -245,7 +249,7 @@ public class CategoriaServiceTests
         var categoriaCreateDto = new CategoriaCreateDTO { Nombre = "" };
 
         // Act
-        var result = await _service.CreateAsync(categoriaCreateDto);
+        var result = await _categoriaService.CreateAsync(categoriaCreateDto);
 
         // Assert
         Assert.False(result);
@@ -263,7 +267,7 @@ public class CategoriaServiceTests
         };
 
         // Act
-        var result = await _service.CreateAsync(categoriaCreateDto);
+        var result = await _categoriaService.CreateAsync(categoriaCreateDto);
 
         // Assert
         Assert.False(result);
@@ -280,9 +284,222 @@ public class CategoriaServiceTests
             .ThrowsAsync(new Exception("DB Error"));
 
         // Act
-        var result = await _service.GetByNombreAsync(nombre);
+        var result = await _categoriaService.GetByNombreAsync(nombre);
 
         // Assert
         Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ReturnsEmptyList_WhenExceptionOccurs()
+    {
+        // Arrange
+        _mockCategoriaRepository.Setup(r => r.GetAllAsync())
+            .ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _categoriaService.GetAllAsync();
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_ReturnsNull_WhenExceptionOccurs()
+    {
+        // Arrange
+        _mockCategoriaRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _categoriaService.GetByIdAsync(1);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetCategoriasWithLibrosAsync_ReturnsEmptyList_WhenExceptionOccurs()
+    {
+        // Arrange
+        _mockCategoriaRepository.Setup(r => r.GetCategoriasWithLibrosAsync())
+            .ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _categoriaService.GetCategoriasWithLibrosAsync();
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ReturnsFalse_WhenNombreIsNull()
+    {
+        // Arrange
+        var categoriaDto = new CategoriaCreateDTO { Nombre = null };
+
+        // Act
+        var result = await _categoriaService.CreateAsync(categoriaDto);
+
+        // Assert
+        Assert.False(result);
+        _mockCategoriaRepository.Verify(r => r.AddAsync(It.IsAny<Categoria>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ReturnsFalse_WhenCategoriaAlreadyExists()
+    {
+        // Arrange
+        var categoriaDto = new CategoriaCreateDTO { Nombre = "Test" };
+        var existingCategoria = new Categoria { CategoriaId = 1, Nombre = "Test" };
+
+        _mockCategoriaRepository.Setup(r => r.GetByNombreAsync("Test"))
+            .ReturnsAsync(existingCategoria);
+
+        // Act
+        var result = await _categoriaService.CreateAsync(categoriaDto);
+
+        // Assert
+        Assert.False(result);
+        _mockCategoriaRepository.Verify(r => r.AddAsync(It.IsAny<Categoria>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ReturnsFalse_WhenExceptionOccurs()
+    {
+        // Arrange
+        var categoriaDto = new CategoriaCreateDTO { Nombre = "Test" };
+        _mockCategoriaRepository.Setup(r => r.AddAsync(It.IsAny<Categoria>()))
+            .ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _categoriaService.CreateAsync(categoriaDto);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReturnsFalse_WhenNombreIsInvalid()
+    {
+        // Arrange
+        var categoriaDto = new CategoriaUpdateDTO 
+        { 
+            CategoriaId = 1,
+            Nombre = new string('A', 51)
+        };
+
+        // Act
+        var result = await _categoriaService.UpdateAsync(categoriaDto);
+
+        // Assert
+        Assert.False(result);
+        _mockCategoriaRepository.Verify(r => r.Update(It.IsAny<Categoria>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReturnsFalse_WhenCategoriaNotFound()
+    {
+        // Arrange
+        var categoriaDto = new CategoriaUpdateDTO 
+        { 
+            CategoriaId = 1,
+            Nombre = "Test"
+        };
+
+        _mockCategoriaRepository.Setup(r => r.GetByIdAsync(1))
+            .ReturnsAsync((Categoria)null);
+
+        // Act
+        var result = await _categoriaService.UpdateAsync(categoriaDto);
+
+        // Assert
+        Assert.False(result);
+        _mockCategoriaRepository.Verify(r => r.Update(It.IsAny<Categoria>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReturnsFalse_WhenExceptionOccurs()
+    {
+        // Arrange
+        var categoriaDto = new CategoriaUpdateDTO 
+        { 
+            CategoriaId = 1,
+            Nombre = "Test"
+        };
+
+        var categoria = new Categoria { CategoriaId = 1, Nombre = "Test" };
+
+        _mockCategoriaRepository.Setup(r => r.GetByIdAsync(1))
+            .ReturnsAsync(categoria);
+        _mockCategoriaRepository.Setup(r => r.Update(It.IsAny<Categoria>()))
+            .Throws(new Exception());
+
+        // Act
+        var result = await _categoriaService.UpdateAsync(categoriaDto);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ReturnsFalse_WhenCategoriaNotFound()
+    {
+        // Arrange
+        _mockCategoriaRepository.Setup(r => r.GetByIdAsync(1))
+            .ReturnsAsync((Categoria)null);
+
+        // Act
+        var result = await _categoriaService.DeleteAsync(1);
+
+        // Assert
+        Assert.False(result);
+        _mockCategoriaRepository.Verify(r => r.Remove(It.IsAny<Categoria>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ReturnsFalse_WhenExceptionOccurs()
+    {
+        // Arrange
+        var categoria = new Categoria { CategoriaId = 1, Nombre = "Test" };
+
+        _mockCategoriaRepository.Setup(r => r.GetByIdAsync(1))
+            .ReturnsAsync(categoria);
+        _mockCategoriaRepository.Setup(r => r.Remove(It.IsAny<Categoria>()))
+            .Throws(new Exception());
+
+        // Act
+        var result = await _categoriaService.DeleteAsync(1);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ReturnsCategoriaDTOs_WhenSuccessful()
+    {
+        // Arrange
+        var categorias = new List<Categoria>
+        {
+            new() { CategoriaId = 1, Nombre = "Test1" },
+            new() { CategoriaId = 2, Nombre = "Test2" }
+        };
+
+        var categoriasDto = new List<CategoriaDTO>
+        {
+            new() { CategoriaId = 1, Nombre = "Test1" },
+            new() { CategoriaId = 2, Nombre = "Test2" }
+        };
+
+        _mockCategoriaRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(categorias);
+        _mockMapper.Setup(m => m.Map<IEnumerable<CategoriaDTO>>(categorias))
+            .Returns(categoriasDto);
+
+        // Act
+        var result = await _categoriaService.GetAllAsync();
+
+        // Assert
+        Assert.Equal(2, result.Count());
     }
 }

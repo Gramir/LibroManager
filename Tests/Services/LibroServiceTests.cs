@@ -204,4 +204,156 @@ public class LibroServiceTests
         Assert.Equal("Autor 1", libro.AutorNombre);
         Assert.Equal("Categoria 1", libro.CategoriaNombre);
     }
+
+    [Fact]
+    public async Task CreateLibroAsync_WithInvalidLibro_ReturnsFalse()
+    {
+        // Arrange
+        var libroCreateDto = new LibroCreateDTO 
+        { 
+            Titulo = "Test Libro",
+            ISBN = "1234567890",
+            AutorId = 1,
+            CategoriaId = 1
+        };
+
+        var libro = new Libro 
+        { 
+            Titulo = "Test Libro",
+            ISBN = "1234567890",
+            AutorId = 1,
+            CategoriaId = 1
+        };
+
+        _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
+            .ReturnsAsync(false);
+        _mockMapper.Setup(m => m.Map<Libro>(libroCreateDto))
+            .Returns(libro);
+
+        // Act
+        var result = await _libroService.CreateLibroAsync(libroCreateDto);
+
+        // Assert
+        Assert.False(result);
+        _mockLibroRepository.Verify(r => r.AddAsync(It.IsAny<Libro>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetLibroByIdAsync_WithNonExistentId_ReturnsNull()
+    {
+        // Arrange
+        _mockLibroRepository.Setup(r => r.GetLibroWithDetailsAsync(It.IsAny<int>()))
+            .ReturnsAsync((Libro)null);
+
+        // Act
+        var result = await _libroService.GetLibroByIdAsync(999);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateLibroAsync_WithInvalidLibro_ReturnsFalse()
+    {
+        // Arrange
+        var libroUpdateDto = new LibroUpdateDTO 
+        { 
+            LibroId = 1,
+            Titulo = "",  // Invalid title
+            ISBN = "1234567890",
+            AutorId = 1,
+            CategoriaId = 1
+        };
+
+        var libro = new Libro();
+        _mockMapper.Setup(m => m.Map<Libro>(libroUpdateDto))
+            .Returns(libro);
+        _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _libroService.UpdateLibroAsync(libroUpdateDto);
+
+        // Assert
+        Assert.False(result);
+        _mockLibroRepository.Verify(r => r.Update(It.IsAny<Libro>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateLibroAsync_WithNonExistentLibro_ReturnsFalse()
+    {
+        // Arrange
+        var libroUpdateDto = new LibroUpdateDTO 
+        { 
+            LibroId = 999,
+            Titulo = "Test Libro",
+            ISBN = "1234567890",
+            AutorId = 1,
+            CategoriaId = 1
+        };
+
+        var libro = new Libro();
+        _mockMapper.Setup(m => m.Map<Libro>(libroUpdateDto))
+            .Returns(libro);
+        _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
+            .ReturnsAsync(true);
+        _mockLibroRepository.Setup(r => r.GetByIdAsync(999))
+            .ReturnsAsync((Libro)null);
+
+        // Act
+        var result = await _libroService.UpdateLibroAsync(libroUpdateDto);
+
+        // Assert
+        Assert.False(result);
+        _mockLibroRepository.Verify(r => r.Update(It.IsAny<Libro>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteLibroAsync_WithNonExistentLibro_ReturnsFalse()
+    {
+        // Arrange
+        _mockLibroRepository.Setup(r => r.GetByIdAsync(999))
+            .ReturnsAsync((Libro)null);
+
+        // Act
+        var result = await _libroService.DeleteLibroAsync(999);
+
+        // Assert
+        Assert.False(result);
+        _mockLibroRepository.Verify(r => r.Remove(It.IsAny<Libro>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExisteIsbnAsync_WithExistingIsbn_ReturnsTrue()
+    {
+        // Arrange
+        string isbn = "1234567890";
+        _mockLibroRepository.Setup(r => r.IsbnExistsAsync(isbn))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _libroService.ExisteIsbnAsync(isbn);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task ExisteIsbnAsync_WithNonExistingIsbn_ReturnsFalse()
+    {
+        // Arrange
+        string isbn = "0987654321";
+        _mockLibroRepository.Setup(r => r.IsbnExistsAsync(isbn))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _libroService.ExisteIsbnAsync(isbn);
+
+        // Assert
+        Assert.False(result);
+    }
 }
