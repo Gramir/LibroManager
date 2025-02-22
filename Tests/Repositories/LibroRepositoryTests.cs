@@ -11,25 +11,32 @@ public class LibroRepositoryTests
     private readonly DbContextOptions<ApplicationDbContext> _options;
     private readonly ApplicationDbContext _context;
     private readonly LibroRepository _repository;
+    private static int _databaseNumber = 1;
 
     public LibroRepositoryTests()
     {
+        // Usar un nombre único de base de datos para cada instancia de test
+        var dbName = $"TestLibroManagerDb_Libros_{_databaseNumber++}";
         _options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestLibroManagerDb_Libros")
+            .UseInMemoryDatabase(databaseName: dbName)
             .Options;
 
         _context = new ApplicationDbContext(_options);
         _repository = new LibroRepository(_context);
         
         // Limpiar la base de datos antes de cada test
-        _context.Database.EnsureDeleted();
-        _context.Database.EnsureCreated();
+        _context.Libros.RemoveRange(_context.Libros);
+        _context.Prestamos.RemoveRange(_context.Prestamos);
+        _context.Autores.RemoveRange(_context.Autores);
+        _context.Categorias.RemoveRange(_context.Categorias);
+        _context.SaveChanges();
     }
 
     [Fact]
     public async Task GetAllAsync_ReturnsAllLibros()
     {
         // Arrange
+
         var libros = new List<Libro>
         {
             new() { Titulo = "Libro 1", ISBN = "1234567890" },

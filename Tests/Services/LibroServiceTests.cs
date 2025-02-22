@@ -244,7 +244,7 @@ public class LibroServiceTests
     {
         // Arrange
         _mockLibroRepository.Setup(r => r.GetLibroWithDetailsAsync(It.IsAny<int>()))
-            .ReturnsAsync((Libro)null);
+            .ReturnsAsync((Libro?)null);
 
         // Act
         var result = await _libroService.GetLibroByIdAsync(999);
@@ -300,7 +300,7 @@ public class LibroServiceTests
         _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
             .ReturnsAsync(true);
         _mockLibroRepository.Setup(r => r.GetByIdAsync(999))
-            .ReturnsAsync((Libro)null);
+            .ReturnsAsync((Libro?)null);
 
         // Act
         var result = await _libroService.UpdateLibroAsync(libroUpdateDto);
@@ -316,7 +316,7 @@ public class LibroServiceTests
     {
         // Arrange
         _mockLibroRepository.Setup(r => r.GetByIdAsync(999))
-            .ReturnsAsync((Libro)null);
+            .ReturnsAsync((Libro?)null);
 
         // Act
         var result = await _libroService.DeleteLibroAsync(999);
