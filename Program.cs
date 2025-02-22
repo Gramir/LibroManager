@@ -25,7 +25,8 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Add Services
 builder.Services.AddScoped<ILibroValidationService, LibroValidationService>();
 builder.Services.AddScoped<ILibroService, LibroService>();
-builder.Services.AddScoped<AutorService>();
+builder.Services.AddScoped<IAutorService, AutorService>();
+builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 
 var app = builder.Build();
 
