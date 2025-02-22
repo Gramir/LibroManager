@@ -336,7 +336,7 @@ public class CategoriaServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenNombreIsNull()
     {
         // Arrange
-        var categoriaDto = new CategoriaCreateDTO { Nombre = null };
+        var categoriaDto = new CategoriaCreateDTO { Nombre = string.Empty };
 
         // Act
         var result = await _categoriaService.CreateAsync(categoriaDto);
@@ -408,7 +408,7 @@ public class CategoriaServiceTests
         };
 
         _mockCategoriaRepository.Setup(r => r.GetByIdAsync(1))
-            .ReturnsAsync((Categoria)null);
+            .ReturnsAsync(() => null!);
 
         // Act
         var result = await _categoriaService.UpdateAsync(categoriaDto);
@@ -447,7 +447,7 @@ public class CategoriaServiceTests
     {
         // Arrange
         _mockCategoriaRepository.Setup(r => r.GetByIdAsync(1))
-            .ReturnsAsync((Categoria)null);
+            .ReturnsAsync(() => null!);
 
         // Act
         var result = await _categoriaService.DeleteAsync(1);

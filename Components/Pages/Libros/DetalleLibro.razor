@@ -1,0 +1,74 @@
+@page "/libros/{LibroId:int}"
+@using LibroManager.DTOs
+@using LibroManager.Services.Interfaces
+@inject ILibroService LibroService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Detalle del Libro</PageTitle>
+
+<div class="container mt-4">
+    @if (_libro == null)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">@_libro.Titulo</h3>
+                <button class="btn btn-secondary" @onclick="@(() => Volver())">Volver</button>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">ISBN:</dt>
+                            <dd class="col-sm-8">@_libro.ISBN</dd>
+
+                            <dt class="col-sm-4">Autor:</dt>
+                            <dd class="col-sm-8">@_libro.AutorNombre</dd>
+
+                            <dt class="col-sm-4">Categoría:</dt>
+                            <dd class="col-sm-8">@_libro.CategoriaNombre</dd>
+
+                            <dt class="col-sm-4">Ejemplares:</dt>
+                            <dd class="col-sm-8">@_libro.NumeroEjemplares</dd>
+
+                            <dt class="col-sm-4">Estado:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge @(_libro.EstaPrestado ? "bg-warning" : "bg-success")">
+                                    @(_libro.EstaPrestado ? "Prestado" : "Disponible")
+                                </span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int LibroId { get; set; }
+
+    private LibroDTO? _libro;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _libro = await LibroService.GetLibroByIdAsync(LibroId);
+        if (_libro == null)
+        {
+            NavigationManager.NavigateTo("/libros");
+        }
+    }
+
+    private void Volver()
+    {
+        NavigationManager.NavigateTo("/libros");
+    }
+}
