@@ -1,42 +1,51 @@
+using AutoMapper;
 using LibroManager.Models;
+using LibroManager.DTOs;
 using LibroManager.Repositories.Interfaces;
+using LibroManager.Services.Interfaces;
 
 namespace LibroManager.Services;
 
-public class AutorService
+public class AutorService : IAutorService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
-    public AutorService(IUnitOfWork unitOfWork)
+    public AutorService(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
-    public async Task<IEnumerable<Autor>> GetAllAutoresAsync()
+    public async Task<IEnumerable<AutorDTO>> GetAllAsync()
     {
-        return await _unitOfWork.Autores.GetAllAsync();
+        var autores = await _unitOfWork.Autores.GetAllAsync();
+        return _mapper.Map<IEnumerable<AutorDTO>>(autores);
     }
 
-    public async Task<Autor?> GetAutorByIdAsync(int id)
+    public async Task<AutorDTO?> GetByIdAsync(int id)
     {
-        return await _unitOfWork.Autores.GetAutorWithLibrosAsync(id);
+        var autor = await _unitOfWork.Autores.GetAutorWithLibrosAsync(id);
+        return _mapper.Map<AutorDTO>(autor);
     }
 
-    public async Task<bool> CreateAutorAsync(Autor autor)
+    public async Task<bool> CreateAsync(AutorCreateDTO autorDto)
     {
-        if (string.IsNullOrWhiteSpace(autor.Nombre))
+        if (string.IsNullOrWhiteSpace(autorDto.Nombre))
             return false;
 
+        var autor = _mapper.Map<Autor>(autorDto);
         await _unitOfWork.Autores.AddAsync(autor);
         await _unitOfWork.SaveChangesAsync();
         return true;
     }
 
-    public async Task<bool> UpdateAutorAsync(Autor autor)
+    public async Task<bool> UpdateAsync(AutorUpdateDTO autorDto)
     {
-        if (string.IsNullOrWhiteSpace(autor.Nombre))
+        if (string.IsNullOrWhiteSpace(autorDto.Nombre))
             return false;
 
+        var autor = _mapper.Map<Autor>(autorDto);
         var existingAutor = await _unitOfWork.Autores.GetByIdAsync(autor.AutorId);
         if (existingAutor == null)
             return false;
@@ -46,7 +55,7 @@ public class AutorService
         return true;
     }
 
-    public async Task<bool> DeleteAutorAsync(int id)
+    public async Task<bool> DeleteAsync(int id)
     {
         var autor = await _unitOfWork.Autores.GetByIdAsync(id);
         if (autor == null)

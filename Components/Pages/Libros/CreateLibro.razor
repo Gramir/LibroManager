@@ -1,0 +1,123 @@
+@page "/libros/crear"
+@using LibroManager.Services.Interfaces
+@using LibroManager.DTOs
+@using LibroManager.Models
+@inject ILibroService LibroService
+@inject IAutorService AutorService
+@inject ICategoriaService CategoriaService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Crear Libro - LibroManager</PageTitle>
+
+<div class="container">
+    <h1>Crear Nuevo Libro</h1>
+
+    <EditForm Model="@libroDto" OnValidSubmit="@HandleValidSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label for="titulo" class="form-label">Título</label>
+            <InputText id="titulo" class="form-control" @bind-Value="@libroDto.Titulo" />
+            <ValidationMessage For="@(() => libroDto.Titulo)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="isbn" class="form-label">ISBN</label>
+            <InputText id="isbn" class="form-control" @bind-Value="@libroDto.ISBN" />
+            <ValidationMessage For="@(() => libroDto.ISBN)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="autor" class="form-label">Autor</label>
+            <InputSelect id="autor" class="form-select" @bind-Value="@libroDto.AutorId">
+                <option value="0">Seleccione un autor...</option>
+                @if (_autores != null)
+                {
+                    @foreach (var autor in _autores)
+                    {
+                        <option value="@autor.AutorId">@autor.Nombre</option>
+                    }
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => libroDto.AutorId)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="categoria" class="form-label">Categoría</label>
+            <InputSelect id="categoria" class="form-select" @bind-Value="@libroDto.CategoriaId">
+                <option value="0">Seleccione una categoría...</option>
+                @if (_categorias != null)
+                {
+                    @foreach (var categoria in _categorias)
+                    {
+                        <option value="@categoria.CategoriaId">@categoria.Nombre</option>
+                    }
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => libroDto.CategoriaId)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="ejemplares" class="form-label">Número de Ejemplares</label>
+            <InputNumber id="ejemplares" class="form-control" @bind-Value="@libroDto.NumeroEjemplares" />
+            <ValidationMessage For="@(() => libroDto.NumeroEjemplares)" />
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary me-2">Guardar</button>
+            <button type="button" class="btn btn-secondary" @onclick="@(() => Cancelar())">Cancelar</button>
+        </div>
+    </EditForm>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @_errorMessage
+        </div>
+    }
+</div>
+
+@code {
+    private readonly LibroCreateDTO libroDto = new();
+    private IEnumerable<AutorDTO>? _autores;
+    private IEnumerable<CategoriaDTO>? _categorias;
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _autores = await AutorService.GetAllAsync();
+        _categorias = await CategoriaService.GetAllAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (await LibroService.ExisteIsbnAsync(libroDto.ISBN))
+            {
+                _errorMessage = "Ya existe un libro con este ISBN.";
+                return;
+            }
+
+            var result = await LibroService.CreateLibroAsync(libroDto);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/libros");
+            }
+            else
+            {
+                _errorMessage = "No se pudo crear el libro. Por favor, intente nuevamente.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al crear el libro: {ex.Message}";
+        }
+    }
+
+    private void Cancelar()
+    {
+        NavigationManager.NavigateTo("/libros");
+    }
+}
