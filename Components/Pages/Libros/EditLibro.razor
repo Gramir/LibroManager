@@ -1,0 +1,183 @@
+@page "/libros/editar/{LibroId:int}"
+@using LibroManager.Services.Interfaces
+@using LibroManager.DTOs
+@inject ILibroService LibroService
+@inject IAutorService AutorService
+@inject ICategoriaService CategoriaService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Editar Libro - LibroManager</PageTitle>
+
+<div class="container">
+    @if (LibroDto == null)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h1>Editar Libro</h1>
+                    <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+                </div>
+
+                <EditForm Model="LibroDto" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label">Título</label>
+                        <InputText id="titulo" class="form-control" @bind-Value="LibroDto.Titulo" />
+                        <ValidationMessage For="@(() => LibroDto.Titulo)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="isbn" class="form-label">ISBN</label>
+                        <InputText id="isbn" class="form-control" @bind-Value="LibroDto.ISBN" />
+                        <ValidationMessage For="@(() => LibroDto.ISBN)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="autor" class="form-label">Autor</label>
+                        <InputSelect id="autor" class="form-select" @bind-Value="LibroDto.AutorId">
+                            <option value="0">Seleccione un autor...</option>
+                            @if (Autores != null)
+                            {
+                                @foreach (var autor in Autores)
+                                {
+                                    <option value="@autor.AutorId">@autor.Nombre</option>
+                                }
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => LibroDto.AutorId)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="categoria" class="form-label">Categoría</label>
+                        <InputSelect id="categoria" class="form-select" @bind-Value="LibroDto.CategoriaId">
+                            <option value="0">Seleccione una categoría...</option>
+                            @if (Categorias != null)
+                            {
+                                @foreach (var categoria in Categorias)
+                                {
+                                    <option value="@categoria.CategoriaId">@categoria.Nombre</option>
+                                }
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => LibroDto.CategoriaId)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ejemplares" class="form-label">Número de Ejemplares</label>
+                        <InputNumber id="ejemplares" class="form-control" @bind-Value="LibroDto.NumeroEjemplares" />
+                        <ValidationMessage For="@(() => LibroDto.NumeroEjemplares)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary me-2">Guardar Cambios</button>
+                        <button type="button" class="btn btn-secondary" @onclick="Volver">Cancelar</button>
+                    </div>
+                </EditForm>
+
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="alert alert-danger mt-3">
+                        @ErrorMessage
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int LibroId { get; set; }
+
+    private LibroUpdateDTO? LibroDto { get; set; }
+    private IEnumerable<AutorDTO>? Autores { get; set; }
+    private IEnumerable<CategoriaDTO>? Categorias { get; set; }
+    private string ErrorMessage { get; set; } = string.Empty;
+    private string? OriginalIsbn { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var libro = await LibroService.GetLibroByIdAsync(LibroId);
+        if (libro == null)
+        {
+            NavigationManager.NavigateTo("/libros");
+            return;
+        }
+
+        LibroDto = new LibroUpdateDTO
+        {
+            LibroId = libro.LibroId,
+            Titulo = libro.Titulo,
+            ISBN = libro.ISBN,
+            AutorId = 0, // Will be set from dropdown selection
+            CategoriaId = 0, // Will be set from dropdown selection
+            NumeroEjemplares = libro.NumeroEjemplares
+        };
+
+        OriginalIsbn = libro.ISBN;
+        Autores = await AutorService.GetAllAsync();
+        Categorias = await CategoriaService.GetAllAsync();
+        
+        // Set the correct IDs after loading the lists
+        if (Autores != null)
+        {
+            var autor = Autores.FirstOrDefault(a => a.Nombre == libro.AutorNombre);
+            if (autor != null)
+            {
+                LibroDto.AutorId = autor.AutorId;
+            }
+        }
+
+        if (Categorias != null)
+        {
+            var categoria = Categorias.FirstOrDefault(c => c.Nombre == libro.CategoriaNombre);
+            if (categoria != null)
+            {
+                LibroDto.CategoriaId = categoria.CategoriaId;
+            }
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (LibroDto == null) return;
+
+        try
+        {
+            if (LibroDto.ISBN != OriginalIsbn && await LibroService.ExisteIsbnAsync(LibroDto.ISBN))
+            {
+                ErrorMessage = "Ya existe un libro con este ISBN.";
+                return;
+            }
+
+            var result = await LibroService.UpdateLibroAsync(LibroDto);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/libros");
+            }
+            else
+            {
+                ErrorMessage = "No se pudo actualizar el libro. Por favor, intente nuevamente.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error al actualizar el libro: {ex.Message}";
+        }
+    }
+
+    private void Volver()
+    {
+        NavigationManager.NavigateTo("/libros");
+    }
+}

@@ -48,19 +48,25 @@ public class LibroService : ILibroService
 
     public async Task<bool> UpdateLibroAsync(LibroUpdateDTO libroDto)
     {
-        var libro = _mapper.Map<Libro>(libroDto);
-        
-        if (!await _validationService.LibroEsValido(libro))
-            return false;
-
-        var existingLibro = await _unitOfWork.Libros.GetByIdAsync(libro.LibroId);
+        var existingLibro = await _unitOfWork.Libros.GetByIdAsync(libroDto.LibroId);
         if (existingLibro == null)
             return false;
 
-        if (existingLibro.ISBN != libro.ISBN && await _unitOfWork.Libros.IsbnExistsAsync(libro.ISBN))
+        // Verificar si el ISBN ha cambiado y si ya existe
+        if (existingLibro.ISBN != libroDto.ISBN && await _unitOfWork.Libros.IsbnExistsAsync(libroDto.ISBN))
             return false;
 
-        _unitOfWork.Libros.Update(libro);
+        // Actualizar los valores del libro existente
+        existingLibro.Titulo = libroDto.Titulo;
+        existingLibro.ISBN = libroDto.ISBN;
+        existingLibro.AutorId = libroDto.AutorId;
+        existingLibro.CategoriaId = libroDto.CategoriaId;
+        existingLibro.NumeroEjemplares = libroDto.NumeroEjemplares;
+
+        if (!await _validationService.LibroEsValido(existingLibro))
+            return false;
+
+        _unitOfWork.Libros.Update(existingLibro);
         await _unitOfWork.SaveChangesAsync();
         return true;
     }

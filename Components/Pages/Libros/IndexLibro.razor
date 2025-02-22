@@ -54,8 +54,11 @@ else
                             }
                         </td>
                         <td>
-                            <button class="btn btn-primary btn-sm" @onclick="() => VerDetalles(libro.LibroId)">
-                                Detalles
+                            <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(libro.LibroId)">
+                                <i class="bi bi-eye"></i> Detalles
+                            </button>
+                            <button class="btn btn-warning btn-sm" @onclick="() => EditarLibro(libro.LibroId)">
+                                <i class="bi bi-pencil"></i> Editar
                             </button>
                         </td>
                     </tr>
@@ -81,5 +84,10 @@ else
     private void CrearLibro()
     {
         NavigationManager.NavigateTo("/libros/crear");
+    }
+
+    private void EditarLibro(int libroId)
+    {
+        NavigationManager.NavigateTo($"/libros/editar/{libroId}");
     }
 }

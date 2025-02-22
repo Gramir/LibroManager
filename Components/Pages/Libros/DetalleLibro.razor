@@ -21,7 +21,10 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="mb-0">@_libro.Titulo</h3>
-                <button class="btn btn-secondary" @onclick="@(() => Volver())">Volver</button>
+                <div>
+                    <button class="btn btn-warning me-2" @onclick="@(() => EditarLibro())">Editar</button>
+                    <button class="btn btn-secondary" @onclick="@(() => Volver())">Volver</button>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -71,5 +74,10 @@
     private void Volver()
     {
         NavigationManager.NavigateTo("/libros");
+    }
+
+    private void EditarLibro()
+    {
+        NavigationManager.NavigateTo($"/libros/editar/{LibroId}");
     }
 }
