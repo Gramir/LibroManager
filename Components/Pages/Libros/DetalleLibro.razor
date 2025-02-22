@@ -22,8 +22,11 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="mb-0">@_libro.Titulo</h3>
                 <div>
-                    <button class="btn btn-warning me-2" @onclick="@(() => EditarLibro())">Editar</button>
-                    <button class="btn btn-secondary" @onclick="@(() => Volver())">Volver</button>
+                    <button class="btn btn-warning me-2" @onclick="EditarLibro">Editar</button>
+                    <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@_libro.EstaPrestado">
+                        Eliminar
+                    </button>
+                    <button class="btn btn-secondary" @onclick="Volver">Volver</button>
                 </div>
             </div>
             <div class="card-body">
@@ -54,13 +57,44 @@
             </div>
         </div>
     }
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @_errorMessage
+        </div>
+    }
 </div>
+
+@if (_mostrarConfirmacion)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" @onclick="CancelarEliminacion"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea eliminar el libro '@_libro?.Titulo'?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelarEliminacion">Cancelar</button>
+                    <button type="button" class="btn btn-danger" @onclick="EliminarLibro">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
 
 @code {
     [Parameter]
     public int LibroId { get; set; }
 
     private LibroDTO? _libro;
+    private string _errorMessage = string.Empty;
+    private bool _mostrarConfirmacion;
 
     protected override async Task OnInitializedAsync()
     {
@@ -79,5 +113,37 @@
     private void EditarLibro()
     {
         NavigationManager.NavigateTo($"/libros/editar/{LibroId}");
+    }
+
+    private void MostrarConfirmacion()
+    {
+        _mostrarConfirmacion = true;
+    }
+
+    private void CancelarEliminacion()
+    {
+        _mostrarConfirmacion = false;
+    }
+
+    private async Task EliminarLibro()
+    {
+        _mostrarConfirmacion = false;
+        
+        try
+        {
+            var result = await LibroService.DeleteLibroAsync(LibroId);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/libros");
+            }
+            else
+            {
+                _errorMessage = "No se pudo eliminar el libro. Puede que esté prestado o ya no exista.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al eliminar el libro: {ex.Message}";
+        }
     }
 }
