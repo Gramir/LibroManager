@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateProgramFile>false</GenerateProgramFile>
+    <Watch>true</Watch>
+    <UseHotReload>true</UseHotReload>
   </PropertyGroup>
 
   <ItemGroup>
