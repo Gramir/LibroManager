@@ -45,12 +45,12 @@ public class AutorService : IAutorService
         if (string.IsNullOrWhiteSpace(autorDto.Nombre))
             return false;
 
-        var autor = _mapper.Map<Autor>(autorDto);
-        var existingAutor = await _unitOfWork.Autores.GetByIdAsync(autor.AutorId);
+        var existingAutor = await _unitOfWork.Autores.GetByIdAsync(autorDto.AutorId);
         if (existingAutor == null)
             return false;
 
-        _unitOfWork.Autores.Update(autor);
+        existingAutor.Nombre = autorDto.Nombre;
+        _unitOfWork.Autores.Update(existingAutor);
         await _unitOfWork.SaveChangesAsync();
         return true;
     }

@@ -1,0 +1,100 @@
+@page "/autores/editar/{AutorId:int}"
+@using LibroManager.Services.Interfaces
+@using LibroManager.DTOs
+@inject IAutorService AutorService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Editar Autor - LibroManager</PageTitle>
+
+<div class="container">
+    <h1>Editar Autor</h1>
+
+    @if (AutorDto == null)
+    {
+        <p><em>Cargando...</em></p>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-6">
+                <EditForm Model="AutorDto" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <InputText id="nombre" class="form-control" @bind-Value="AutorDto.Nombre" />
+                        <ValidationMessage For="@(() => AutorDto.Nombre)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                        <button type="button" class="btn btn-secondary" @onclick="Cancelar">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </button>
+                    </div>
+                </EditForm>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="alert alert-danger mt-3">
+                        @_errorMessage
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int AutorId { get; set; }
+
+    private AutorUpdateDTO? AutorDto;
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var autor = await AutorService.GetByIdAsync(AutorId);
+        if (autor == null)
+        {
+            NavigationManager.NavigateTo("/autores");
+            return;
+        }
+
+        AutorDto = new AutorUpdateDTO
+        {
+            AutorId = autor.AutorId,
+            Nombre = autor.Nombre
+        };
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (AutorDto == null) return;
+
+        try
+        {
+            var result = await AutorService.UpdateAsync(AutorDto);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/autores");
+            }
+            else
+            {
+                _errorMessage = "No se pudo actualizar el autor";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private void Cancelar()
+    {
+        NavigationManager.NavigateTo("/autores");
+    }
+}
