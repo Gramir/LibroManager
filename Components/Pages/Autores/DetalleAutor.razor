@@ -28,6 +28,12 @@
                         Eliminar
                     </button>
                     <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+                    @if (_autor.CantidadLibros > 0)
+                    {
+                        <div class="text-danger mt-2 small">
+                            <i class="bi bi-exclamation-circle"></i> No se puede eliminar un autor que tiene libros asociados
+                        </div>
+                    }
                 </div>
             </div>
             <div class="card-body">
