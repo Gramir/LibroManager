@@ -1,0 +1,190 @@
+@page "/autores/{AutorId:int}"
+@using LibroManager.DTOs
+@using LibroManager.Services.Interfaces
+@inject IAutorService AutorService
+@inject ILibroService LibroService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Detalle del Autor</PageTitle>
+
+<div class="container mt-4">
+    @if (_autor == null)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">@_autor.Nombre</h3>
+                <div>
+                    <button class="btn btn-warning me-2" @onclick="EditarAutor">Editar</button>
+                    <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@(_autor.CantidadLibros > 0)">
+                        Eliminar
+                    </button>
+                    <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Cantidad de Libros:</dt>
+                            <dd class="col-sm-8">@_autor.CantidadLibros</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                @if (_autor.CantidadLibros > 0)
+                {
+                    <div class="mt-4">
+                        <h4>Libros del Autor</h4>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>ISBN</th>
+                                        <th>Categoría</th>
+                                        <th>Ejemplares</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var libro in _libros)
+                                    {
+                                        <tr>
+                                            <td>@libro.Titulo</td>
+                                            <td>@libro.ISBN</td>
+                                            <td>@libro.CategoriaNombre</td>
+                                            <td>@libro.NumeroEjemplares</td>
+                                            <td>
+                                                <span class="badge @(libro.EstaPrestado ? "bg-warning" : "bg-success")">
+                                                    @(libro.EstaPrestado ? "Prestado" : "Disponible")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-primary btn-sm" @onclick="() => VerDetalleLibro(libro.LibroId)">
+                                                    <i class="bi bi-eye"></i> Detalles
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @_errorMessage
+        </div>
+    }
+</div>
+
+@if (_mostrarConfirmacion)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" @onclick="CancelarEliminacion"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea eliminar el autor '@_autor?.Nombre'?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelarEliminacion">Cancelar</button>
+                    <button type="button" class="btn btn-danger" @onclick="EliminarAutor">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter]
+    public int AutorId { get; set; }
+
+    private AutorDTO? _autor;
+    private IEnumerable<LibroDTO> _libros = Array.Empty<LibroDTO>();
+    private string _errorMessage = string.Empty;
+    private bool _mostrarConfirmacion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _autor = await AutorService.GetByIdAsync(AutorId);
+        if (_autor == null)
+        {
+            NavigationManager.NavigateTo("/autores");
+            return;
+        }
+
+        // Get books by author if there are any
+        if (_autor.CantidadLibros > 0)
+        {
+            var libros = await LibroService.GetLibrosByAutorIdAsync(AutorId);
+            _libros = libros ?? Array.Empty<LibroDTO>();
+        }
+    }
+
+    private void Volver()
+    {
+        NavigationManager.NavigateTo("/autores");
+    }
+
+    private void EditarAutor()
+    {
+        NavigationManager.NavigateTo($"/autores/editar/{AutorId}");
+    }
+
+    private void VerDetalleLibro(int libroId)
+    {
+        NavigationManager.NavigateTo($"/libros/{libroId}");
+    }
+
+    private void MostrarConfirmacion()
+    {
+        _mostrarConfirmacion = true;
+    }
+
+    private void CancelarEliminacion()
+    {
+        _mostrarConfirmacion = false;
+    }
+
+    private async Task EliminarAutor()
+    {
+        _mostrarConfirmacion = false;
+        
+        try
+        {
+            var result = await AutorService.DeleteAsync(AutorId);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/autores");
+            }
+            else
+            {
+                _errorMessage = "No se pudo eliminar el autor. Puede que tenga libros asociados o ya no exista.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al eliminar el autor: {ex.Message}";
+        }
+    }
+}

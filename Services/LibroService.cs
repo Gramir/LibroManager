@@ -31,6 +31,25 @@ public class LibroService : ILibroService
         return _mapper.Map<LibroDTO>(libro);
     }
 
+    public async Task<IEnumerable<LibroDTO>> GetLibrosByAutorIdAsync(int autorId)
+    {
+        var autor = await _unitOfWork.Autores.GetAutorWithLibrosAsync(autorId);
+        if (autor?.Libros == null)
+            return Array.Empty<LibroDTO>();
+            
+        foreach (var libro in autor.Libros)
+        {
+            // Load the categoria for each libro to ensure it's available for mapping
+            if (libro.Categoria == null)
+            {
+                var categoria = await _unitOfWork.Categorias.GetByIdAsync(libro.CategoriaId);
+                libro.Categoria = categoria;
+            }
+        }
+
+        return _mapper.Map<IEnumerable<LibroDTO>>(autor.Libros);
+    }
+
     public async Task<bool> CreateLibroAsync(LibroCreateDTO libroDto)
     {
         var libro = _mapper.Map<Libro>(libroDto);
