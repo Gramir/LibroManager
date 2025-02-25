@@ -216,6 +216,8 @@ public class CategoriaServiceTests
 
         _mockUnitOfWork.Setup(uow => uow.Categorias.GetByIdAsync(categoriaId))
             .ReturnsAsync(categoria);
+        _mockUnitOfWork.Setup(uow => uow.Libros.GetAllAsync())
+            .ReturnsAsync(new List<Libro>());
         _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
             .ReturnsAsync(1);
 

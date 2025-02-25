@@ -142,13 +142,15 @@ public class EstudianteService : IEstudianteService
                 }
             }
 
-            existingEstudiante.Nombre = estudianteDto.Nombre;
-            existingEstudiante.Email = estudianteDto.Email;
+            // Usar el objeto mapeado directamente
+            var estudiante = _mapper.Map<Estudiante>(estudianteDto);
+            // Preservar la fecha de inscripción
+            estudiante.FechaInscripcion = existingEstudiante.FechaInscripcion;
 
-            _unitOfWork.Estudiantes.Update(existingEstudiante);
+            _unitOfWork.Estudiantes.Update(estudiante);
             await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation("Estudiante actualizado: {EstudianteId}, Nombre: {Nombre}, Email: {Email}", 
-                existingEstudiante.EstudianteId, existingEstudiante.Nombre, existingEstudiante.Email);
+                estudiante.EstudianteId, estudiante.Nombre, estudiante.Email);
             return true;
         }
         catch (Exception ex)
