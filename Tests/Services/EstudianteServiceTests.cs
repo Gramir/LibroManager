@@ -3,6 +3,7 @@ using LibroManager.DTOs;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -12,13 +13,15 @@ public class EstudianteServiceTests
 {
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<IMapper> _mockMapper;
+    private readonly Mock<ILogger<EstudianteService>> _mockLogger;
     private readonly EstudianteService _service;
 
     public EstudianteServiceTests()
     {
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockMapper = new Mock<IMapper>();
-        _service = new EstudianteService(_mockUnitOfWork.Object, _mockMapper.Object);
+        _mockLogger = new Mock<ILogger<EstudianteService>>();
+        _service = new EstudianteService(_mockUnitOfWork.Object, _mockMapper.Object, _mockLogger.Object);
     }
 
     [Fact]

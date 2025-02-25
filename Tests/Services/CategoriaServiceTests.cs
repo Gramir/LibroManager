@@ -3,6 +3,7 @@ using LibroManager.DTOs;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -13,6 +14,7 @@ public class CategoriaServiceTests
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<ICategoriaRepository> _mockCategoriaRepository;
     private readonly Mock<IMapper> _mockMapper;
+    private readonly Mock<ILogger<CategoriaService>> _mockLogger;
     private readonly CategoriaService _categoriaService;
 
     public CategoriaServiceTests()
@@ -20,9 +22,10 @@ public class CategoriaServiceTests
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockCategoriaRepository = new Mock<ICategoriaRepository>();
         _mockMapper = new Mock<IMapper>();
+        _mockLogger = new Mock<ILogger<CategoriaService>>();
 
         _mockUnitOfWork.Setup(u => u.Categorias).Returns(_mockCategoriaRepository.Object);
-        _categoriaService = new CategoriaService(_mockUnitOfWork.Object, _mockMapper.Object);
+        _categoriaService = new CategoriaService(_mockUnitOfWork.Object, _mockMapper.Object, _mockLogger.Object);
     }
 
     [Fact]
