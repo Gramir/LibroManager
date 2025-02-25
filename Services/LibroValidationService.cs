@@ -38,7 +38,7 @@ public class LibroValidationService : ILibroValidationService
     public async Task<bool> LibroEstaPrestado(int libroId)
     {
         return await _context.Prestamos
-            .AnyAsync(p => p.LibroId == libroId && p.FechaVencimiento > DateTime.Now);
+            .AnyAsync(p => p.LibroId == libroId && p.Estado == EstadoPrestamo.Activo);
     }
 
     public bool FechasPrestamoSonValidas(DateTime fechaPrestamo, DateTime fechaVencimiento)
@@ -55,7 +55,7 @@ public class LibroValidationService : ILibroValidationService
             fechaVencimiento.Date > fechaPrestamo.Date.AddDays(30))
             return false;
 
-        // La fecha de vencimiento no puede ser pasada
+        // La fecha de vencimiento debe ser hoy o en el futuro para nuevos préstamos
         if (fechaVencimiento.Date < hoy)
             return false;
 
@@ -67,7 +67,11 @@ public class LibroValidationService : ILibroValidationService
         if (prestamo.LibroId <= 0 || prestamo.EstudianteId <= 0)
             return false;
 
-        if (!FechasPrestamoSonValidas(prestamo.FechaPrestamo, prestamo.FechaVencimiento))
+        // Para préstamos nuevos, la fecha de vencimiento debe ser en el futuro
+        // Para actualizaciones, puede haber fechas pasadas
+        bool esNuevoPrestamo = prestamo.PrestamoId == 0;
+        
+        if (esNuevoPrestamo && !FechasPrestamoSonValidas(prestamo.FechaPrestamo, prestamo.FechaVencimiento))
             return false;
 
         var libro = await _context.Libros.FindAsync(prestamo.LibroId);
@@ -76,11 +80,16 @@ public class LibroValidationService : ILibroValidationService
         if (libro == null || !estudianteExiste)
             return false;
 
-        // Verificar si hay ejemplares disponibles para préstamo
-        var prestamosActivos = await _context.Prestamos
-            .CountAsync(p => p.LibroId == prestamo.LibroId && p.FechaVencimiento > DateTime.Now);
-            
-        return prestamosActivos < libro.NumeroEjemplares;
+        // Verificar si hay ejemplares disponibles para préstamo (sólo para nuevos préstamos)
+        if (esNuevoPrestamo)
+        {
+            var prestamosActivos = await _context.Prestamos
+                .CountAsync(p => p.LibroId == prestamo.LibroId && p.Estado == EstadoPrestamo.Activo);
+                
+            return prestamosActivos < libro.NumeroEjemplares;
+        }
+        
+        return true;
     }
 
     public async Task<bool> HayEjemplaresDisponibles(int libroId)
@@ -90,7 +99,7 @@ public class LibroValidationService : ILibroValidationService
             return false;
 
         var prestamosActivos = await _context.Prestamos
-            .CountAsync(p => p.LibroId == libroId && p.FechaVencimiento > DateTime.Now);
+            .CountAsync(p => p.LibroId == libroId && p.Estado == EstadoPrestamo.Activo);
             
         return prestamosActivos < libro.NumeroEjemplares;
     }

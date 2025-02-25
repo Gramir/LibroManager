@@ -27,6 +27,9 @@ builder.Services.AddScoped<ILibroValidationService, LibroValidationService>();
 builder.Services.AddScoped<ILibroService, LibroService>();
 builder.Services.AddScoped<IAutorService, AutorService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
+// Agregar los servicios faltantes
+builder.Services.AddScoped<IEstudianteService, EstudianteService>();
+builder.Services.AddScoped<IPrestamoService, PrestamoService>();
 
 var app = builder.Build();
 

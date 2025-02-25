@@ -4,6 +4,7 @@ using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
 using LibroManager.Services.Interfaces;
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -17,6 +18,7 @@ public class LibroServiceTests
     private readonly Mock<IAutorRepository> _mockAutorRepository;
     private readonly Mock<ICategoriaRepository> _mockCategoriaRepository;
     private readonly Mock<IMapper> _mockMapper;
+    private readonly Mock<ILogger<LibroService>> _mockLogger;
     private readonly LibroService _libroService;
 
     public LibroServiceTests()
@@ -27,12 +29,13 @@ public class LibroServiceTests
         _mockAutorRepository = new Mock<IAutorRepository>();
         _mockCategoriaRepository = new Mock<ICategoriaRepository>();
         _mockMapper = new Mock<IMapper>();
+        _mockLogger = new Mock<ILogger<LibroService>>();
 
         _mockUnitOfWork.Setup(u => u.Libros).Returns(_mockLibroRepository.Object);
         _mockUnitOfWork.Setup(u => u.Autores).Returns(_mockAutorRepository.Object);
         _mockUnitOfWork.Setup(u => u.Categorias).Returns(_mockCategoriaRepository.Object);
         
-        _libroService = new LibroService(_mockUnitOfWork.Object, _mockValidationService.Object, _mockMapper.Object);
+        _libroService = new LibroService(_mockUnitOfWork.Object, _mockValidationService.Object, _mockMapper.Object, _mockLogger.Object);
     }
 
     [Fact]
@@ -118,26 +121,30 @@ public class LibroServiceTests
             Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = 1,
-            CategoriaId = 1
+            CategoriaId = 1,
+            NumeroEjemplares = 2
         };
 
         var libro = new Libro 
         { 
             LibroId = 1,
             Titulo = "Test Libro",
-            ISBN = "1234567890",
+            ISBN = "0987654321", // ISBN diferente al de libroUpdateDto
             AutorId = 1,
-            CategoriaId = 1
+            CategoriaId = 1,
+            NumeroEjemplares = 1
         };
 
         _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
             .ReturnsAsync(true);
         _mockLibroRepository.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync(libro);
-        _mockLibroRepository.Setup(r => r.IsbnExistsAsync(It.IsAny<string>()))
+        _mockLibroRepository.Setup(r => r.IsbnExistsAsync(libroUpdateDto.ISBN))
             .ReturnsAsync(false);
-        _mockMapper.Setup(m => m.Map<Libro>(libroUpdateDto))
-            .Returns(libro);
+
+        // Configurar para el control de ejemplares y préstamos
+        _mockUnitOfWork.Setup(u => u.Prestamos.GetPrestamosByLibroAsync(libro.LibroId))
+            .ReturnsAsync(new List<Prestamo>());
 
         // Act
         var result = await _libroService.UpdateLibroAsync(libroUpdateDto);

@@ -4,6 +4,7 @@ using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
 using LibroManager.Services.Interfaces;
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -14,6 +15,7 @@ public class PrestamoServiceTests
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<ILibroValidationService> _mockLibroValidationService;
+    private readonly Mock<ILogger<PrestamoService>> _mockLogger;
     private readonly PrestamoService _service;
 
     public PrestamoServiceTests()
@@ -21,7 +23,8 @@ public class PrestamoServiceTests
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockMapper = new Mock<IMapper>();
         _mockLibroValidationService = new Mock<ILibroValidationService>();
-        _service = new PrestamoService(_mockUnitOfWork.Object, _mockMapper.Object, _mockLibroValidationService.Object);
+        _mockLogger = new Mock<ILogger<PrestamoService>>();
+        _service = new PrestamoService(_mockUnitOfWork.Object, _mockMapper.Object, _mockLibroValidationService.Object, _mockLogger.Object);
     }
 
     [Fact]
@@ -160,6 +163,9 @@ public class PrestamoServiceTests
             It.IsAny<DateTime>(), 
             It.IsAny<DateTime>()))
             .Returns(true);
+            
+        _mockLibroValidationService.Setup(s => s.PrestamoEsValido(It.IsAny<Prestamo>()))
+            .ReturnsAsync(true);
 
         // Mock libro existe y está disponible
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
@@ -275,7 +281,7 @@ public class PrestamoServiceTests
     {
         // Arrange
         var prestamoId = 1;
-        var prestamo = new Prestamo { PrestamoId = prestamoId };
+        var prestamo = new Prestamo { PrestamoId = prestamoId, Estado = EstadoPrestamo.Concluido };
 
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamoId))
             .ReturnsAsync(prestamo);
@@ -852,6 +858,9 @@ public class PrestamoServiceTests
             It.IsAny<DateTime>(), 
             It.IsAny<DateTime>()))
             .Returns(true);
+            
+        _mockLibroValidationService.Setup(s => s.PrestamoEsValido(It.IsAny<Prestamo>()))
+            .ReturnsAsync(true);
 
         // Mock libro existe y está disponible
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
@@ -913,6 +922,17 @@ public class PrestamoServiceTests
 
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
             .ReturnsAsync(libro);
+        
+        // Configurar préstamos activos para este libro
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(prestamo.LibroId))
+            .ReturnsAsync(new List<Prestamo> { 
+                new() { 
+                    PrestamoId = 1,
+                    LibroId = 1, 
+                    Estado = EstadoPrestamo.Activo,
+                    FechaVencimiento = DateTime.Now.AddDays(-1)
+                } 
+            });
 
         _mockMapper.Setup(m => m.Map<Prestamo>(prestamoUpdateDto))
             .Returns(prestamo);
@@ -1008,6 +1028,9 @@ public class PrestamoServiceTests
             It.IsAny<DateTime>(), 
             It.IsAny<DateTime>()))
             .Returns(true);
+            
+        _mockLibroValidationService.Setup(s => s.PrestamoEsValido(It.IsAny<Prestamo>()))
+            .ReturnsAsync(true);
 
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
             .ReturnsAsync(libro);
@@ -1103,6 +1126,9 @@ public class PrestamoServiceTests
         
         _mockLibroValidationService.Setup(s => s.FechasPrestamoSonValidas(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .Returns(true);
+            
+        _mockLibroValidationService.Setup(s => s.PrestamoEsValido(It.IsAny<Prestamo>()))
+            .ReturnsAsync(true);
 
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
             .ReturnsAsync(libro);
@@ -1168,6 +1194,9 @@ public class PrestamoServiceTests
        
         _mockLibroValidationService.Setup(s => s.FechasPrestamoSonValidas(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .Returns(true);
+            
+        _mockLibroValidationService.Setup(s => s.PrestamoEsValido(It.IsAny<Prestamo>()))
+            .ReturnsAsync(true);
 
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
             .ReturnsAsync(libro);
@@ -1343,6 +1372,17 @@ public class PrestamoServiceTests
 
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
             .ReturnsAsync(libro);
+        
+        // Configurar préstamos activos para este libro
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(prestamo.LibroId))
+            .ReturnsAsync(new List<Prestamo> { 
+                new() { 
+                    PrestamoId = 1,
+                    LibroId = 1, 
+                    Estado = EstadoPrestamo.Activo,
+                    FechaVencimiento = fechaVencimiento
+                } 
+            });
 
         _mockMapper.Setup(m => m.Map<Prestamo>(prestamoUpdateDto))
             .Returns(prestamo);
