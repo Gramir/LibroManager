@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LibroManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250221014618_AddPrestamosSeeds")]
-    partial class AddPrestamosSeeds
+    [Migration("20250226000644_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,20 +49,32 @@ namespace LibroManager.Migrations
                         new
                         {
                             AutorId = 1,
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Nombre = "Gabriel García Márquez"
                         },
                         new
                         {
                             AutorId = 2,
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Mario Vargas Llosa"
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "J.K. Rowling"
                         },
                         new
                         {
                             AutorId = 3,
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Stephen King"
+                        },
+                        new
+                        {
+                            AutorId = 4,
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Nombre = "Isabel Allende"
+                        },
+                        new
+                        {
+                            AutorId = 5,
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Haruki Murakami"
                         });
                 });
 
@@ -93,20 +105,32 @@ namespace LibroManager.Migrations
                         new
                         {
                             CategoriaId = 1,
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Nombre = "Novela"
                         },
                         new
                         {
                             CategoriaId = 2,
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Historia"
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Fantasía"
                         },
                         new
                         {
                             CategoriaId = 3,
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Terror"
+                        },
+                        new
+                        {
+                            CategoriaId = 4,
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Nombre = "Ciencia Ficción"
+                        },
+                        new
+                        {
+                            CategoriaId = 5,
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Historia"
                         });
                 });
 
@@ -146,18 +170,42 @@ namespace LibroManager.Migrations
                         new
                         {
                             EstudianteId = 1,
-                            Email = "juan.perez@ejemplo.com",
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FechaInscripcion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Juan Pérez"
+                            Email = "ana.garcia@email.com",
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaInscripcion = new DateTime(2020, 9, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Ana García"
                         },
                         new
                         {
                             EstudianteId = 2,
-                            Email = "maria.garcia@ejemplo.com",
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FechaInscripcion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "María García"
+                            Email = "pedro.martinez@email.com",
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaInscripcion = new DateTime(2019, 9, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Pedro Martínez"
+                        },
+                        new
+                        {
+                            EstudianteId = 3,
+                            Email = "maria.lopez@email.com",
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaInscripcion = new DateTime(2021, 9, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "María López"
+                        },
+                        new
+                        {
+                            EstudianteId = 4,
+                            Email = "carlos.rodriguez@email.com",
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaInscripcion = new DateTime(2018, 9, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Carlos Rodríguez"
+                        },
+                        new
+                        {
+                            EstudianteId = 5,
+                            Email = "laura.fernandez@email.com",
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaInscripcion = new DateTime(2022, 9, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Nombre = "Laura Fernández"
                         });
                 });
 
@@ -216,7 +264,7 @@ namespace LibroManager.Migrations
                             AutorId = 1,
                             CategoriaId = 1,
                             Estado = 0,
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9780307474728",
                             NumeroEjemplares = 3,
                             Titulo = "Cien años de soledad"
@@ -225,23 +273,78 @@ namespace LibroManager.Migrations
                         {
                             LibroId = 2,
                             AutorId = 2,
-                            CategoriaId = 1,
+                            CategoriaId = 2,
                             Estado = 0,
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ISBN = "9788420471839",
-                            NumeroEjemplares = 2,
-                            Titulo = "La ciudad y los perros"
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ISBN = "9788478884452",
+                            NumeroEjemplares = 5,
+                            Titulo = "Harry Potter y la piedra filosofal"
                         },
                         new
                         {
                             LibroId = 3,
                             AutorId = 3,
+                            CategoriaId = 3,
+                            Estado = 0,
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ISBN = "9788497593793",
+                            NumeroEjemplares = 2,
+                            Titulo = "El resplandor"
+                        },
+                        new
+                        {
+                            LibroId = 4,
+                            AutorId = 4,
                             CategoriaId = 1,
                             Estado = 0,
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9780525433477",
                             NumeroEjemplares = 4,
                             Titulo = "La casa de los espíritus"
+                        },
+                        new
+                        {
+                            LibroId = 5,
+                            AutorId = 5,
+                            CategoriaId = 1,
+                            Estado = 0,
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ISBN = "9788483835043",
+                            NumeroEjemplares = 2,
+                            Titulo = "Tokio blues"
+                        },
+                        new
+                        {
+                            LibroId = 6,
+                            AutorId = 1,
+                            CategoriaId = 1,
+                            Estado = 0,
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ISBN = "9780307387264",
+                            NumeroEjemplares = 3,
+                            Titulo = "El amor en los tiempos del cólera"
+                        },
+                        new
+                        {
+                            LibroId = 7,
+                            AutorId = 2,
+                            CategoriaId = 2,
+                            Estado = 0,
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ISBN = "9788478884957",
+                            NumeroEjemplares = 4,
+                            Titulo = "Harry Potter y la cámara secreta"
+                        },
+                        new
+                        {
+                            LibroId = 8,
+                            AutorId = 3,
+                            CategoriaId = 3,
+                            Estado = 0,
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ISBN = "9781501142970",
+                            NumeroEjemplares = 2,
+                            Titulo = "It"
                         });
                 });
 
@@ -292,43 +395,44 @@ namespace LibroManager.Migrations
                         new
                         {
                             PrestamoId = 1,
-                            Estado = 0,
+                            Estado = 1,
                             EstudianteId = 1,
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FechaPrestamo = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FechaVencimiento = new DateTime(2024, 2, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaDevolucion = new DateTime(2023, 1, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaPrestamo = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaVencimiento = new DateTime(2023, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LibroId = 1
                         },
                         new
                         {
                             PrestamoId = 2,
-                            Estado = 0,
-                            EstudianteId = 2,
-                            FechaCreacion = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FechaPrestamo = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FechaVencimiento = new DateTime(2024, 3, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            LibroId = 1
-                        },
-                        new
-                        {
-                            PrestamoId = 3,
                             Estado = 2,
-                            EstudianteId = 1,
-                            FechaCreacion = new DateTime(2024, 2, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FechaPrestamo = new DateTime(2024, 2, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FechaVencimiento = new DateTime(2024, 2, 18, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EstudianteId = 2,
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaPrestamo = new DateTime(2023, 1, 5, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaVencimiento = new DateTime(2023, 1, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LibroId = 2
                         },
                         new
                         {
-                            PrestamoId = 4,
+                            PrestamoId = 3,
                             Estado = 1,
-                            EstudianteId = 2,
-                            FechaCreacion = new DateTime(2024, 2, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FechaDevolucion = new DateTime(2024, 2, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FechaPrestamo = new DateTime(2024, 2, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FechaVencimiento = new DateTime(2024, 2, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EstudianteId = 3,
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaDevolucion = new DateTime(2023, 1, 23, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaPrestamo = new DateTime(2023, 1, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaVencimiento = new DateTime(2023, 1, 25, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LibroId = 3
+                        },
+                        new
+                        {
+                            PrestamoId = 4,
+                            Estado = 0,
+                            EstudianteId = 4,
+                            FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaPrestamo = new DateTime(2023, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FechaVencimiento = new DateTime(2023, 2, 5, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            LibroId = 4
                         });
                 });
 
