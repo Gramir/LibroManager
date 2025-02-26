@@ -25,6 +25,34 @@ public class CategoriaRepositoryTests
         
         _context.Database.EnsureDeleted();
         _context.Database.EnsureCreated();
+        
+        // Asegurarse de que no hay datos residuales en las tablas
+        if (_context.Prestamos.Any())
+        {
+            _context.Prestamos.RemoveRange(_context.Prestamos);
+        }
+        
+        if (_context.Libros.Any())
+        {
+            _context.Libros.RemoveRange(_context.Libros);
+        }
+        
+        if (_context.Estudiantes.Any())
+        {
+            _context.Estudiantes.RemoveRange(_context.Estudiantes);
+        }
+        
+        if (_context.Autores.Any())
+        {
+            _context.Autores.RemoveRange(_context.Autores);
+        }
+        
+        if (_context.Categorias.Any())
+        {
+            _context.Categorias.RemoveRange(_context.Categorias);
+        }
+        
+        _context.SaveChanges();
     }
 
     [Fact]

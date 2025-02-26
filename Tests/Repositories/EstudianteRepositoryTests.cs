@@ -25,6 +25,24 @@ public class EstudianteRepositoryTests
         
         _context.Database.EnsureDeleted();
         _context.Database.EnsureCreated();
+        
+        // Limpiar cualquier dato existente para asegurarnos de que el test comienza con un estado limpio
+        if (_context.Estudiantes.Any())
+        {
+            _context.Estudiantes.RemoveRange(_context.Estudiantes);
+        }
+        
+        if (_context.Libros.Any())
+        {
+            _context.Libros.RemoveRange(_context.Libros);
+        }
+        
+        if (_context.Prestamos.Any())
+        {
+            _context.Prestamos.RemoveRange(_context.Prestamos);
+        }
+        
+        _context.SaveChanges();
     }
 
     [Fact]
