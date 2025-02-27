@@ -50,6 +50,11 @@ public class LibroRepository : ILibroRepository
         return await _context.Libros.AnyAsync(l => l.ISBN.ToUpper() == isbn.ToUpper());
     }
 
+    public async Task<bool> SerialExistsAsync(string serial)
+    {
+        return await _context.Libros.AnyAsync(l => l.Serial.ToUpper() == serial.ToUpper());
+    }
+
     public async Task<IEnumerable<Libro>> GetLibrosWithAutorAndCategoriaAsync()
     {
         return await _context.Libros

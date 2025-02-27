@@ -11,7 +11,8 @@ public enum EstadoLibro
     Perdido
 }
 
-[Index(nameof(ISBN), IsUnique = true)]
+[Index(nameof(ISBN), IsUnique = false)]
+[Index(nameof(Serial), IsUnique = true)]
 public class Libro
 {
     [Key]
@@ -27,6 +28,11 @@ public class Libro
     [RegularExpression(@"^[0-9-]*$", ErrorMessage = "El ISBN solo puede contener números y guiones")]
     public string ISBN { get; set; } = string.Empty;
     
+    [Required(ErrorMessage = "El número de serie es requerido")]
+    [StringLength(50)]
+    [RegularExpression(@"^[A-Z0-9-]*$", ErrorMessage = "El Serial solo puede contener letras mayúsculas, números y guiones")]
+    public string Serial { get; set; } = string.Empty;
+    
     [Required(ErrorMessage = "El autor es requerido")]
     [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un autor válido")]
     public int AutorId { get; set; }
@@ -35,10 +41,6 @@ public class Libro
     [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar una categoría válida")]
     public int CategoriaId { get; set; }
 
-    [Required(ErrorMessage = "El número de ejemplares es requerido")]
-    [Range(1, int.MaxValue, ErrorMessage = "El número de ejemplares debe ser mayor a 0")]
-    public int NumeroEjemplares { get; set; } = 1;
-
     [Required]
     public EstadoLibro Estado { get; set; } = EstadoLibro.Disponible;
     
@@ -46,8 +48,18 @@ public class Libro
     [DataType(DataType.Date)]
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
 
+    [Required(ErrorMessage = "La ubicación es requerida")]
+    [StringLength(100, ErrorMessage = "La ubicación no puede exceder los 100 caracteres")]
+    public string Ubicacion { get; set; } = string.Empty;
+
     [NotMapped]
     public bool EstaPrestado => Estado == EstadoLibro.Prestado;
+    
+    
+    public static int GetCantidadEjemplares(IEnumerable<Libro> libros, string isbn)
+    {
+        return libros?.Count(l => l.ISBN == isbn) ?? 0;
+    }
 
     // Navigation properties
     [ForeignKey("AutorId")]

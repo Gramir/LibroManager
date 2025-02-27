@@ -103,10 +103,16 @@ public class LibroService : ILibroService
                 return false;
             }
 
+            if (await _unitOfWork.Libros.SerialExistsAsync(libro.Serial))
+            {
+                _logger.LogWarning("Serial ya existe: {Serial}", libro.Serial);
+                return false;
+            }
+
             await _unitOfWork.Libros.AddAsync(libro);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Libro creado: {LibroId}, Título: {Titulo}, ISBN: {ISBN}", 
-                libro.LibroId, libro.Titulo, libro.ISBN);
+            _logger.LogInformation("Libro creado: {LibroId}, Título: {Titulo}, ISBN: {ISBN}, Serial: {Serial}", 
+                libro.LibroId, libro.Titulo, libro.ISBN, libro.Serial);
             return true;
         }
         catch (Exception ex)
@@ -134,23 +140,20 @@ public class LibroService : ILibroService
                 return false;
             }
 
+            // Verificar si el Serial ha cambiado y si ya existe
+            if (existingLibro.Serial != libroDto.Serial && await _unitOfWork.Libros.SerialExistsAsync(libroDto.Serial))
+            {
+                _logger.LogWarning("Serial ya existe en otro libro: {Serial}", libroDto.Serial);
+                return false;
+            }
+
             // Actualizar los valores del libro existente
             existingLibro.Titulo = libroDto.Titulo;
             existingLibro.ISBN = libroDto.ISBN;
+            existingLibro.Serial = libroDto.Serial;
             existingLibro.AutorId = libroDto.AutorId;
             existingLibro.CategoriaId = libroDto.CategoriaId;
-            existingLibro.NumeroEjemplares = libroDto.NumeroEjemplares;
-
-            // Verificar que el libro tenga suficientes ejemplares para los préstamos activos
-            var prestamosActivos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(existingLibro.LibroId);
-            var prestamosActivosCount = prestamosActivos.Count(p => p.Estado == EstadoPrestamo.Activo);
-            
-            if (existingLibro.NumeroEjemplares < prestamosActivosCount)
-            {
-                _logger.LogWarning("No se puede reducir el número de ejemplares a {NumeroEjemplares} porque hay {PrestamosActivos} préstamos activos", 
-                    existingLibro.NumeroEjemplares, prestamosActivosCount);
-                return false;
-            }
+            existingLibro.Ubicacion = libroDto.Ubicacion;
 
             if (!await _validationService.LibroEsValido(existingLibro))
             {
@@ -160,8 +163,8 @@ public class LibroService : ILibroService
 
             _unitOfWork.Libros.Update(existingLibro);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Libro actualizado: {LibroId}, Título: {Titulo}, ISBN: {ISBN}", 
-                existingLibro.LibroId, existingLibro.Titulo, existingLibro.ISBN);
+            _logger.LogInformation("Libro actualizado: {LibroId}, Título: {Titulo}, ISBN: {ISBN}, Serial: {Serial}", 
+                existingLibro.LibroId, existingLibro.Titulo, existingLibro.ISBN, existingLibro.Serial);
             return true;
         }
         catch (Exception ex)
@@ -209,6 +212,19 @@ public class LibroService : ILibroService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al verificar existencia de ISBN {ISBN}", isbn);
+            return false;
+        }
+    }
+
+    public async Task<bool> ExisteSerialAsync(string serial)
+    {
+        try
+        {
+            return await _unitOfWork.Libros.SerialExistsAsync(serial);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al verificar existencia de Serial {Serial}", serial);
             return false;
         }
     }

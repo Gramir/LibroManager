@@ -57,7 +57,6 @@
                                         <th>Título</th>
                                         <th>ISBN</th>
                                         <th>Categoría</th>
-                                        <th>Ejemplares</th>
                                         <th>Estado</th>
                                         <th>Acciones</th>
                                     </tr>
@@ -69,7 +68,6 @@
                                             <td>@libro.Titulo</td>
                                             <td>@libro.ISBN</td>
                                             <td>@libro.CategoriaNombre</td>
-                                            <td>@libro.NumeroEjemplares</td>
                                             <td>
                                                 <span class="badge @(libro.EstaPrestado ? "bg-warning" : "bg-success")">
                                                     @(libro.EstaPrestado ? "Prestado" : "Disponible")

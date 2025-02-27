@@ -100,58 +100,39 @@ public class PrestamoService : IPrestamoService
     {
         try
         {
-            var prestamo = _mapper.Map<Prestamo>(prestamoDto);
-            prestamo.FechaPrestamo = DateTime.Now;
-            prestamo.Estado = EstadoPrestamo.Activo;
-            prestamo.FechaCreacion = DateTime.Now;
+            var libro = await _unitOfWork.Libros.GetByIdAsync(prestamoDto.LibroId);
+            if (libro == null)
+            {
+                _logger.LogWarning("Libro no encontrado: {LibroId}", prestamoDto.LibroId);
+                return false;
+            }
 
-            // Validate using the validation service
+            if (libro.Estado != EstadoLibro.Disponible)
+            {
+                _logger.LogWarning("El libro {LibroId} no está disponible", prestamoDto.LibroId);
+                return false;
+            }
+
+            var prestamo = _mapper.Map<Prestamo>(prestamoDto);
             if (!await _libroValidationService.PrestamoEsValido(prestamo))
             {
-                _logger.LogWarning("Datos de préstamo no válidos: {PrestamoData}", 
-                    new { prestamo.LibroId, prestamo.EstudianteId, prestamo.FechaPrestamo, prestamo.FechaVencimiento });
+                _logger.LogWarning("Datos de préstamo no válidos");
                 return false;
             }
 
-            // Get libro and estudiante
-            var libro = await _unitOfWork.Libros.GetByIdAsync(prestamo.LibroId);
-            var estudiante = await _unitOfWork.Estudiantes.GetByIdAsync(prestamo.EstudianteId);
-            
-            if (libro == null || estudiante == null)
+            if (!_libroValidationService.FechasPrestamoSonValidas(prestamo.FechaPrestamo, prestamo.FechaVencimiento))
             {
-                _logger.LogWarning("Libro o estudiante no encontrado: LibroId={LibroId}, EstudianteId={EstudianteId}", 
-                    prestamo.LibroId, prestamo.EstudianteId);
+                _logger.LogWarning("Fechas de préstamo no válidas");
                 return false;
             }
 
-            // Check for expired prestamos
-            var prestamosEstudiante = await _unitOfWork.Prestamos.GetPrestamosByEstudianteAsync(prestamo.EstudianteId);
-            if (prestamosEstudiante.Any(p => p.Estado == EstadoPrestamo.Expirado))
-            {
-                _logger.LogWarning("Estudiante {EstudianteId} tiene préstamos expirados", prestamo.EstudianteId);
-                return false;
-            }
+            prestamo.Estado = EstadoPrestamo.Activo;
+            libro.Estado = EstadoLibro.Prestado;
 
-            // Check ejemplares availability
-            var prestamosActivos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(libro.LibroId);
-            var prestamosCount = prestamosActivos.Count(p => p.Estado == EstadoPrestamo.Activo);
-            
-            if (prestamosCount >= libro.NumeroEjemplares)
-            {
-                _logger.LogWarning("No hay ejemplares disponibles para el libro {LibroId}", libro.LibroId);
-                return false;
-            }
-            
-            // Update libro estado only if all ejemplares will be borrowed
-            if (prestamosCount + 1 >= libro.NumeroEjemplares)
-            {
-                libro.Estado = EstadoLibro.Prestado;
-                _unitOfWork.Libros.Update(libro);
-            }
-            
             await _unitOfWork.Prestamos.AddAsync(prestamo);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Préstamo creado: {PrestamoId} para LibroId={LibroId}, EstudianteId={EstudianteId}", 
+
+            _logger.LogInformation("Préstamo creado: {PrestamoId}, Libro: {LibroId}, Estudiante: {EstudianteId}",
                 prestamo.PrestamoId, prestamo.LibroId, prestamo.EstudianteId);
             return true;
         }
@@ -166,65 +147,40 @@ public class PrestamoService : IPrestamoService
     {
         try
         {
-            var prestamo = _mapper.Map<Prestamo>(prestamoDto);
-            
-            var existingPrestamo = await _unitOfWork.Prestamos.GetByIdAsync(prestamo.PrestamoId);
-            if (existingPrestamo == null)
+            var prestamo = await _unitOfWork.Prestamos.GetByIdAsync(prestamoDto.PrestamoId);
+            if (prestamo == null)
             {
-                _logger.LogWarning("Préstamo no encontrado: {PrestamoId}", prestamo.PrestamoId);
-                return false;
-            }
-
-            // Mantener los valores originales que no deben cambiar
-            prestamo.LibroId = existingPrestamo.LibroId;
-            prestamo.EstudianteId = existingPrestamo.EstudianteId;
-            prestamo.FechaPrestamo = existingPrestamo.FechaPrestamo;
-            prestamo.FechaCreacion = existingPrestamo.FechaCreacion;
-
-            if (!ValidatePrestamoData(prestamo))
-            {
-                _logger.LogWarning("Datos de préstamo no válidos para actualización: {PrestamoId}", prestamo.PrestamoId);
+                _logger.LogWarning("Préstamo no encontrado: {PrestamoId}", prestamoDto.PrestamoId);
                 return false;
             }
 
             var libro = await _unitOfWork.Libros.GetByIdAsync(prestamo.LibroId);
             if (libro == null)
             {
-                _logger.LogWarning("Libro no encontrado para préstamo: LibroId={LibroId}", prestamo.LibroId);
+                _logger.LogWarning("Libro no encontrado: {LibroId}", prestamo.LibroId);
                 return false;
             }
 
-            // Actualizar estado del libro según el estado del préstamo
-            if (prestamo.FechaDevolucion.HasValue)
+            // Actualizar los valores del préstamo
+            prestamo.FechaDevolucion = prestamoDto.FechaDevolucion;
+            prestamo.Estado = prestamoDto.Estado;
+
+            _unitOfWork.Prestamos.Update(prestamo);
+
+            // Si el préstamo ha sido devuelto, actualizar el estado del libro
+            if (prestamo.Estado == EstadoPrestamo.Concluido)
             {
-                prestamo.Estado = EstadoPrestamo.Concluido;
-                
-                // Verificar si hay que actualizar el estado del libro a Disponible
                 await ActualizarEstadoLibroAsync(libro);
             }
-            else if (prestamo.Estado == EstadoPrestamo.Expirado)
-            {
-                // Solo marcar como perdido si no hay ejemplares disponibles
-                var prestamosActivos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(libro.LibroId);
-                var prestamosCount = prestamosActivos.Count(p => p.Estado == EstadoPrestamo.Activo);
-                
-                if (prestamosCount >= libro.NumeroEjemplares)
-                {
-                    libro.Estado = EstadoLibro.Perdido;
-                }
-            }
 
-            _unitOfWork.Libros.Update(libro);
-            _unitOfWork.Prestamos.Update(prestamo);
             await _unitOfWork.SaveChangesAsync();
-            
-            _logger.LogInformation("Préstamo actualizado: {PrestamoId}, Estado={Estado}", 
-                prestamo.PrestamoId, prestamo.Estado);
+
+            _logger.LogInformation("Préstamo actualizado: {PrestamoId}", prestamo.PrestamoId);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al actualizar préstamo");
+            _logger.LogError(ex, "Error al actualizar préstamo {PrestamoId}", prestamoDto.PrestamoId);
             return false;
         }
     }
@@ -240,19 +196,15 @@ public class PrestamoService : IPrestamoService
                 return false;
             }
 
-            // Si el préstamo está activo, debemos actualizar el estado del libro
             if (prestamo.Estado == EstadoPrestamo.Activo)
             {
-                var libro = await _unitOfWork.Libros.GetByIdAsync(prestamo.LibroId);
-                if (libro != null)
-                {
-                    await ActualizarEstadoLibroAsync(libro);
-                }
+                _logger.LogWarning("No se puede eliminar un préstamo activo: {PrestamoId}", id);
+                return false;
             }
 
             _unitOfWork.Prestamos.Remove(prestamo);
             await _unitOfWork.SaveChangesAsync();
-            
+
             _logger.LogInformation("Préstamo eliminado: {PrestamoId}", id);
             return true;
         }
@@ -263,60 +215,13 @@ public class PrestamoService : IPrestamoService
         }
     }
 
-    private bool ValidatePrestamoData(Prestamo prestamo)
-    {
-        // Normalizamos las fechas para comparar solo las fechas sin tiempo
-        var fechaPrestamo = prestamo.FechaPrestamo.Date;
-        var fechaVencimiento = prestamo.FechaVencimiento.Date;
-        var hoy = DateTime.Today;
-
-        if (fechaPrestamo > fechaVencimiento)
-        {
-            _logger.LogWarning("Fecha de préstamo posterior a fecha de vencimiento");
-            return false;
-        }
-
-        if (fechaPrestamo > hoy)
-        {
-            _logger.LogWarning("Fecha de préstamo en el futuro");
-            return false;
-        }
-
-        // Si la fecha de vencimiento es pasada, marcar como expirado
-        if (fechaVencimiento < hoy && prestamo.Estado != EstadoPrestamo.Concluido)
-        {
-            _logger.LogInformation("Actualizando estado a Expirado porque la fecha de vencimiento pasó");
-            prestamo.Estado = EstadoPrestamo.Expirado;
-        }
-
-        if (fechaVencimiento > fechaPrestamo.AddDays(30))
-        {
-            _logger.LogWarning("Período de préstamo mayor a 30 días");
-            return false;
-        }
-
-        if (prestamo.FechaDevolucion.HasValue)
-        {
-            if (prestamo.FechaDevolucion.Value < fechaPrestamo)
-            {
-                _logger.LogWarning("Fecha de devolución anterior a fecha de préstamo");
-                return false;
-            }
-            
-            prestamo.Estado = EstadoPrestamo.Concluido;
-        }
-
-        return true;
-    }
-
     private async Task ActualizarEstadoLibroAsync(Libro libro)
     {
         // Verificar si hay préstamos activos para este libro
         var prestamosActivos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(libro.LibroId);
-        var countActivos = prestamosActivos.Count(p => p.Estado == EstadoPrestamo.Activo);
+        var tieneActivosCount = prestamosActivos.Any(p => p.Estado == EstadoPrestamo.Activo);
         
-        // Si no hay préstamos activos o hay ejemplares disponibles
-        if (countActivos < libro.NumeroEjemplares)
+        if (!tieneActivosCount)
         {
             libro.Estado = EstadoLibro.Disponible;
             _logger.LogInformation("Estado del libro actualizado a Disponible: {LibroId}", libro.LibroId);

@@ -11,4 +11,5 @@ public interface ILibroService
     Task<bool> UpdateLibroAsync(LibroUpdateDTO libro);
     Task<bool> DeleteLibroAsync(int id);
     Task<bool> ExisteIsbnAsync(string isbn);
+    Task<bool> ExisteSerialAsync(string serial);
 }

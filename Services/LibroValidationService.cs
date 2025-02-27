@@ -43,23 +43,7 @@ public class LibroValidationService : ILibroValidationService
 
     public bool FechasPrestamoSonValidas(DateTime fechaPrestamo, DateTime fechaVencimiento)
     {
-        var hoy = DateTime.Today;
-        
-        // La fecha de préstamo no puede ser futura
-        if (fechaPrestamo.Date > hoy)
-            return false;
-
-        // La fecha de vencimiento debe ser posterior a la fecha de préstamo
-        // y no puede ser más de 30 días después
-        if (fechaVencimiento.Date <= fechaPrestamo.Date || 
-            fechaVencimiento.Date > fechaPrestamo.Date.AddDays(30))
-            return false;
-
-        // La fecha de vencimiento debe ser hoy o en el futuro para nuevos préstamos
-        if (fechaVencimiento.Date < hoy)
-            return false;
-
-        return true;
+        return fechaVencimiento > fechaPrestamo;
     }
 
     public async Task<bool> PrestamoEsValido(Prestamo prestamo)
@@ -67,40 +51,9 @@ public class LibroValidationService : ILibroValidationService
         if (prestamo.LibroId <= 0 || prestamo.EstudianteId <= 0)
             return false;
 
-        // Para préstamos nuevos, la fecha de vencimiento debe ser en el futuro
-        // Para actualizaciones, puede haber fechas pasadas
-        bool esNuevoPrestamo = prestamo.PrestamoId == 0;
-        
-        if (esNuevoPrestamo && !FechasPrestamoSonValidas(prestamo.FechaPrestamo, prestamo.FechaVencimiento))
-            return false;
-
         var libro = await _context.Libros.FindAsync(prestamo.LibroId);
-        var estudianteExiste = await _context.Estudiantes.AnyAsync(e => e.EstudianteId == prestamo.EstudianteId);
-        
-        if (libro == null || !estudianteExiste)
-            return false;
+        var estudiante = await _context.Estudiantes.FindAsync(prestamo.EstudianteId);
 
-        // Verificar si hay ejemplares disponibles para préstamo (sólo para nuevos préstamos)
-        if (esNuevoPrestamo)
-        {
-            var prestamosActivos = await _context.Prestamos
-                .CountAsync(p => p.LibroId == prestamo.LibroId && p.Estado == EstadoPrestamo.Activo);
-                
-            return prestamosActivos < libro.NumeroEjemplares;
-        }
-        
-        return true;
-    }
-
-    public async Task<bool> HayEjemplaresDisponibles(int libroId)
-    {
-        var libro = await _context.Libros.FindAsync(libroId);
-        if (libro == null)
-            return false;
-
-        var prestamosActivos = await _context.Prestamos
-            .CountAsync(p => p.LibroId == libroId && p.Estado == EstadoPrestamo.Activo);
-            
-        return prestamosActivos < libro.NumeroEjemplares;
+        return libro != null && estudiante != null;
     }
 }

@@ -27,9 +27,10 @@ else
                 <tr>
                     <th>Título</th>
                     <th>ISBN</th>
+                    <th>Serial</th>
                     <th>Autor</th>
                     <th>Categoría</th>
-                    <th>Ejemplares</th>
+                    <th>Ubicación</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -40,9 +41,10 @@ else
                     <tr>
                         <td>@libro.Titulo</td>
                         <td>@libro.ISBN</td>
+                        <td>@libro.Serial</td>
                         <td>@libro.AutorNombre</td>
                         <td>@libro.CategoriaNombre</td>
-                        <td>@libro.NumeroEjemplares</td>
+                        <td>@libro.Ubicacion</td>
                         <td>
                             @if (libro.EstaPrestado)
                             {

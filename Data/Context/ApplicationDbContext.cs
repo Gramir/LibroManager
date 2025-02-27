@@ -107,14 +107,94 @@ namespace LibroManager.Data.Context
 
             // Seed Libros
             modelBuilder.Entity<Libro>().HasData(
-                new Libro { LibroId = 1, Titulo = "Cien años de soledad", ISBN = "9780307474728", AutorId = 1, CategoriaId = 1, NumeroEjemplares = 3, Estado = EstadoLibro.Disponible, FechaCreacion = fechaPredeterminada },
-                new Libro { LibroId = 2, Titulo = "Harry Potter y la piedra filosofal", ISBN = "9788478884452", AutorId = 2, CategoriaId = 2, NumeroEjemplares = 5, Estado = EstadoLibro.Disponible, FechaCreacion = fechaPredeterminada },
-                new Libro { LibroId = 3, Titulo = "El resplandor", ISBN = "9788497593793", AutorId = 3, CategoriaId = 3, NumeroEjemplares = 2, Estado = EstadoLibro.Disponible, FechaCreacion = fechaPredeterminada },
-                new Libro { LibroId = 4, Titulo = "La casa de los espíritus", ISBN = "9780525433477", AutorId = 4, CategoriaId = 1, NumeroEjemplares = 4, Estado = EstadoLibro.Disponible, FechaCreacion = fechaPredeterminada },
-                new Libro { LibroId = 5, Titulo = "Tokio blues", ISBN = "9788483835043", AutorId = 5, CategoriaId = 1, NumeroEjemplares = 2, Estado = EstadoLibro.Disponible, FechaCreacion = fechaPredeterminada },
-                new Libro { LibroId = 6, Titulo = "El amor en los tiempos del cólera", ISBN = "9780307387264", AutorId = 1, CategoriaId = 1, NumeroEjemplares = 3, Estado = EstadoLibro.Disponible, FechaCreacion = fechaPredeterminada },
-                new Libro { LibroId = 7, Titulo = "Harry Potter y la cámara secreta", ISBN = "9788478884957", AutorId = 2, CategoriaId = 2, NumeroEjemplares = 4, Estado = EstadoLibro.Disponible, FechaCreacion = fechaPredeterminada },
-                new Libro { LibroId = 8, Titulo = "It", ISBN = "9781501142970", AutorId = 3, CategoriaId = 3, NumeroEjemplares = 2, Estado = EstadoLibro.Disponible, FechaCreacion = fechaPredeterminada }
+                new Libro { 
+                    LibroId = 1, 
+                    Titulo = "Cien años de soledad", 
+                    ISBN = "9780307474728", 
+                    Serial = "GAB-SOL-001",
+                    AutorId = 1, 
+                    CategoriaId = 1, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante A1-01"
+                },
+                new Libro { 
+                    LibroId = 2, 
+                    Titulo = "Harry Potter y la piedra filosofal", 
+                    ISBN = "9788478884452", 
+                    Serial = "ROW-HP1-001",
+                    AutorId = 2, 
+                    CategoriaId = 2, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante B2-01"
+                },
+                new Libro { 
+                    LibroId = 3, 
+                    Titulo = "El resplandor", 
+                    ISBN = "9788497593793", 
+                    Serial = "KIN-RES-001",
+                    AutorId = 3, 
+                    CategoriaId = 3, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante C3-01"
+                },
+                new Libro { 
+                    LibroId = 4, 
+                    Titulo = "La casa de los espíritus", 
+                    ISBN = "9780525433477", 
+                    Serial = "ALL-ESP-001",
+                    AutorId = 4, 
+                    CategoriaId = 1, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante A1-02"
+                },
+                new Libro { 
+                    LibroId = 5, 
+                    Titulo = "Tokio blues", 
+                    ISBN = "9788483835043", 
+                    Serial = "MUR-TOK-001",
+                    AutorId = 5, 
+                    CategoriaId = 1, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante A1-03"
+                },
+                new Libro { 
+                    LibroId = 6, 
+                    Titulo = "El amor en los tiempos del cólera", 
+                    ISBN = "9780307387264", 
+                    Serial = "GAB-AMO-001",
+                    AutorId = 1, 
+                    CategoriaId = 1, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante A1-04"
+                },
+                new Libro { 
+                    LibroId = 7, 
+                    Titulo = "Harry Potter y la cámara secreta", 
+                    ISBN = "9788478884957", 
+                    Serial = "ROW-HP2-001",
+                    AutorId = 2, 
+                    CategoriaId = 2, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante B2-02"
+                },
+                new Libro { 
+                    LibroId = 8, 
+                    Titulo = "It", 
+                    ISBN = "9781501142970", 
+                    Serial = "KIN-IT-001",
+                    AutorId = 3, 
+                    CategoriaId = 3, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante C3-02"
+                }
             );
 
             // Fechas fijas para préstamos

@@ -120,19 +120,21 @@ public class LibroServiceTests
             LibroId = 1,
             Titulo = "Test Libro",
             ISBN = "1234567890",
+            Serial = "TST-LBR-001",
             AutorId = 1,
             CategoriaId = 1,
-            NumeroEjemplares = 2
+            Ubicacion = "Test-01"
         };
 
         var libro = new Libro 
         { 
             LibroId = 1,
             Titulo = "Test Libro",
-            ISBN = "0987654321", // ISBN diferente al de libroUpdateDto
+            ISBN = "0987654321",
+            Serial = "TST-LBR-002",
             AutorId = 1,
             CategoriaId = 1,
-            NumeroEjemplares = 1
+            Ubicacion = "Test-02"
         };
 
         _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
@@ -141,10 +143,8 @@ public class LibroServiceTests
             .ReturnsAsync(libro);
         _mockLibroRepository.Setup(r => r.IsbnExistsAsync(libroUpdateDto.ISBN))
             .ReturnsAsync(false);
-
-        // Configurar para el control de ejemplares y préstamos
-        _mockUnitOfWork.Setup(u => u.Prestamos.GetPrestamosByLibroAsync(libro.LibroId))
-            .ReturnsAsync(new List<Prestamo>());
+        _mockLibroRepository.Setup(r => r.SerialExistsAsync(libroUpdateDto.Serial))
+            .ReturnsAsync(false);
 
         // Act
         var result = await _libroService.UpdateLibroAsync(libroUpdateDto);

@@ -43,6 +43,13 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="serial" class="form-label">Número de Serie</label>
+                        <InputText id="serial" class="form-control" @bind-Value="LibroDto.Serial" />
+                        <ValidationMessage For="@(() => LibroDto.Serial)" />
+                        <small class="form-text text-muted">Formato: XXX-XXX-000 (letras mayúsculas, números y guiones)</small>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="autor" class="form-label">Autor</label>
                         <InputSelect id="autor" class="form-select" @bind-Value="LibroDto.AutorId">
                             <option value="0">Seleccione un autor...</option>
@@ -73,9 +80,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="ejemplares" class="form-label">Número de Ejemplares</label>
-                        <InputNumber id="ejemplares" class="form-control" @bind-Value="LibroDto.NumeroEjemplares" />
-                        <ValidationMessage For="@(() => LibroDto.NumeroEjemplares)" />
+                        <label for="ubicacion" class="form-label">Ubicación</label>
+                        <InputText id="ubicacion" class="form-control" @bind-Value="LibroDto.Ubicacion" />
+                        <ValidationMessage For="@(() => LibroDto.Ubicacion)" />
                     </div>
 
                     <div class="mb-3">
@@ -104,6 +111,7 @@
     private IEnumerable<CategoriaDTO>? Categorias { get; set; }
     private string ErrorMessage { get; set; } = string.Empty;
     private string? OriginalIsbn { get; set; }
+    private string? OriginalSerial { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -119,16 +127,17 @@
             LibroId = libro.LibroId,
             Titulo = libro.Titulo,
             ISBN = libro.ISBN,
-            AutorId = 0, // Will be set from dropdown selection
-            CategoriaId = 0, // Will be set from dropdown selection
-            NumeroEjemplares = libro.NumeroEjemplares
+            Serial = libro.Serial,
+            AutorId = 0,
+            CategoriaId = 0,
+            Ubicacion = libro.Ubicacion
         };
 
         OriginalIsbn = libro.ISBN;
+        OriginalSerial = libro.Serial;
         Autores = await AutorService.GetAllAsync();
         Categorias = await CategoriaService.GetAllAsync();
         
-        // Set the correct IDs after loading the lists
         if (Autores != null)
         {
             var autor = Autores.FirstOrDefault(a => a.Nombre == libro.AutorNombre);
@@ -157,6 +166,12 @@
             if (LibroDto.ISBN != OriginalIsbn && await LibroService.ExisteIsbnAsync(LibroDto.ISBN))
             {
                 ErrorMessage = "Ya existe un libro con este ISBN.";
+                return;
+            }
+
+            if (LibroDto.Serial != OriginalSerial && await LibroService.ExisteSerialAsync(LibroDto.Serial))
+            {
+                ErrorMessage = "Ya existe un libro con este número de serie.";
                 return;
             }
 
