@@ -185,9 +185,21 @@ public class LibroService : ILibroService
                 return false;
             }
 
+            // Verificar primero si el ejemplar está prestado
             if (await _unitOfWork.Libros.EstaPrestadoAsync(id))
             {
                 _logger.LogWarning("No se puede eliminar el libro {LibroId} porque está prestado", id);
+                return false;
+            }
+
+            // Obtener todos los ejemplares con el mismo ISBN
+            var ejemplares = await _unitOfWork.Libros.GetAllAsync();
+            var cantidadEjemplares = ejemplares.Count(l => l.ISBN == libro.ISBN);
+
+            // Si es el último ejemplar y hay préstamos activos de cualquier ejemplar, no permitir la eliminación
+            if (cantidadEjemplares == 1 && ejemplares.Any(l => l.ISBN == libro.ISBN && l.EstaPrestado))
+            {
+                _logger.LogWarning("No se puede eliminar el último ejemplar del libro con ISBN {ISBN} porque hay préstamos activos", libro.ISBN);
                 return false;
             }
 
@@ -226,6 +238,35 @@ public class LibroService : ILibroService
         {
             _logger.LogError(ex, "Error al verificar existencia de Serial {Serial}", serial);
             return false;
+        }
+    }
+    
+    public async Task<int> ContarEjemplaresPorIsbnAsync(string isbn)
+    {
+        try
+        {
+            var libros = await _unitOfWork.Libros.GetAllAsync();
+            return libros.Count(l => l.ISBN == isbn);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al contar ejemplares para ISBN {ISBN}", isbn);
+            return 0;
+        }
+    }
+
+    public async Task<IEnumerable<LibroDTO>> GetEjemplaresPorIsbnAsync(string isbn)
+    {
+        try
+        {
+            var libros = await _unitOfWork.Libros.GetAllAsync();
+            var ejemplares = libros.Where(l => l.ISBN == isbn);
+            return _mapper.Map<IEnumerable<LibroDTO>>(ejemplares);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener ejemplares para ISBN {ISBN}", isbn);
+            return Enumerable.Empty<LibroDTO>();
         }
     }
 }

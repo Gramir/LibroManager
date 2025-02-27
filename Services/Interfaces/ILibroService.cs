@@ -12,4 +12,6 @@ public interface ILibroService
     Task<bool> DeleteLibroAsync(int id);
     Task<bool> ExisteIsbnAsync(string isbn);
     Task<bool> ExisteSerialAsync(string serial);
+    Task<int> ContarEjemplaresPorIsbnAsync(string isbn);
+    Task<IEnumerable<LibroDTO>> GetEjemplaresPorIsbnAsync(string isbn);
 }

@@ -23,7 +23,7 @@
                 <h3 class="mb-0">@_libro.Titulo</h3>
                 <div>
                     <button class="btn btn-warning me-2" @onclick="EditarLibro">Editar</button>
-                    <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@_libro.EstaPrestado">
+                    <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@_ejemplares.Any()">
                         Eliminar
                     </button>
                     <button class="btn btn-secondary" @onclick="Volver">Volver</button>
@@ -42,15 +42,51 @@
                             <dt class="col-sm-4">Categoría:</dt>
                             <dd class="col-sm-8">@_libro.CategoriaNombre</dd>
 
-                            <dt class="col-sm-4">Estado:</dt>
-                            <dd class="col-sm-8">
-                                <span class="badge @(_libro.EstaPrestado ? "bg-warning" : "bg-success")">
-                                    @(_libro.EstaPrestado ? "Prestado" : "Disponible")
-                                </span>
-                            </dd>
+                            <dt class="col-sm-4">Ejemplares:</dt>
+                            <dd class="col-sm-8">@_ejemplares.Count()</dd>
                         </dl>
                     </div>
                 </div>
+
+                @if (_ejemplares.Any())
+                {
+                    <div class="mt-4">
+                        <h4>Lista de Ejemplares</h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Serial</th>
+                                        <th>Ubicación</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ejemplar in _ejemplares.OrderBy(e => e.Serial))
+                                    {
+                                        <tr>
+                                            <td>@ejemplar.Serial</td>
+                                            <td>@ejemplar.Ubicacion</td>
+                                            <td>
+                                                <span class="badge @(ejemplar.EstaPrestado ? "bg-warning" : "bg-success")">
+                                                    @(ejemplar.EstaPrestado ? "Prestado" : "Disponible")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-danger btn-sm" 
+                                                        @onclick="() => MostrarConfirmacionEjemplar(ejemplar)"
+                                                        disabled="@ejemplar.EstaPrestado">
+                                                    <i class="bi bi-trash"></i> Eliminar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
     }
@@ -73,7 +109,14 @@
                     <button type="button" class="btn-close" @onclick="CancelarEliminacion"></button>
                 </div>
                 <div class="modal-body">
-                    ¿Está seguro que desea eliminar el libro '@_libro?.Titulo'?
+                    @if (_ejemplarAEliminar != null)
+                    {
+                        <p>¿Está seguro que desea eliminar el ejemplar con serial '@_ejemplarAEliminar.Serial'?</p>
+                    }
+                    else
+                    {
+                        <p>¿Está seguro que desea eliminar el libro '@_libro?.Titulo' y todos sus ejemplares?</p>
+                    }
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CancelarEliminacion">Cancelar</button>
@@ -90,8 +133,10 @@
     public int LibroId { get; set; }
 
     private LibroDTO? _libro;
+    private IEnumerable<LibroDTO> _ejemplares = Enumerable.Empty<LibroDTO>();
     private string _errorMessage = string.Empty;
     private bool _mostrarConfirmacion;
+    private LibroDTO? _ejemplarAEliminar;
 
     protected override async Task OnInitializedAsync()
     {
@@ -99,7 +144,10 @@
         if (_libro == null)
         {
             NavigationManager.NavigateTo("/libros");
+            return;
         }
+
+        _ejemplares = await LibroService.GetEjemplaresPorIsbnAsync(_libro.ISBN);
     }
 
     private void Volver()
@@ -114,12 +162,30 @@
 
     private void MostrarConfirmacion()
     {
+        if (_ejemplares.Any())
+        {
+            _errorMessage = "No se puede eliminar el libro mientras tenga ejemplares. Elimine los ejemplares primero.";
+            return;
+        }
+        _ejemplarAEliminar = null;
+        _mostrarConfirmacion = true;
+    }
+
+    private void MostrarConfirmacionEjemplar(LibroDTO ejemplar)
+    {
+        if (ejemplar.EstaPrestado)
+        {
+            _errorMessage = "No se puede eliminar un ejemplar que está prestado.";
+            return;
+        }
+        _ejemplarAEliminar = ejemplar;
         _mostrarConfirmacion = true;
     }
 
     private void CancelarEliminacion()
     {
         _mostrarConfirmacion = false;
+        _ejemplarAEliminar = null;
     }
 
     private async Task EliminarLibro()
@@ -128,19 +194,50 @@
         
         try
         {
-            var result = await LibroService.DeleteLibroAsync(LibroId);
-            if (result)
+            bool result;
+            if (_ejemplarAEliminar != null)
             {
-                NavigationManager.NavigateTo("/libros");
+                result = await LibroService.DeleteLibroAsync(_ejemplarAEliminar.LibroId);
+                if (result)
+                {
+                    // Actualizar la lista de ejemplares
+                    _ejemplares = await LibroService.GetEjemplaresPorIsbnAsync(_libro!.ISBN);
+                    if (!_ejemplares.Any())
+                    {
+                        // Si era el último ejemplar, volver a la lista
+                        NavigationManager.NavigateTo("/libros");
+                    }
+                }
+                else
+                {
+                    _errorMessage = "No se pudo eliminar el ejemplar. Puede que esté prestado o ya no exista.";
+                }
             }
             else
             {
-                _errorMessage = "No se pudo eliminar el libro. Puede que esté prestado o ya no exista.";
+                result = await LibroService.DeleteLibroAsync(LibroId);
+                if (result)
+                {
+                    NavigationManager.NavigateTo("/libros");
+                }
+                else
+                {
+                    _errorMessage = "No se pudo eliminar el libro. Puede que ya no exista.";
+                }
             }
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Error al eliminar el libro: {ex.Message}";
+            _errorMessage = $"Error al eliminar: {ex.Message}";
         }
+        finally
+        {
+            _ejemplarAEliminar = null;
+        }
+    }
+
+    private bool TieneEjemplaresPrestados()
+    {
+        return _ejemplares.Any(e => e.EstaPrestado);
     }
 }

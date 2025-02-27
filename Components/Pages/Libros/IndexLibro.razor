@@ -27,34 +27,21 @@ else
                 <tr>
                     <th>Título</th>
                     <th>ISBN</th>
-                    <th>Serial</th>
+                    <th>Ejemplares</th>
                     <th>Autor</th>
                     <th>Categoría</th>
-                    <th>Ubicación</th>
-                    <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var libro in libros)
+                @foreach (var libro in librosUnicos)
                 {
                     <tr>
                         <td>@libro.Titulo</td>
                         <td>@libro.ISBN</td>
-                        <td>@libro.Serial</td>
+                        <td>@(ejemplaresPorIsbn.TryGetValue(libro.ISBN, out var count) ? count : 0)</td>
                         <td>@libro.AutorNombre</td>
                         <td>@libro.CategoriaNombre</td>
-                        <td>@libro.Ubicacion</td>
-                        <td>
-                            @if (libro.EstaPrestado)
-                            {
-                                <span class="badge bg-warning">Prestado</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-success">Disponible</span>
-                            }
-                        </td>
                         <td>
                             <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(libro.LibroId)">
                                 <i class="bi bi-eye"></i> Detalles
@@ -72,10 +59,34 @@ else
 
 @code {
     private List<LibroDTO>? libros;
+    private List<LibroDTO> librosUnicos = new();
+    private Dictionary<string, int> ejemplaresPorIsbn = new Dictionary<string, int>();
 
     protected override async Task OnInitializedAsync()
     {
         libros = (await LibroService.GetAllLibrosAsync()).ToList();
+        if (libros != null)
+        {
+            // Agrupar por ISBN y tomar el primer libro de cada grupo
+            librosUnicos = libros.GroupBy(l => l.ISBN)
+                                .Select(g => g.First())
+                                .ToList();
+        }
+        await CargarNumeroEjemplares();
+    }
+
+    private async Task CargarNumeroEjemplares()
+    {
+        if (libros == null) return;
+        
+        // Agrupar libros por ISBN para evitar llamadas duplicadas
+        var isbnsUnicos = libros.Select(l => l.ISBN).Distinct();
+        
+        foreach (var isbn in isbnsUnicos)
+        {
+            var count = await LibroService.ContarEjemplaresPorIsbnAsync(isbn);
+            ejemplaresPorIsbn[isbn] = count;
+        }
     }
 
     private void VerDetalles(int libroId)
