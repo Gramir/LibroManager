@@ -128,7 +128,10 @@ public class PrestamoService : IPrestamoService
 
             prestamo.Estado = EstadoPrestamo.Activo;
             libro.Estado = EstadoLibro.Prestado;
-
+            
+            // Actualizar el estado del libro en la base de datos
+            _unitOfWork.Libros.Update(libro);
+            
             await _unitOfWork.Prestamos.AddAsync(prestamo);
             await _unitOfWork.SaveChangesAsync();
 
@@ -143,44 +146,63 @@ public class PrestamoService : IPrestamoService
         }
     }
 
-    public async Task<bool> UpdateAsync(PrestamoUpdateDTO prestamoDto)
+    public async Task<bool> UpdateAsync(PrestamoUpdateDTO prestamoUpdateDto)
     {
         try
         {
-            var prestamo = await _unitOfWork.Prestamos.GetByIdAsync(prestamoDto.PrestamoId);
-            if (prestamo == null)
+            var prestamoExistente = await _unitOfWork.Prestamos.GetByIdAsync(prestamoUpdateDto.PrestamoId);
+            if (prestamoExistente == null)
             {
-                _logger.LogWarning("Préstamo no encontrado: {PrestamoId}", prestamoDto.PrestamoId);
+                _logger.LogWarning("Préstamo no encontrado: {PrestamoId}", prestamoUpdateDto.PrestamoId);
                 return false;
             }
 
-            var libro = await _unitOfWork.Libros.GetByIdAsync(prestamo.LibroId);
+            var libro = await _unitOfWork.Libros.GetByIdAsync(prestamoExistente.LibroId);
             if (libro == null)
             {
-                _logger.LogWarning("Libro no encontrado: {LibroId}", prestamo.LibroId);
+                _logger.LogWarning("Libro no encontrado: {LibroId}", prestamoExistente.LibroId);
                 return false;
             }
 
-            // Actualizar los valores del préstamo
-            prestamo.FechaDevolucion = prestamoDto.FechaDevolucion;
-            prestamo.Estado = prestamoDto.Estado;
-
-            _unitOfWork.Prestamos.Update(prestamo);
-
-            // Si el préstamo ha sido devuelto, actualizar el estado del libro
-            if (prestamo.Estado == EstadoPrestamo.Concluido)
+            // Mapear los datos actualizados al préstamo existente
+            var prestamoActualizado = _mapper.Map<Prestamo>(prestamoUpdateDto);
+            
+            // Conservar datos que no están en el DTO
+            prestamoActualizado.LibroId = prestamoExistente.LibroId;
+            prestamoActualizado.EstudianteId = prestamoExistente.EstudianteId;
+            prestamoActualizado.FechaPrestamo = prestamoExistente.FechaPrestamo;
+            
+            // Si el préstamo ha sido devuelto, actualizar el estado del préstamo y del libro
+            if (prestamoActualizado.FechaDevolucion.HasValue)
             {
-                await ActualizarEstadoLibroAsync(libro);
+                prestamoActualizado.Estado = EstadoPrestamo.Concluido;
+            }
+            if (prestamoActualizado.Estado == EstadoPrestamo.Concluido && prestamoActualizado.FechaDevolucion.HasValue)
+            {
+                libro.Estado = EstadoLibro.Disponible;
+                _unitOfWork.Libros.Update(libro);
+                _logger.LogInformation("Estado del libro actualizado a Disponible: {LibroId}", libro.LibroId);
+            }
+            // Si el préstamo está expirado, marcar el libro como perdido
+            else if (prestamoActualizado.Estado == EstadoPrestamo.Expirado || 
+                     (prestamoActualizado.FechaVencimiento < DateTime.Now && prestamoActualizado.Estado == EstadoPrestamo.Activo))
+            {
+                prestamoActualizado.Estado = EstadoPrestamo.Expirado;
+                libro.Estado = EstadoLibro.Perdido;
+                _unitOfWork.Libros.Update(libro);
+                _logger.LogInformation("Estado del libro actualizado a Perdido: {LibroId}", libro.LibroId);
             }
 
+            // Actualizar el préstamo
+            _unitOfWork.Prestamos.Update(prestamoActualizado);
             await _unitOfWork.SaveChangesAsync();
 
-            _logger.LogInformation("Préstamo actualizado: {PrestamoId}", prestamo.PrestamoId);
+            _logger.LogInformation("Préstamo actualizado: {PrestamoId}", prestamoActualizado.PrestamoId);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al actualizar préstamo {PrestamoId}", prestamoDto.PrestamoId);
+            _logger.LogError(ex, "Error al actualizar préstamo {PrestamoId}", prestamoUpdateDto.PrestamoId);
             return false;
         }
     }
@@ -224,6 +246,8 @@ public class PrestamoService : IPrestamoService
         if (!tieneActivosCount)
         {
             libro.Estado = EstadoLibro.Disponible;
+            // Actualizar explícitamente el estado del libro en la base de datos
+            _unitOfWork.Libros.Update(libro);
             _logger.LogInformation("Estado del libro actualizado a Disponible: {LibroId}", libro.LibroId);
         }
     }
