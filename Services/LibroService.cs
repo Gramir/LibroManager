@@ -103,11 +103,14 @@ public class LibroService : ILibroService
                 return false;
             }
 
-            if (await _unitOfWork.Libros.SerialExistsAsync(libro.Serial))
+            // Generar un número de serie único para el primer ejemplar
+            string serial;
+            do
             {
-                _logger.LogWarning("Serial ya existe: {Serial}", libro.Serial);
-                return false;
-            }
+                serial = GenerateSerial();
+            } while (await _unitOfWork.Libros.SerialExistsAsync(serial));
+
+            libro.Serial = serial;
 
             await _unitOfWork.Libros.AddAsync(libro);
             await _unitOfWork.SaveChangesAsync();
@@ -122,6 +125,21 @@ public class LibroService : ILibroService
         }
     }
 
+    private string GenerateSerial()
+    {
+        // Formato: XXX-XXX-000 (letras mayúsculas, números y guiones)
+        var random = new Random();
+        var letters1 = new string(Enumerable.Range(0, 3)
+            .Select(_ => (char)('A' + random.Next(26)))
+            .ToArray());
+        var letters2 = new string(Enumerable.Range(0, 3)
+            .Select(_ => (char)('A' + random.Next(26)))
+            .ToArray());
+        var numbers = random.Next(1000).ToString("000");
+        
+        return $"{letters1}-{letters2}-{numbers}";
+    }
+
     public async Task<bool> UpdateLibroAsync(LibroUpdateDTO libroDto)
     {
         try
@@ -133,24 +151,12 @@ public class LibroService : ILibroService
                 return false;
             }
 
-            // Verificar si el ISBN ha cambiado y si ya existe
-            if (existingLibro.ISBN != libroDto.ISBN && await _unitOfWork.Libros.IsbnExistsAsync(libroDto.ISBN))
-            {
-                _logger.LogWarning("ISBN ya existe en otro libro: {ISBN}", libroDto.ISBN);
-                return false;
-            }
+            // No permitimos cambiar el ISBN ni el Serial
+            libroDto.ISBN = existingLibro.ISBN;
+            libroDto.Serial = existingLibro.Serial;
 
-            // Verificar si el Serial ha cambiado y si ya existe
-            if (existingLibro.Serial != libroDto.Serial && await _unitOfWork.Libros.SerialExistsAsync(libroDto.Serial))
-            {
-                _logger.LogWarning("Serial ya existe en otro libro: {Serial}", libroDto.Serial);
-                return false;
-            }
-
-            // Actualizar los valores del libro existente
+            // Actualizar solo los valores permitidos del libro existente
             existingLibro.Titulo = libroDto.Titulo;
-            existingLibro.ISBN = libroDto.ISBN;
-            existingLibro.Serial = libroDto.Serial;
             existingLibro.AutorId = libroDto.AutorId;
             existingLibro.CategoriaId = libroDto.CategoriaId;
             existingLibro.Ubicacion = libroDto.Ubicacion;
@@ -163,8 +169,8 @@ public class LibroService : ILibroService
 
             _unitOfWork.Libros.Update(existingLibro);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Libro actualizado: {LibroId}, Título: {Titulo}, ISBN: {ISBN}, Serial: {Serial}", 
-                existingLibro.LibroId, existingLibro.Titulo, existingLibro.ISBN, existingLibro.Serial);
+            _logger.LogInformation("Libro actualizado: {LibroId}, Título: {Titulo}", 
+                existingLibro.LibroId, existingLibro.Titulo);
             return true;
         }
         catch (Exception ex)
@@ -185,7 +191,7 @@ public class LibroService : ILibroService
                 return false;
             }
 
-            // Verificar primero si el ejemplar está prestado
+            // Verificar si el ejemplar específico está prestado
             if (await _unitOfWork.Libros.EstaPrestadoAsync(id))
             {
                 _logger.LogWarning("No se puede eliminar el libro {LibroId} porque está prestado", id);
@@ -194,18 +200,23 @@ public class LibroService : ILibroService
 
             // Obtener todos los ejemplares con el mismo ISBN
             var ejemplares = await _unitOfWork.Libros.GetAllAsync();
-            var cantidadEjemplares = ejemplares.Count(l => l.ISBN == libro.ISBN);
+            var ejemplaresDelMismoLibro = ejemplares.Where(l => l.ISBN == libro.ISBN).ToList();
 
-            // Si es el último ejemplar y hay préstamos activos de cualquier ejemplar, no permitir la eliminación
-            if (cantidadEjemplares == 1 && ejemplares.Any(l => l.ISBN == libro.ISBN && l.EstaPrestado))
+            // Si es el último ejemplar, verificar que no haya préstamos activos de ningún ejemplar
+            if (ejemplaresDelMismoLibro.Count == 1)
             {
-                _logger.LogWarning("No se puede eliminar el último ejemplar del libro con ISBN {ISBN} porque hay préstamos activos", libro.ISBN);
-                return false;
+                var hayPrestamosActivos = ejemplaresDelMismoLibro.Any(l => l.EstaPrestado);
+                if (hayPrestamosActivos)
+                {
+                    _logger.LogWarning("No se puede eliminar el último ejemplar del libro con ISBN {ISBN} porque hay préstamos activos", libro.ISBN);
+                    return false;
+                }
             }
 
             _unitOfWork.Libros.Remove(libro);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Libro eliminado: {LibroId}", id);
+            _logger.LogInformation("Libro eliminado: {LibroId}, ISBN: {ISBN}, Serial: {Serial}", 
+                id, libro.ISBN, libro.Serial);
             return true;
         }
         catch (Exception ex)
@@ -267,6 +278,50 @@ public class LibroService : ILibroService
         {
             _logger.LogError(ex, "Error al obtener ejemplares para ISBN {ISBN}", isbn);
             return Enumerable.Empty<LibroDTO>();
+        }
+    }
+
+    public async Task<bool> CreateEjemplarAsync(string isbn, string ubicacion)
+    {
+        try
+        {
+            // Obtener el libro original con sus detalles
+            var ejemplares = await _unitOfWork.Libros.GetLibrosWithAutorAndCategoriaAsync();
+            var primerEjemplar = ejemplares.FirstOrDefault(l => l.ISBN == isbn);
+            if (primerEjemplar == null)
+            {
+                _logger.LogWarning("No se encontró un libro con el ISBN {ISBN}", isbn);
+                return false;
+            }
+
+            // Generar un número de serie único para el nuevo ejemplar
+            string serial;
+            do
+            {
+                serial = GenerateSerial();
+            } while (await _unitOfWork.Libros.SerialExistsAsync(serial));
+
+            // Crear el nuevo ejemplar con los mismos datos del libro original
+            var nuevoEjemplar = new Libro
+            {
+                Titulo = primerEjemplar.Titulo,
+                ISBN = isbn,
+                Serial = serial,
+                AutorId = primerEjemplar.AutorId,
+                CategoriaId = primerEjemplar.CategoriaId,
+                Ubicacion = ubicacion
+            };
+
+            await _unitOfWork.Libros.AddAsync(nuevoEjemplar);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Nuevo ejemplar creado: ISBN: {ISBN}, Serial: {Serial}", isbn, serial);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear nuevo ejemplar para ISBN {ISBN}", isbn);
+            return false;
         }
     }
 }

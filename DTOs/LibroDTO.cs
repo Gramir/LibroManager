@@ -25,11 +25,6 @@ public class LibroCreateDTO
     [RegularExpression(@"^[0-9-]*$", ErrorMessage = "El ISBN solo puede contener números y guiones")]
     public string ISBN { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "El número de serie es requerido")]
-    [StringLength(50)]
-    [RegularExpression(@"^[A-Z0-9-]*$", ErrorMessage = "El Serial solo puede contener letras mayúsculas, números y guiones")]
-    public string Serial { get; set; } = string.Empty;
-
     [Required(ErrorMessage = "Debe seleccionar un autor")]
     [Range(1, int.MaxValue, ErrorMessage = "Por favor, seleccione un autor de la lista")]
     public int AutorId { get; set; }
@@ -46,4 +41,5 @@ public class LibroCreateDTO
 public class LibroUpdateDTO : LibroCreateDTO
 {
     public int LibroId { get; set; }
+    public string Serial { get; set; } = string.Empty; // Solo para mostrar en el formulario de edición, no se puede modificar
 }

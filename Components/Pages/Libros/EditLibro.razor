@@ -38,15 +38,14 @@
 
                     <div class="mb-3">
                         <label for="isbn" class="form-label">ISBN</label>
-                        <InputText id="isbn" class="form-control" @bind-Value="LibroDto.ISBN" />
-                        <ValidationMessage For="@(() => LibroDto.ISBN)" />
+                        <InputText id="isbn" class="form-control" @bind-Value="LibroDto.ISBN" disabled />
+                        <small class="text-muted">El ISBN no se puede modificar</small>
                     </div>
 
                     <div class="mb-3">
                         <label for="serial" class="form-label">Número de Serie</label>
-                        <InputText id="serial" class="form-control" @bind-Value="LibroDto.Serial" />
-                        <ValidationMessage For="@(() => LibroDto.Serial)" />
-                        <small class="form-text text-muted">Formato: XXX-XXX-000 (letras mayúsculas, números y guiones)</small>
+                        <InputText id="serial" class="form-control" @bind-Value="LibroDto.Serial" disabled />
+                        <small class="text-muted">El número de serie no se puede modificar</small>
                     </div>
 
                     <div class="mb-3">
@@ -163,18 +162,6 @@
 
         try
         {
-            if (LibroDto.ISBN != OriginalIsbn && await LibroService.ExisteIsbnAsync(LibroDto.ISBN))
-            {
-                ErrorMessage = "Ya existe un libro con este ISBN.";
-                return;
-            }
-
-            if (LibroDto.Serial != OriginalSerial && await LibroService.ExisteSerialAsync(LibroDto.Serial))
-            {
-                ErrorMessage = "Ya existe un libro con este número de serie.";
-                return;
-            }
-
             var result = await LibroService.UpdateLibroAsync(LibroDto);
             if (result)
             {

@@ -51,7 +51,12 @@
                 @if (_ejemplares.Any())
                 {
                     <div class="mt-4">
-                        <h4>Lista de Ejemplares</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4>Lista de Ejemplares</h4>
+                            <button class="btn btn-primary" @onclick="MostrarFormularioEjemplar">
+                                <i class="bi bi-plus-circle"></i> Crear Ejemplar
+                            </button>
+                        </div>
                         <div class="table-responsive">
                             <table class="table table-striped">
                                 <thead>
@@ -87,6 +92,17 @@
                         </div>
                     </div>
                 }
+                else
+                {
+                    <div class="mt-4">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No hay ejemplares registrados para este libro.
+                        </div>
+                        <button class="btn btn-primary" @onclick="MostrarFormularioEjemplar">
+                            <i class="bi bi-plus-circle"></i> Crear Ejemplar
+                        </button>
+                    </div>
+                }
             </div>
         </div>
     }
@@ -98,6 +114,33 @@
         </div>
     }
 </div>
+
+@if (_mostrarFormularioEjemplar)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Crear Nuevo Ejemplar</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarFormularioEjemplar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="ubicacion" class="form-label">Ubicación</label>
+                        <input type="text" class="form-control" id="ubicacion" @bind="_nuevaUbicacion" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarFormularioEjemplar">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="CrearEjemplar" disabled="@string.IsNullOrWhiteSpace(_nuevaUbicacion)">
+                        Crear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
 
 @if (_mostrarConfirmacion)
 {
@@ -137,6 +180,8 @@
     private string _errorMessage = string.Empty;
     private bool _mostrarConfirmacion;
     private LibroDTO? _ejemplarAEliminar;
+    private bool _mostrarFormularioEjemplar;
+    private string _nuevaUbicacion = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -239,5 +284,41 @@
     private bool TieneEjemplaresPrestados()
     {
         return _ejemplares.Any(e => e.EstaPrestado);
+    }
+
+    private void MostrarFormularioEjemplar()
+    {
+        _mostrarFormularioEjemplar = true;
+        _nuevaUbicacion = string.Empty;
+    }
+
+    private void CerrarFormularioEjemplar()
+    {
+        _mostrarFormularioEjemplar = false;
+        _nuevaUbicacion = string.Empty;
+    }
+
+    private async Task CrearEjemplar()
+    {
+        if (string.IsNullOrWhiteSpace(_nuevaUbicacion) || _libro == null)
+            return;
+
+        try
+        {
+            var result = await LibroService.CreateEjemplarAsync(_libro.ISBN, _nuevaUbicacion);
+            if (result)
+            {
+                _ejemplares = await LibroService.GetEjemplaresPorIsbnAsync(_libro.ISBN);
+                CerrarFormularioEjemplar();
+            }
+            else
+            {
+                _errorMessage = "No se pudo crear el ejemplar. Por favor, intente nuevamente.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al crear el ejemplar: {ex.Message}";
+        }
     }
 }

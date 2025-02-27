@@ -29,13 +29,6 @@
         </div>
 
         <div class="mb-3">
-            <label for="serial" class="form-label">Número de Serie</label>
-            <InputText id="serial" class="form-control" @bind-Value="@libroDto.Serial" />
-            <ValidationMessage For="@(() => libroDto.Serial)" />
-            <small class="form-text text-muted">Formato: XXX-XXX-000 (letras mayúsculas, números y guiones)</small>
-        </div>
-
-        <div class="mb-3">
             <label for="autor" class="form-label">Autor</label>
             <InputSelect id="autor" class="form-select" @bind-Value="@libroDto.AutorId">
                 <option value="0">Seleccione un autor...</option>
@@ -104,12 +97,6 @@
             if (await LibroService.ExisteIsbnAsync(libroDto.ISBN))
             {
                 _errorMessage = "Ya existe un libro con este ISBN.";
-                return;
-            }
-
-            if (await LibroService.ExisteSerialAsync(libroDto.Serial))
-            {
-                _errorMessage = "Ya existe un libro con este número de serie.";
                 return;
             }
 
