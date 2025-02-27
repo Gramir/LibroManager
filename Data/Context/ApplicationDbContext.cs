@@ -107,6 +107,7 @@ namespace LibroManager.Data.Context
 
             // Seed Libros
             modelBuilder.Entity<Libro>().HasData(
+                // Libros originales
                 new Libro { 
                     LibroId = 1, 
                     Titulo = "Cien años de soledad", 
@@ -194,6 +195,140 @@ namespace LibroManager.Data.Context
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
                     Ubicacion = "Estante C3-02"
+                },
+                
+                // Nuevos ejemplares con mismo ISBN pero seriales y ubicaciones diferentes
+                // Ejemplares adicionales de "Cien años de soledad"
+                new Libro { 
+                    LibroId = 9, 
+                    Titulo = "Cien años de soledad", 
+                    ISBN = "9780307474728", 
+                    Serial = "GAB-SOL-002",
+                    AutorId = 1, 
+                    CategoriaId = 1, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante A1-05"
+                },
+                new Libro { 
+                    LibroId = 10, 
+                    Titulo = "Cien años de soledad", 
+                    ISBN = "9780307474728", 
+                    Serial = "GAB-SOL-003",
+                    AutorId = 1, 
+                    CategoriaId = 1, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante A1-06"
+                },
+                
+                // Ejemplares adicionales de "Harry Potter y la piedra filosofal"
+                new Libro { 
+                    LibroId = 11, 
+                    Titulo = "Harry Potter y la piedra filosofal", 
+                    ISBN = "9788478884452", 
+                    Serial = "ROW-HP1-002",
+                    AutorId = 2, 
+                    CategoriaId = 2, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante B2-03"
+                },
+                new Libro { 
+                    LibroId = 12, 
+                    Titulo = "Harry Potter y la piedra filosofal", 
+                    ISBN = "9788478884452", 
+                    Serial = "ROW-HP1-003",
+                    AutorId = 2, 
+                    CategoriaId = 2, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante B2-04"
+                },
+                new Libro { 
+                    LibroId = 13, 
+                    Titulo = "Harry Potter y la piedra filosofal", 
+                    ISBN = "9788478884452", 
+                    Serial = "ROW-HP1-004",
+                    AutorId = 2, 
+                    CategoriaId = 2, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante B2-05"
+                },
+                
+                // Ejemplares adicionales de "El resplandor"
+                new Libro { 
+                    LibroId = 14, 
+                    Titulo = "El resplandor", 
+                    ISBN = "9788497593793", 
+                    Serial = "KIN-RES-002",
+                    AutorId = 3, 
+                    CategoriaId = 3, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante C3-03"
+                },
+                
+                // Ejemplares adicionales de "La casa de los espíritus"
+                new Libro { 
+                    LibroId = 15, 
+                    Titulo = "La casa de los espíritus", 
+                    ISBN = "9780525433477", 
+                    Serial = "ALL-ESP-002",
+                    AutorId = 4, 
+                    CategoriaId = 1, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante A1-07"
+                },
+                new Libro { 
+                    LibroId = 16, 
+                    Titulo = "La casa de los espíritus", 
+                    ISBN = "9780525433477", 
+                    Serial = "ALL-ESP-003",
+                    AutorId = 4, 
+                    CategoriaId = 1, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante A1-08"
+                },
+                
+                // Ejemplares adicionales de "Harry Potter y la cámara secreta"
+                new Libro { 
+                    LibroId = 17, 
+                    Titulo = "Harry Potter y la cámara secreta", 
+                    ISBN = "9788478884957", 
+                    Serial = "ROW-HP2-002",
+                    AutorId = 2, 
+                    CategoriaId = 2, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante B2-06"
+                },
+                new Libro { 
+                    LibroId = 18, 
+                    Titulo = "Harry Potter y la cámara secreta", 
+                    ISBN = "9788478884957", 
+                    Serial = "ROW-HP2-003",
+                    AutorId = 2, 
+                    CategoriaId = 2, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante B2-07"
+                },
+                
+                // Ejemplares adicionales de "It"
+                new Libro { 
+                    LibroId = 19, 
+                    Titulo = "It", 
+                    ISBN = "9781501142970", 
+                    Serial = "KIN-IT-002",
+                    AutorId = 3, 
+                    CategoriaId = 3, 
+                    Estado = EstadoLibro.Disponible, 
+                    FechaCreacion = fechaPredeterminada,
+                    Ubicacion = "Estante C3-04"
                 }
             );
 

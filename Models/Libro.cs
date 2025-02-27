@@ -11,7 +11,7 @@ public enum EstadoLibro
     Perdido
 }
 
-[Index(nameof(ISBN), IsUnique = false)]
+[Index(nameof(Ubicacion), IsUnique = true)]
 [Index(nameof(Serial), IsUnique = true)]
 public class Libro
 {
