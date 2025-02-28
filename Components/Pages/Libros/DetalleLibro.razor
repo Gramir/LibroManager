@@ -72,7 +72,7 @@
                                     {
                                         <tr>
                                             <td>@ejemplar.Serial</td>
-                                            <td>@ejemplar.Ubicacion</td>
+                                            <td>@ejemplar.UbicacionFormateada</td>
                                             <td>
                                                 <span class="badge @(ejemplar.EstaPrestado ? "bg-warning" : "bg-success")">
                                                     @(ejemplar.EstaPrestado ? "Prestado" : "Disponible")
@@ -126,8 +126,9 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="ubicacion" class="form-label">Ubicación</label>
-                        <input type="text" class="form-control" id="ubicacion" @bind="_nuevaUbicacion" />
+                        <label for="ubicacion" class="form-label">Ubicación (formato: A-1-1)</label>
+                        <input type="text" class="form-control" id="ubicacion" @bind="_nuevaUbicacion" placeholder="Ejemplo: A-1-1" />
+                        <small class="form-text text-muted">Formato: Estante(A-Z)-Nivel(1-10)-Posición(1-50)</small>
                     </div>
                 </div>
                 <div class="modal-footer">

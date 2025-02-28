@@ -17,6 +17,7 @@ namespace LibroManager.Data.Context
         public DbSet<Categoria> Categorias { get; set; }
         public DbSet<Estudiante> Estudiantes { get; set; }
         public DbSet<Prestamo> Prestamos { get; set; }
+        public DbSet<Ubicacion> Ubicaciones { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -32,6 +33,12 @@ namespace LibroManager.Data.Context
             modelBuilder.Entity<Libro>()
                 .HasOne(l => l.Categoria)
                 .WithMany(c => c.Libros)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            modelBuilder.Entity<Libro>()
+                .HasOne(l => l.Ubicacion)
+                .WithMany(u => u.Libros)
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired();
 
@@ -105,6 +112,25 @@ namespace LibroManager.Data.Context
                 new Categoria { CategoriaId = 5, Nombre = "Historia", FechaCreacion = fechaPredeterminada }
             );
 
+            // Seed Ubicaciones
+            modelBuilder.Entity<Ubicacion>().HasData(
+                new Ubicacion { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 },
+                new Ubicacion { UbicacionId = 2, Estante = "A", Nivel = 1, Posicion = 2 },
+                new Ubicacion { UbicacionId = 3, Estante = "A", Nivel = 1, Posicion = 3 },
+                new Ubicacion { UbicacionId = 4, Estante = "A", Nivel = 1, Posicion = 4 },
+                new Ubicacion { UbicacionId = 5, Estante = "B", Nivel = 2, Posicion = 1 },
+                new Ubicacion { UbicacionId = 6, Estante = "B", Nivel = 2, Posicion = 2 },
+                new Ubicacion { UbicacionId = 7, Estante = "B", Nivel = 2, Posicion = 3 },
+                new Ubicacion { UbicacionId = 8, Estante = "C", Nivel = 3, Posicion = 1 },
+                new Ubicacion { UbicacionId = 9, Estante = "C", Nivel = 3, Posicion = 2 },
+                new Ubicacion { UbicacionId = 10, Estante = "A", Nivel = 2, Posicion = 1 },
+                new Ubicacion { UbicacionId = 11, Estante = "A", Nivel = 2, Posicion = 2 },
+                new Ubicacion { UbicacionId = 12, Estante = "B", Nivel = 1, Posicion = 1 },
+                new Ubicacion { UbicacionId = 13, Estante = "B", Nivel = 1, Posicion = 2 },
+                new Ubicacion { UbicacionId = 14, Estante = "C", Nivel = 1, Posicion = 1 },
+                new Ubicacion { UbicacionId = 15, Estante = "C", Nivel = 1, Posicion = 2 }
+            );
+
             // Seed Libros
             modelBuilder.Entity<Libro>().HasData(
                 // Libros originales
@@ -117,7 +143,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 1, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante A1-01"
+                    UbicacionId = 1
                 },
                 new Libro { 
                     LibroId = 2, 
@@ -128,7 +154,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 2, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante B2-01"
+                    UbicacionId = 5
                 },
                 new Libro { 
                     LibroId = 3, 
@@ -139,7 +165,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 3, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante C3-01"
+                    UbicacionId = 8
                 },
                 new Libro { 
                     LibroId = 4, 
@@ -150,7 +176,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 1, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante A1-02"
+                    UbicacionId = 2
                 },
                 new Libro { 
                     LibroId = 5, 
@@ -161,7 +187,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 1, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante A1-03"
+                    UbicacionId = 3
                 },
                 new Libro { 
                     LibroId = 6, 
@@ -172,7 +198,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 1, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante A1-04"
+                    UbicacionId = 4
                 },
                 new Libro { 
                     LibroId = 7, 
@@ -183,7 +209,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 2, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante B2-02"
+                    UbicacionId = 6
                 },
                 new Libro { 
                     LibroId = 8, 
@@ -194,7 +220,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 3, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante C3-02"
+                    UbicacionId = 9
                 },
                 
                 // Nuevos ejemplares con mismo ISBN pero seriales y ubicaciones diferentes
@@ -208,7 +234,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 1, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante A1-05"
+                    UbicacionId = 10
                 },
                 new Libro { 
                     LibroId = 10, 
@@ -219,7 +245,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 1, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante A1-06"
+                    UbicacionId = 11
                 },
                 
                 // Ejemplares adicionales de "Harry Potter y la piedra filosofal"
@@ -232,7 +258,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 2, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante B2-03"
+                    UbicacionId = 12
                 },
                 new Libro { 
                     LibroId = 12, 
@@ -243,7 +269,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 2, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante B2-04"
+                    UbicacionId = 13
                 },
                 new Libro { 
                     LibroId = 13, 
@@ -254,7 +280,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 2, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante B2-05"
+                    UbicacionId = 5
                 },
                 
                 // Ejemplares adicionales de "El resplandor"
@@ -267,7 +293,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 3, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante C3-03"
+                    UbicacionId = 14
                 },
                 
                 // Ejemplares adicionales de "La casa de los espíritus"
@@ -280,7 +306,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 1, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante A1-07"
+                    UbicacionId = 15
                 },
                 new Libro { 
                     LibroId = 16, 
@@ -291,7 +317,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 1, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante A1-08"
+                    UbicacionId = 2
                 },
                 
                 // Ejemplares adicionales de "Harry Potter y la cámara secreta"
@@ -304,7 +330,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 2, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante B2-06"
+                    UbicacionId = 6
                 },
                 new Libro { 
                     LibroId = 18, 
@@ -315,7 +341,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 2, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante B2-07"
+                    UbicacionId = 7
                 },
                 
                 // Ejemplares adicionales de "It"
@@ -328,7 +354,7 @@ namespace LibroManager.Data.Context
                     CategoriaId = 3, 
                     Estado = EstadoLibro.Disponible, 
                     FechaCreacion = fechaPredeterminada,
-                    Ubicacion = "Estante C3-04"
+                    UbicacionId = 9
                 }
             );
 

@@ -11,9 +11,14 @@ public class AutoMapperProfile : Profile
         // Mapeos de Libro
         CreateMap<Libro, LibroDTO>()
             .ForMember(dest => dest.AutorNombre, opt => opt.MapFrom(src => src.Autor != null ? src.Autor.Nombre : string.Empty))
-            .ForMember(dest => dest.CategoriaNombre, opt => opt.MapFrom(src => src.Categoria != null ? src.Categoria.Nombre : string.Empty));
-        CreateMap<LibroCreateDTO, Libro>();
-        CreateMap<LibroUpdateDTO, Libro>();
+            .ForMember(dest => dest.CategoriaNombre, opt => opt.MapFrom(src => src.Categoria != null ? src.Categoria.Nombre : string.Empty))
+            .ForMember(dest => dest.UbicacionFormateada, opt => opt.MapFrom(src => src.Ubicacion != null ? src.Ubicacion.ObtenerUbicacionFormateada() : string.Empty));
+
+        CreateMap<LibroCreateDTO, Libro>()
+            .ForMember(dest => dest.UbicacionId, opt => opt.Ignore());
+
+        CreateMap<LibroUpdateDTO, Libro>()
+            .ForMember(dest => dest.UbicacionId, opt => opt.Ignore());
 
         // Mapeos de Autor
         CreateMap<Autor, AutorDTO>()

@@ -59,9 +59,10 @@
         </div>
 
         <div class="mb-3">
-            <label for="ubicacion" class="form-label">Ubicación</label>
-            <InputText id="ubicacion" class="form-control" @bind-Value="@libroDto.Ubicacion" />
-            <ValidationMessage For="@(() => libroDto.Ubicacion)" />
+            <label for="ubicacion" class="form-label">Ubicación (formato: A-1-1)</label>
+            <InputText id="ubicacion" class="form-control" @bind-Value="@libroDto.UbicacionString" placeholder="Ejemplo: A-1-1" />
+            <small class="form-text text-muted">Formato: Estante(A-Z)-Nivel(1-10)-Posición(1-50)</small>
+            <ValidationMessage For="@(() => libroDto.UbicacionString)" />
         </div>
 
         <div class="mb-3">
@@ -107,7 +108,7 @@
             }
             else
             {
-                _errorMessage = "No se pudo crear el libro. Por favor, intente nuevamente.";
+                _errorMessage = "No se pudo crear el libro. Por favor, verifique que la ubicación sea válida e intente nuevamente.";
             }
         }
         catch (Exception ex)

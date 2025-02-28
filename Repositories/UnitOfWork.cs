@@ -11,6 +11,7 @@ public class UnitOfWork : IUnitOfWork
     private IPrestamoRepository? _prestamoRepository;
     private IEstudianteRepository? _estudianteRepository;
     private ICategoriaRepository? _categoriaRepository;
+    private IUbicacionRepository? _ubicacionRepository;
 
     public UnitOfWork(ApplicationDbContext context)
     {
@@ -43,6 +44,9 @@ public class UnitOfWork : IUnitOfWork
 
     public ICategoriaRepository Categorias =>
         _categoriaRepository ??= new CategoriaRepository(_context);
+
+    public IUbicacionRepository Ubicaciones =>
+        _ubicacionRepository ??= new UbicacionRepository(_context);
 
     public async Task<int> SaveChangesAsync()
     {

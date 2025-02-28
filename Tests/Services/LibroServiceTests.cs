@@ -123,7 +123,7 @@ public class LibroServiceTests
             Serial = "TST-LBR-001",
             AutorId = 1,
             CategoriaId = 1,
-            Ubicacion = "Test-01"
+            UbicacionString = "A-1-1"
         };
 
         var libro = new Libro 
@@ -134,7 +134,12 @@ public class LibroServiceTests
             Serial = "TST-LBR-002",
             AutorId = 1,
             CategoriaId = 1,
-            Ubicacion = "Test-02"
+            UbicacionId = 1
+        };
+
+        var ubicaciones = new List<Ubicacion>
+        {
+            new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 }
         };
 
         _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
@@ -145,6 +150,8 @@ public class LibroServiceTests
             .ReturnsAsync(false);
         _mockLibroRepository.Setup(r => r.SerialExistsAsync(libroUpdateDto.Serial))
             .ReturnsAsync(false);
+        _mockUnitOfWork.Setup(u => u.Ubicaciones.GetAllAsync())
+            .ReturnsAsync(ubicaciones);
 
         // Act
         var result = await _libroService.UpdateLibroAsync(libroUpdateDto);

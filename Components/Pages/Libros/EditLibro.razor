@@ -79,9 +79,10 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="ubicacion" class="form-label">Ubicación</label>
-                        <InputText id="ubicacion" class="form-control" @bind-Value="LibroDto.Ubicacion" />
-                        <ValidationMessage For="@(() => LibroDto.Ubicacion)" />
+                        <label for="ubicacion" class="form-label">Ubicación (formato: A-1-1)</label>
+                        <InputText id="ubicacion" class="form-control" @bind-Value="LibroDto.UbicacionString" placeholder="Ejemplo: A-1-1" />
+                        <small class="form-text text-muted">Formato: Estante(A-Z)-Nivel(1-10)-Posición(1-50)</small>
+                        <ValidationMessage For="@(() => LibroDto.UbicacionString)" />
                     </div>
 
                     <div class="mb-3">
@@ -129,7 +130,7 @@
             Serial = libro.Serial,
             AutorId = 0,
             CategoriaId = 0,
-            Ubicacion = libro.Ubicacion
+            UbicacionString = libro.UbicacionFormateada
         };
 
         OriginalIsbn = libro.ISBN;
@@ -169,7 +170,7 @@
             }
             else
             {
-                ErrorMessage = "No se pudo actualizar el libro. Por favor, intente nuevamente.";
+                ErrorMessage = "No se pudo actualizar el libro. Por favor, verifique que la ubicación sea válida e intente nuevamente.";
             }
         }
         catch (Exception ex)

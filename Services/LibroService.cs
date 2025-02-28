@@ -31,6 +31,15 @@ public class LibroService : ILibroService
         try
         {
             var libros = await _unitOfWork.Libros.GetLibrosWithAutorAndCategoriaAsync();
+            foreach (var libro in libros)
+            {
+                // Load the ubicacion for each libro to ensure it's available for mapping
+                if (libro.Ubicacion == null)
+                {
+                    var ubicacion = await _unitOfWork.Ubicaciones.GetByIdAsync(libro.UbicacionId);
+                    libro.Ubicacion = ubicacion;
+                }
+            }
             return _mapper.Map<IEnumerable<LibroDTO>>(libros);
         }
         catch (Exception ex)
@@ -45,6 +54,16 @@ public class LibroService : ILibroService
         try
         {
             var libro = await _unitOfWork.Libros.GetLibroWithDetailsAsync(id);
+            if (libro == null)
+            {
+                return null;
+            }
+
+            if (libro.Ubicacion == null)
+            {
+                var ubicacion = await _unitOfWork.Ubicaciones.GetByIdAsync(libro.UbicacionId);
+                libro.Ubicacion = ubicacion;
+            }
             return _mapper.Map<LibroDTO>(libro);
         }
         catch (Exception ex)
@@ -67,11 +86,16 @@ public class LibroService : ILibroService
                 
             foreach (var libro in autor.Libros)
             {
-                // Load the categoria for each libro to ensure it's available for mapping
+                // Load the categoria and ubicacion for each libro
                 if (libro.Categoria == null)
                 {
                     var categoria = await _unitOfWork.Categorias.GetByIdAsync(libro.CategoriaId);
                     libro.Categoria = categoria;
+                }
+                if (libro.Ubicacion == null)
+                {
+                    var ubicacion = await _unitOfWork.Ubicaciones.GetByIdAsync(libro.UbicacionId);
+                    libro.Ubicacion = ubicacion;
                 }
             }
 
@@ -88,7 +112,28 @@ public class LibroService : ILibroService
     {
         try
         {
+            // Obtener la ubicación antes de crear el libro
+            var partes = libroDto.UbicacionString.Split('-');
+            if (partes.Length != 3)
+            {
+                _logger.LogWarning("Formato de ubicación inválido: {Ubicacion}", libroDto.UbicacionString);
+                return false;
+            }
+
+            var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
+            var ubicacion = ubicaciones.FirstOrDefault(u => 
+                u.Estante == partes[0] && 
+                u.Nivel == int.Parse(partes[1]) && 
+                u.Posicion == int.Parse(partes[2]));
+
+            if (ubicacion == null)
+            {
+                _logger.LogWarning("Ubicación no encontrada: {Ubicacion}", libroDto.UbicacionString);
+                return false;
+            }
+
             var libro = _mapper.Map<Libro>(libroDto);
+            libro.UbicacionId = ubicacion.UbicacionId;
             
             if (!await _validationService.LibroEsValido(libro))
             {
@@ -155,11 +200,31 @@ public class LibroService : ILibroService
             libroDto.ISBN = existingLibro.ISBN;
             libroDto.Serial = existingLibro.Serial;
 
+            // Obtener la ubicación
+            var partes = libroDto.UbicacionString.Split('-');
+            if (partes.Length != 3)
+            {
+                _logger.LogWarning("Formato de ubicación inválido: {Ubicacion}", libroDto.UbicacionString);
+                return false;
+            }
+
+            var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
+            var ubicacion = ubicaciones.FirstOrDefault(u => 
+                u.Estante == partes[0] && 
+                u.Nivel == int.Parse(partes[1]) && 
+                u.Posicion == int.Parse(partes[2]));
+
+            if (ubicacion == null)
+            {
+                _logger.LogWarning("Ubicación no encontrada: {Ubicacion}", libroDto.UbicacionString);
+                return false;
+            }
+
             // Actualizar solo los valores permitidos del libro existente
             existingLibro.Titulo = libroDto.Titulo;
             existingLibro.AutorId = libroDto.AutorId;
             existingLibro.CategoriaId = libroDto.CategoriaId;
-            existingLibro.Ubicacion = libroDto.Ubicacion;
+            existingLibro.UbicacionId = ubicacion.UbicacionId;
 
             if (!await _validationService.LibroEsValido(existingLibro))
             {
@@ -271,7 +336,17 @@ public class LibroService : ILibroService
         try
         {
             var libros = await _unitOfWork.Libros.GetAllAsync();
-            var ejemplares = libros.Where(l => l.ISBN == isbn);
+            var ejemplares = libros.Where(l => l.ISBN == isbn).ToList();
+            
+            // Cargar las ubicaciones para cada ejemplar
+            foreach (var ejemplar in ejemplares)
+            {
+                if (ejemplar.Ubicacion == null)
+                {
+                    ejemplar.Ubicacion = await _unitOfWork.Ubicaciones.GetByIdAsync(ejemplar.UbicacionId);
+                }
+            }
+            
             return _mapper.Map<IEnumerable<LibroDTO>>(ejemplares);
         }
         catch (Exception ex)
@@ -285,6 +360,27 @@ public class LibroService : ILibroService
     {
         try
         {
+            // Parsear la ubicación (formato esperado: "A-1-1")
+            var partes = ubicacion.Split('-');
+            if (partes.Length != 3)
+            {
+                _logger.LogWarning("Formato de ubicación inválido: {Ubicacion}", ubicacion);
+                return false;
+            }
+
+            // Buscar la ubicación en la base de datos
+            var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
+            var ubicacionEncontrada = ubicaciones.FirstOrDefault(u => 
+                u.Estante == partes[0] && 
+                u.Nivel == int.Parse(partes[1]) && 
+                u.Posicion == int.Parse(partes[2]));
+
+            if (ubicacionEncontrada == null)
+            {
+                _logger.LogWarning("Ubicación no encontrada: {Ubicacion}", ubicacion);
+                return false;
+            }
+
             // Obtener el libro original con sus detalles
             var ejemplares = await _unitOfWork.Libros.GetLibrosWithAutorAndCategoriaAsync();
             var primerEjemplar = ejemplares.FirstOrDefault(l => l.ISBN == isbn);
@@ -309,13 +405,16 @@ public class LibroService : ILibroService
                 Serial = serial,
                 AutorId = primerEjemplar.AutorId,
                 CategoriaId = primerEjemplar.CategoriaId,
-                Ubicacion = ubicacion
+                UbicacionId = ubicacionEncontrada.UbicacionId,
+                Estado = EstadoLibro.Disponible,
+                FechaCreacion = DateTime.Now
             };
 
             await _unitOfWork.Libros.AddAsync(nuevoEjemplar);
             await _unitOfWork.SaveChangesAsync();
 
-            _logger.LogInformation("Nuevo ejemplar creado: ISBN: {ISBN}, Serial: {Serial}", isbn, serial);
+            _logger.LogInformation("Nuevo ejemplar creado: ISBN: {ISBN}, Serial: {Serial}, Ubicacion: {Ubicacion}", 
+                isbn, serial, ubicacion);
             return true;
         }
         catch (Exception ex)

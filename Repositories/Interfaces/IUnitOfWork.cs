@@ -7,5 +7,6 @@ public interface IUnitOfWork : IDisposable
     IPrestamoRepository Prestamos { get; }
     IEstudianteRepository Estudiantes { get; }
     ICategoriaRepository Categorias { get; }
+    IUbicacionRepository Ubicaciones { get; }
     Task<int> SaveChangesAsync();
 }

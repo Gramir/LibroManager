@@ -11,7 +11,6 @@ public enum EstadoLibro
     Perdido
 }
 
-[Index(nameof(Ubicacion), IsUnique = true)]
 [Index(nameof(Serial), IsUnique = true)]
 public class Libro
 {
@@ -49,8 +48,7 @@ public class Libro
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
 
     [Required(ErrorMessage = "La ubicación es requerida")]
-    [StringLength(100, ErrorMessage = "La ubicación no puede exceder los 100 caracteres")]
-    public string Ubicacion { get; set; } = string.Empty;
+    public int UbicacionId { get; set; }
 
     [NotMapped]
     public bool EstaPrestado => Estado == EstadoLibro.Prestado;
@@ -67,6 +65,9 @@ public class Libro
     
     [ForeignKey("CategoriaId")]
     public Categoria? Categoria { get; set; }
+    
+    [ForeignKey("UbicacionId")]
+    public Ubicacion? Ubicacion { get; set; }
     
     public ICollection<Prestamo>? Prestamos { get; set; }
 }
