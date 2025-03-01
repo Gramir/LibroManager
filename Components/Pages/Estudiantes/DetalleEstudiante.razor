@@ -1,0 +1,204 @@
+@page "/estudiantes/{EstudianteId:int}"
+@using LibroManager.DTOs
+@using LibroManager.Models
+@using LibroManager.Services.Interfaces
+@inject IEstudianteService EstudianteService
+@inject IPrestamoService PrestamoService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Detalle del Estudiante</PageTitle>
+
+<div class="container mt-4">
+    @if (_estudiante == null)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">@_estudiante.Nombre</h3>
+                <div>
+                    <button class="btn btn-warning me-2" @onclick="EditarEstudiante">Editar</button>
+                    <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@(_estudiante.PrestamosActivos > 0)">
+                        Eliminar
+                    </button>
+                    <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+                    @if (_estudiante.PrestamosActivos > 0)
+                    {
+                        <div class="text-danger mt-2 small">
+                            <i class="bi bi-exclamation-circle"></i> No se puede eliminar un estudiante que tiene préstamos activos
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Email:</dt>
+                            <dd class="col-sm-8">@_estudiante.Email</dd>
+                            <dt class="col-sm-4">Fecha de inscripción:</dt>
+                            <dd class="col-sm-8">@_estudiante.FechaInscripcion.ToShortDateString()</dd>
+                            <dt class="col-sm-4">Préstamos Activos:</dt>
+                            <dd class="col-sm-8">@_estudiante.PrestamosActivos</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                @if (_prestamos.Any())
+                {
+                    <div class="mt-4">
+                        <h4>Préstamos del Estudiante</h4>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Libro</th>
+                                        <th>Fecha de préstamo</th>
+                                        <th>Fecha de vencimiento</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var prestamo in _prestamos)
+                                    {
+                                        <tr>
+                                            <td>@prestamo.LibroTitulo</td>
+                                            <td>@prestamo.FechaPrestamo.ToShortDateString()</td>
+                                            <td>@prestamo.FechaVencimiento.ToShortDateString()</td>
+                                            <td>
+                                                <span class="badge @GetEstadoBadgeClass(prestamo.EstaActivo)">
+                                                    @(prestamo.EstaActivo ? "Activo" : "Concluido")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-primary btn-sm" @onclick="() => VerDetalleLibro(prestamo.PrestamoId)">
+                                                    <i class="bi bi-eye"></i> Detalles
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @_errorMessage
+        </div>
+    }
+</div>
+
+@if (_mostrarConfirmacion)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" @onclick="CancelarEliminacion"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea eliminar el estudiante '@_estudiante?.Nombre'?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelarEliminacion">Cancelar</button>
+                    <button type="button" class="btn btn-danger" @onclick="EliminarEstudiante">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter]
+    public int EstudianteId { get; set; }
+
+    private EstudianteDTO? _estudiante;
+    private IEnumerable<PrestamoDTO> _prestamos = Array.Empty<PrestamoDTO>();
+    private string _errorMessage = string.Empty;
+    private bool _mostrarConfirmacion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _estudiante = await EstudianteService.GetByIdAsync(EstudianteId);
+        if (_estudiante == null)
+        {
+            NavigationManager.NavigateTo("/estudiantes");
+            return;
+        }
+
+        // Get préstamos by estudiante if there are any
+        if (_estudiante.PrestamosActivos > 0)
+        {
+            var prestamos = await PrestamoService.GetPrestamosByEstudianteAsync(EstudianteId);
+            _prestamos = prestamos ?? Array.Empty<PrestamoDTO>();
+        }
+    }
+
+    private string GetEstadoBadgeClass(bool estaActivo)
+    {
+        return estaActivo ? "bg-warning" : "bg-success";
+    }
+
+    private void Volver()
+    {
+        NavigationManager.NavigateTo("/estudiantes");
+    }
+
+    private void EditarEstudiante()
+    {
+        NavigationManager.NavigateTo($"/estudiantes/editar/{EstudianteId}");
+    }
+
+    private void VerDetalleLibro(int prestamoId)
+    {
+        NavigationManager.NavigateTo($"/prestamos/{prestamoId}");
+    }
+
+    private void MostrarConfirmacion()
+    {
+        _mostrarConfirmacion = true;
+    }
+
+    private void CancelarEliminacion()
+    {
+        _mostrarConfirmacion = false;
+    }
+
+    private async Task EliminarEstudiante()
+    {
+        _mostrarConfirmacion = false;
+        
+        try
+        {
+            var result = await EstudianteService.DeleteAsync(EstudianteId);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/estudiantes");
+            }
+            else
+            {
+                _errorMessage = "No se pudo eliminar el estudiante. Puede que tenga préstamos activos o ya no exista.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al eliminar el estudiante: {ex.Message}";
+        }
+    }
+}

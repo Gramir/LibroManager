@@ -1,0 +1,135 @@
+@page "/prestamos/editar/{PrestamoId:int}"
+@using LibroManager.Services.Interfaces
+@using LibroManager.DTOs
+@using LibroManager.Models
+@inject IPrestamoService PrestamoService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Editar Préstamo - LibroManager</PageTitle>
+
+<div class="container">
+    <h1>Editar Préstamo</h1>
+
+    @if (PrestamoDto == null)
+    {
+        <p><em>Cargando...</em></p>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-6">
+                <EditForm Model="PrestamoDto" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-3">
+                        <label class="form-label">Libro</label>
+                        <input type="text" class="form-control" value="@Prestamo?.LibroTitulo" disabled />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Estudiante</label>
+                        <input type="text" class="form-control" value="@Prestamo?.EstudianteNombre" disabled />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Fecha de Préstamo</label>
+                        <input type="text" class="form-control" value="@Prestamo?.FechaPrestamo.ToShortDateString()" disabled />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fechaVencimiento" class="form-label">Fecha de Vencimiento</label>
+                        <InputDate id="fechaVencimiento" class="form-control" @bind-Value="PrestamoDto.FechaVencimiento" />
+                        <ValidationMessage For="@(() => PrestamoDto.FechaVencimiento)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fechaDevolucion" class="form-label">Fecha de Devolución</label>
+                        <InputDate id="fechaDevolucion" class="form-control" @bind-Value="PrestamoDto.FechaDevolucion" />
+                        <small class="form-text text-muted">Complete este campo solo cuando el libro sea devuelto.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="estado" class="form-label">Estado</label>
+                        <InputSelect id="estado" class="form-select" @bind-Value="PrestamoDto.Estado">
+                            @foreach (var estado in Enum.GetValues(typeof(EstadoPrestamo)))
+                            {
+                                <option value="@estado">@estado</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => PrestamoDto.Estado)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                        <button type="button" class="btn btn-secondary" @onclick="Cancelar">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </button>
+                    </div>
+                </EditForm>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="alert alert-danger mt-3">
+                        @_errorMessage
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int PrestamoId { get; set; }
+
+    private PrestamoUpdateDTO? PrestamoDto;
+    private PrestamoDTO? Prestamo;
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Prestamo = await PrestamoService.GetByIdAsync(PrestamoId);
+        if (Prestamo == null)
+        {
+            NavigationManager.NavigateTo("/prestamos");
+            return;
+        }
+
+        PrestamoDto = new PrestamoUpdateDTO
+        {
+            PrestamoId = PrestamoId,
+            FechaVencimiento = Prestamo.FechaVencimiento,
+            Estado = Prestamo.EstaActivo ? EstadoPrestamo.Activo : EstadoPrestamo.Concluido
+        };
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (PrestamoDto == null) return;
+
+        try
+        {
+            var result = await PrestamoService.UpdateAsync(PrestamoDto);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/prestamos");
+            }
+            else
+            {
+                _errorMessage = "No se pudo actualizar el préstamo";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private void Cancelar()
+    {
+        NavigationManager.NavigateTo("/prestamos");
+    }
+}

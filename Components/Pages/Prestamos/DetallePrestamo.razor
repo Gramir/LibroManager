@@ -1,0 +1,166 @@
+@page "/prestamos/{PrestamoId:int}"
+@using LibroManager.DTOs
+@using LibroManager.Models
+@using LibroManager.Services.Interfaces
+@inject IPrestamoService PrestamoService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Detalle del Préstamo</PageTitle>
+
+<div class="container mt-4">
+    @if (_prestamo == null)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Préstamo de Libro</h3>
+                <div>
+                    <button class="btn btn-warning me-2" @onclick="EditarPrestamo">Editar</button>
+                    <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@(_prestamo.EstaActivo)">
+                        Eliminar
+                    </button>
+                    <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+                    @if (_prestamo.EstaActivo)
+                    {
+                        <div class="text-danger mt-2 small">
+                            <i class="bi bi-exclamation-circle"></i> No se puede eliminar un préstamo activo
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Libro:</dt>
+                            <dd class="col-sm-8">@_prestamo.LibroTitulo</dd>
+
+                            <dt class="col-sm-4">Estudiante:</dt>
+                            <dd class="col-sm-8">@_prestamo.EstudianteNombre</dd>
+
+                            <dt class="col-sm-4">Fecha de Préstamo:</dt>
+                            <dd class="col-sm-8">@_prestamo.FechaPrestamo.ToShortDateString()</dd>
+
+                            <dt class="col-sm-4">Fecha de Vencimiento:</dt>
+                            <dd class="col-sm-8">
+                                <span class="@(_prestamo.FechaVencimiento < DateTime.Now && _prestamo.EstaActivo ? "text-danger" : "")">
+                                    @_prestamo.FechaVencimiento.ToShortDateString()
+                                </span>
+                            </dd>
+
+                            <dt class="col-sm-4">Estado:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge @GetEstadoBadgeClass(_prestamo.EstaActivo)">
+                                    @(_prestamo.EstaActivo ? "Activo" : "Concluido")
+                                </span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @_errorMessage
+        </div>
+    }
+</div>
+
+@if (_mostrarConfirmacion)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" @onclick="CancelarEliminacion"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea eliminar este préstamo?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelarEliminacion">Cancelar</button>
+                    <button type="button" class="btn btn-danger" @onclick="EliminarPrestamo">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter]
+    public int PrestamoId { get; set; }
+
+    private PrestamoDTO? _prestamo;
+    private string _errorMessage = string.Empty;
+    private bool _mostrarConfirmacion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _prestamo = await PrestamoService.GetByIdAsync(PrestamoId);
+        if (_prestamo == null)
+        {
+            NavigationManager.NavigateTo("/prestamos");
+            return;
+        }
+    }
+
+    private string GetEstadoBadgeClass(bool estaActivo)
+    {
+        return estaActivo ? "bg-warning" : "bg-success";
+    }
+
+    private void EditarPrestamo()
+    {
+        NavigationManager.NavigateTo($"/prestamos/editar/{PrestamoId}");
+    }
+
+    private void Volver()
+    {
+        NavigationManager.NavigateTo("/prestamos");
+    }
+
+    private void MostrarConfirmacion()
+    {
+        _mostrarConfirmacion = true;
+    }
+
+    private void CancelarEliminacion()
+    {
+        _mostrarConfirmacion = false;
+    }
+
+    private async Task EliminarPrestamo()
+    {
+        _mostrarConfirmacion = false;
+        
+        try
+        {
+            var result = await PrestamoService.DeleteAsync(PrestamoId);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/prestamos");
+            }
+            else
+            {
+                _errorMessage = "No se pudo eliminar el préstamo. Puede que esté activo o ya no exista.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al eliminar el préstamo: {ex.Message}";
+        }
+    }
+}

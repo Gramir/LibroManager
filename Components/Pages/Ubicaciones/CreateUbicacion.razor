@@ -1,0 +1,88 @@
+@page "/ubicaciones/crear"
+@using LibroManager.Services.Interfaces
+@using LibroManager.DTOs
+@using Microsoft.AspNetCore.Components.Web
+@inject IUbicacionService UbicacionService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Crear Ubicación - LibroManager</PageTitle>
+
+<div class="container">
+    <h1>Crear Nueva Ubicación</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <EditForm Model="@ubicacionDto" OnValidSubmit="@HandleValidSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label for="estante" class="form-label">Estante</label>
+                    <InputText id="estante" class="form-control" @bind-Value="@ubicacionDto.Estante" />
+                    <small class="form-text text-muted">Debe ser una letra mayúscula (A-Z)</small>
+                    <ValidationMessage For="@(() => ubicacionDto.Estante)" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="nivel" class="form-label">Nivel</label>
+                    <InputNumber id="nivel" class="form-control" @bind-Value="@ubicacionDto.Nivel" />
+                    <small class="form-text text-muted">Debe estar entre 1 y 10</small>
+                    <ValidationMessage For="@(() => ubicacionDto.Nivel)" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="posicion" class="form-label">Posición</label>
+                    <InputNumber id="posicion" class="form-control" @bind-Value="@ubicacionDto.Posicion" />
+                    <small class="form-text text-muted">Debe estar entre 1 y 50</small>
+                    <ValidationMessage For="@(() => ubicacionDto.Posicion)" />
+                </div>
+
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                    <button type="button" class="btn btn-secondary" @onclick="@Cancelar">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                </div>
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">
+                    @errorMessage
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private UbicacionCreateDTO ubicacionDto = new();
+    private string errorMessage = string.Empty;
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var result = await UbicacionService.CreateUbicacionAsync(ubicacionDto);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/ubicaciones");
+            }
+            else
+            {
+                errorMessage = "No se pudo crear la ubicación. Es posible que ya exista una ubicación en esa posición.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private void Cancelar()
+    {
+        NavigationManager.NavigateTo("/ubicaciones");
+    }
+}

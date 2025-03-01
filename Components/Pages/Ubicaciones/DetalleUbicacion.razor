@@ -1,0 +1,207 @@
+@page "/ubicaciones/{UbicacionId:int}"
+@using LibroManager.DTOs
+@using LibroManager.Services.Interfaces
+@inject IUbicacionService UbicacionService
+@inject ILibroService LibroService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Detalle de Ubicación</PageTitle>
+
+<div class="container mt-4">
+    @if (_ubicacion == null)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">@_ubicacion.UbicacionFormateada</h3>
+                <div>
+                    <button class="btn btn-warning me-2" @onclick="EditarUbicacion">Editar</button>
+                    <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@(!_ubicacion.EstaDisponible)">
+                        Eliminar
+                    </button>
+                    <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+                    @if (!_ubicacion.EstaDisponible)
+                    {
+                        <div class="text-danger mt-2 small">
+                            <i class="bi bi-exclamation-circle"></i> No se puede eliminar una ubicación que tiene libros asignados
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Estante:</dt>
+                            <dd class="col-sm-8">@_ubicacion.Estante</dd>
+
+                            <dt class="col-sm-4">Nivel:</dt>
+                            <dd class="col-sm-8">@_ubicacion.Nivel</dd>
+
+                            <dt class="col-sm-4">Posición:</dt>
+                            <dd class="col-sm-8">@_ubicacion.Posicion</dd>
+
+                            <dt class="col-sm-4">Estado:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge @(_ubicacion.EstaDisponible ? "bg-success" : "bg-warning")">
+                                    @(_ubicacion.EstaDisponible ? "Disponible" : "Ocupada")
+                                </span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+
+                @if (_libros.Any())
+                {
+                    <div class="mt-4">
+                        <h4>Libros en esta Ubicación</h4>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>ISBN</th>
+                                        <th>Autor</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var libro in _libros)
+                                    {
+                                        <tr>
+                                            <td>@libro.Titulo</td>
+                                            <td>@libro.ISBN</td>
+                                            <td>@libro.AutorNombre</td>
+                                            <td>
+                                                <span class="badge @(libro.EstaPrestado ? "bg-warning" : "bg-success")">
+                                                    @(libro.EstaPrestado ? "Prestado" : "Disponible")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-primary btn-sm" @onclick="() => VerDetalleLibro(libro.LibroId)">
+                                                    <i class="bi bi-eye"></i> Detalles
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @_errorMessage
+        </div>
+    }
+</div>
+
+@if (_mostrarConfirmacion)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" @onclick="CancelarEliminacion"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea eliminar la ubicación '@_ubicacion?.UbicacionFormateada'?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelarEliminacion">Cancelar</button>
+                    <button type="button" class="btn btn-danger" @onclick="EliminarUbicacion">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter]
+    public int UbicacionId { get; set; }
+
+    private UbicacionDTO? _ubicacion;
+    private IEnumerable<LibroDTO> _libros = Array.Empty<LibroDTO>();
+    private string _errorMessage = string.Empty;
+    private bool _mostrarConfirmacion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _ubicacion = await UbicacionService.GetUbicacionByIdAsync(UbicacionId);
+        if (_ubicacion == null)
+        {
+            NavigationManager.NavigateTo("/ubicaciones");
+            return;
+        }
+
+        // Get books in this location
+        if (!_ubicacion.EstaDisponible)
+        {
+            var libros = await LibroService.GetLibrosPorUbicacionAsync(UbicacionId);
+            _libros = libros ?? Array.Empty<LibroDTO>();
+        }
+    }
+
+    private void EditarUbicacion()
+    {
+        NavigationManager.NavigateTo($"/ubicaciones/editar/{UbicacionId}");
+    }
+
+    private void VerDetalleLibro(int libroId)
+    {
+        NavigationManager.NavigateTo($"/libros/{libroId}");
+    }
+
+    private void Volver()
+    {
+        NavigationManager.NavigateTo("/ubicaciones");
+    }
+
+    private void MostrarConfirmacion()
+    {
+        _mostrarConfirmacion = true;
+    }
+
+    private void CancelarEliminacion()
+    {
+        _mostrarConfirmacion = false;
+    }
+
+    private async Task EliminarUbicacion()
+    {
+        _mostrarConfirmacion = false;
+        
+        try
+        {
+            var result = await UbicacionService.DeleteUbicacionAsync(UbicacionId);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/ubicaciones");
+            }
+            else
+            {
+                _errorMessage = "No se pudo eliminar la ubicación. Puede que tenga libros asignados o ya no exista.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al eliminar la ubicación: {ex.Message}";
+        }
+    }
+}

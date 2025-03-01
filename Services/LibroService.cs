@@ -423,4 +423,28 @@ public class LibroService : ILibroService
             return false;
         }
     }
+
+    public async Task<IEnumerable<LibroDTO>> GetLibrosPorUbicacionAsync(int ubicacionId)
+    {
+        try
+        {
+            var libros = await _unitOfWork.Libros.GetLibrosWithAutorAndCategoriaAsync();
+            var librosEnUbicacion = libros.Where(l => l.UbicacionId == ubicacionId).ToList();
+
+            foreach (var libro in librosEnUbicacion)
+            {
+                if (libro.Ubicacion == null)
+                {
+                    libro.Ubicacion = await _unitOfWork.Ubicaciones.GetByIdAsync(libro.UbicacionId);
+                }
+            }
+
+            return _mapper.Map<IEnumerable<LibroDTO>>(librosEnUbicacion);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener libros para la ubicación {UbicacionId}", ubicacionId);
+            return Enumerable.Empty<LibroDTO>();
+        }
+    }
 }

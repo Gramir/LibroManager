@@ -1,0 +1,107 @@
+@page "/estudiantes/editar/{EstudianteId:int}"
+@using LibroManager.Services.Interfaces
+@using LibroManager.DTOs
+@inject IEstudianteService EstudianteService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Editar Estudiante - LibroManager</PageTitle>
+
+<div class="container">
+    <h1>Editar Estudiante</h1>
+
+    @if (EstudianteDto == null)
+    {
+        <p><em>Cargando...</em></p>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-6">
+                <EditForm Model="EstudianteDto" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <InputText id="nombre" class="form-control" @bind-Value="EstudianteDto.Nombre" />
+                        <ValidationMessage For="@(() => EstudianteDto.Nombre)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <InputText id="email" class="form-control" @bind-Value="EstudianteDto.Email" />
+                        <ValidationMessage For="@(() => EstudianteDto.Email)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                        <button type="button" class="btn btn-secondary" @onclick="Cancelar">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </button>
+                    </div>
+                </EditForm>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="alert alert-danger mt-3">
+                        @_errorMessage
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int EstudianteId { get; set; }
+
+    private EstudianteUpdateDTO? EstudianteDto;
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var estudiante = await EstudianteService.GetByIdAsync(EstudianteId);
+        if (estudiante == null)
+        {
+            NavigationManager.NavigateTo("/estudiantes");
+            return;
+        }
+
+        EstudianteDto = new EstudianteUpdateDTO
+        {
+            EstudianteId = estudiante.EstudianteId,
+            Nombre = estudiante.Nombre,
+            Email = estudiante.Email
+        };
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (EstudianteDto == null) return;
+
+        try
+        {
+            var result = await EstudianteService.UpdateAsync(EstudianteDto);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/estudiantes");
+            }
+            else
+            {
+                _errorMessage = "No se pudo actualizar el estudiante";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private void Cancelar()
+    {
+        NavigationManager.NavigateTo("/estudiantes");
+    }
+}

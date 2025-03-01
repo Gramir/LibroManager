@@ -1,0 +1,118 @@
+@page "/ubicaciones/editar/{UbicacionId:int}"
+@using LibroManager.Services.Interfaces
+@using LibroManager.DTOs
+@using Microsoft.AspNetCore.Components.Web
+@inject IUbicacionService UbicacionService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Editar Ubicación - LibroManager</PageTitle>
+
+<div class="container">
+    <h1>Editar Ubicación</h1>
+
+    @if (UbicacionDto == null)
+    {
+        <p><em>Cargando...</em></p>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-6">
+                <EditForm Model="UbicacionDto" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-3">
+                        <label for="estante" class="form-label">Estante</label>
+                        <InputText id="estante" class="form-control" @bind-Value="UbicacionDto.Estante" />
+                        <small class="form-text text-muted">Debe ser una letra mayúscula (A-Z)</small>
+                        <ValidationMessage For="@(() => UbicacionDto.Estante)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="nivel" class="form-label">Nivel</label>
+                        <InputNumber id="nivel" class="form-control" @bind-Value="UbicacionDto.Nivel" />
+                        <small class="form-text text-muted">Debe estar entre 1 y 10</small>
+                        <ValidationMessage For="@(() => UbicacionDto.Nivel)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="posicion" class="form-label">Posición</label>
+                        <InputNumber id="posicion" class="form-control" @bind-Value="UbicacionDto.Posicion" />
+                        <small class="form-text text-muted">Debe estar entre 1 y 50</small>
+                        <ValidationMessage For="@(() => UbicacionDto.Posicion)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                        <button type="button" class="btn btn-secondary" @onclick="Cancelar">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </button>
+                    </div>
+                </EditForm>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="alert alert-danger mt-3">
+                        @_errorMessage
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int UbicacionId { get; set; }
+
+    private UbicacionUpdateDTO? UbicacionDto;
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var ubicacion = await UbicacionService.GetUbicacionByIdAsync(UbicacionId);
+        if (ubicacion == null)
+        {
+            NavigationManager.NavigateTo("/ubicaciones");
+            return;
+        }
+
+        UbicacionDto = new UbicacionUpdateDTO
+        {
+            UbicacionId = ubicacion.UbicacionId,
+            Estante = ubicacion.Estante,
+            Nivel = ubicacion.Nivel,
+            Posicion = ubicacion.Posicion
+        };
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (UbicacionDto == null) return;
+
+        try
+        {
+            var result = await UbicacionService.UpdateUbicacionAsync(UbicacionId, UbicacionDto);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/ubicaciones");
+            }
+            else
+            {
+                _errorMessage = "No se pudo actualizar la ubicación. Es posible que ya exista una ubicación en esa posición.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private void Cancelar()
+    {
+        NavigationManager.NavigateTo("/ubicaciones");
+    }
+}

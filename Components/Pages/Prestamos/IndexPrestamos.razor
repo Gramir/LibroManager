@@ -1,0 +1,86 @@
+@page "/prestamos"
+@using LibroManager.DTOs
+@using LibroManager.Services.Interfaces
+@inject IPrestamoService PrestamoService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Préstamos - LibroManager</PageTitle>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Préstamos</h1>
+        <a href="/prestamos/crear" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nuevo Préstamo
+        </a>
+    </div>
+
+    @if (_prestamos == null)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else if (!_prestamos.Any())
+    {
+        <div class="alert alert-info" role="alert">
+            No hay préstamos registrados.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Libro</th>
+                        <th>Estudiante</th>
+                        <th>Fecha de Préstamo</th>
+                        <th>Fecha de Vencimiento</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var prestamo in _prestamos)
+                    {
+                        <tr>
+                            <td>@prestamo.LibroTitulo</td>
+                            <td>@prestamo.EstudianteNombre</td>
+                            <td>@prestamo.FechaPrestamo.ToShortDateString()</td>
+                            <td>
+                                <span class="@(prestamo.FechaVencimiento < DateTime.Now && prestamo.EstaActivo ? "text-danger" : "")">
+                                    @prestamo.FechaVencimiento.ToShortDateString()
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @(prestamo.EstaActivo ? "bg-warning" : "bg-success")">
+                                    @(prestamo.EstaActivo ? "Activo" : "Concluido")
+                                </span>
+                            </td>
+                            <td>
+                                <a href="/prestamos/@prestamo.PrestamoId" class="btn btn-primary btn-sm me-2">
+                                    <i class="bi bi-eye"></i> Detalles
+                                </a>
+                                <a href="/prestamos/editar/@prestamo.PrestamoId" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-pencil"></i> Editar
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private IEnumerable<PrestamoDTO>? _prestamos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _prestamos = await PrestamoService.GetAllAsync();
+    }
+}

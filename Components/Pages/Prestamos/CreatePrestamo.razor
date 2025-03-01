@@ -1,0 +1,115 @@
+@page "/prestamos/crear"
+@using LibroManager.Services.Interfaces
+@using LibroManager.DTOs
+@inject IPrestamoService PrestamoService
+@inject ILibroService LibroService
+@inject IEstudianteService EstudianteService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Crear Préstamo - LibroManager</PageTitle>
+
+<div class="container">
+    <h1>Crear Nuevo Préstamo</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <EditForm Model="@prestamoDto" OnValidSubmit="@HandleValidSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label for="libro" class="form-label">Libro</label>
+                    <InputSelect id="libro" class="form-select" @bind-Value="prestamoDto.LibroId">
+                        <option value="0">Seleccione un libro...</option>
+                        @if (Libros != null)
+                        {
+                            @foreach (var libro in Libros.Where(l => !l.EstaPrestado))
+                            {
+                                <option value="@libro.LibroId">@libro.Titulo (@libro.ISBN)</option>
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => prestamoDto.LibroId)" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="estudiante" class="form-label">Estudiante</label>
+                    <InputSelect id="estudiante" class="form-select" @bind-Value="prestamoDto.EstudianteId">
+                        <option value="0">Seleccione un estudiante...</option>
+                        @if (Estudiantes != null)
+                        {
+                            @foreach (var estudiante in Estudiantes)
+                            {
+                                <option value="@estudiante.EstudianteId">@estudiante.Nombre (@estudiante.Email)</option>
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => prestamoDto.EstudianteId)" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="fechaVencimiento" class="form-label">Fecha de Vencimiento</label>
+                    <InputDate id="fechaVencimiento" class="form-control" @bind-Value="prestamoDto.FechaVencimiento" />
+                    <ValidationMessage For="@(() => prestamoDto.FechaVencimiento)" />
+                </div>
+
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                    <button type="button" class="btn btn-secondary" @onclick="@Cancelar">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                </div>
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">
+                    @errorMessage
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private PrestamoCreateDTO prestamoDto = new()
+    {
+        FechaVencimiento = DateTime.Now.AddDays(7)
+    };
+    private IEnumerable<LibroDTO>? Libros;
+    private IEnumerable<EstudianteDTO>? Estudiantes;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Libros = await LibroService.GetAllLibrosAsync();
+        Estudiantes = await EstudianteService.GetAllAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var result = await PrestamoService.CreateAsync(prestamoDto);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/prestamos");
+            }
+            else
+            {
+                errorMessage = "No se pudo crear el préstamo. Verifique que el libro esté disponible y el estudiante no tenga préstamos vencidos.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private void Cancelar()
+    {
+        NavigationManager.NavigateTo("/prestamos");
+    }
+}

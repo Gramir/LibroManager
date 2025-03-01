@@ -1,0 +1,103 @@
+@page "/estudiantes"
+@using LibroManager.DTOs
+@using LibroManager.Services.Interfaces
+@inject IEstudianteService EstudianteService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Estudiantes - LibroManager</PageTitle>
+
+<h1>Catálogo de Estudiantes</h1>
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="CrearEstudiante">
+        <i class="bi bi-plus-circle"></i> Crear Estudiante
+    </button>
+</div>
+
+@if (estudiantes == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Fecha de Inscripción</th>
+                    <th>Préstamos Activos</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var estudiante in estudiantes)
+                {
+                    <tr>
+                        <td>@estudiante.EstudianteId</td>
+                        <td>@estudiante.Nombre</td>
+                        <td>@estudiante.Email</td>
+                        <td>@estudiante.FechaInscripcion.ToShortDateString()</td>
+                        <td>@estudiante.PrestamosActivos</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(estudiante.EstudianteId)">
+                                <i class="bi bi-eye"></i> Detalles
+                            </button>
+                            <button class="btn btn-warning btn-sm me-1" @onclick="() => EditarEstudiante(estudiante.EstudianteId)">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (errorMessage != null)
+{
+    <div class="alert alert-danger mt-3">
+        @errorMessage
+    </div>
+}
+
+@code {
+    private IEnumerable<EstudianteDTO>? estudiantes;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarEstudiantes();
+    }
+
+    private async Task CargarEstudiantes()
+    {
+        try
+        {
+            estudiantes = await EstudianteService.GetAllAsync();
+            errorMessage = null;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar estudiantes: {ex.Message}";
+        }
+    }
+
+    private void VerDetalles(int estudianteId)
+    {
+        NavigationManager.NavigateTo($"/estudiantes/{estudianteId}");
+    }
+
+    private void CrearEstudiante()
+    {
+        NavigationManager.NavigateTo("/estudiantes/crear");
+    }
+
+    private void EditarEstudiante(int estudianteId)
+    {
+        NavigationManager.NavigateTo($"/estudiantes/editar/{estudianteId}");
+    }
+}
