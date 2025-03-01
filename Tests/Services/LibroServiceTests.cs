@@ -17,6 +17,7 @@ public class LibroServiceTests
     private readonly Mock<ILibroRepository> _mockLibroRepository;
     private readonly Mock<IAutorRepository> _mockAutorRepository;
     private readonly Mock<ICategoriaRepository> _mockCategoriaRepository;
+    private readonly Mock<IUbicacionRepository> _mockUbicacionRepository;
     private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<ILogger<LibroService>> _mockLogger;
     private readonly LibroService _libroService;
@@ -28,12 +29,14 @@ public class LibroServiceTests
         _mockLibroRepository = new Mock<ILibroRepository>();
         _mockAutorRepository = new Mock<IAutorRepository>();
         _mockCategoriaRepository = new Mock<ICategoriaRepository>();
+        _mockUbicacionRepository = new Mock<IUbicacionRepository>();
         _mockMapper = new Mock<IMapper>();
         _mockLogger = new Mock<ILogger<LibroService>>();
 
         _mockUnitOfWork.Setup(u => u.Libros).Returns(_mockLibroRepository.Object);
         _mockUnitOfWork.Setup(u => u.Autores).Returns(_mockAutorRepository.Object);
         _mockUnitOfWork.Setup(u => u.Categorias).Returns(_mockCategoriaRepository.Object);
+        _mockUnitOfWork.Setup(u => u.Ubicaciones).Returns(_mockUbicacionRepository.Object);
         
         _libroService = new LibroService(_mockUnitOfWork.Object, _mockValidationService.Object, _mockMapper.Object, _mockLogger.Object);
     }
@@ -47,7 +50,8 @@ public class LibroServiceTests
             Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = 1,
-            CategoriaId = 1
+            CategoriaId = 1,
+            UbicacionString = "A-1-1" // Este campo es correcto para LibroCreateDTO
         };
 
         var libro = new Libro 
@@ -55,15 +59,25 @@ public class LibroServiceTests
             Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = 1,
-            CategoriaId = 1
+            CategoriaId = 1,
+            UbicacionId = 1
+        };
+
+        var ubicaciones = new List<Ubicacion>
+        {
+            new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 }
         };
 
         _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
             .ReturnsAsync(true);
         _mockLibroRepository.Setup(r => r.IsbnExistsAsync(It.IsAny<string>()))
             .ReturnsAsync(false);
+        _mockLibroRepository.Setup(r => r.SerialExistsAsync(It.IsAny<string>()))
+            .ReturnsAsync(false);
         _mockMapper.Setup(m => m.Map<Libro>(libroCreateDto))
             .Returns(libro);
+        _mockUbicacionRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(ubicaciones);
 
         // Act
         var result = await _libroService.CreateLibroAsync(libroCreateDto);
@@ -84,7 +98,9 @@ public class LibroServiceTests
             Titulo = "Test Libro",
             ISBN = "1234567890",
             Autor = new Autor { Nombre = "Test Autor" },
-            Categoria = new Categoria { Nombre = "Test Categoria" }
+            Categoria = new Categoria { Nombre = "Test Categoria" },
+            UbicacionId = 1,
+            Ubicacion = new Ubicacion { Estante = "A", Nivel = 1, Posicion = 1 }
         };
 
         var libroDto = new LibroDTO
@@ -93,7 +109,8 @@ public class LibroServiceTests
             Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorNombre = "Test Autor",
-            CategoriaNombre = "Test Categoria"
+            CategoriaNombre = "Test Categoria",
+            UbicacionFormateada = "A-1-1"
         };
 
         _mockLibroRepository.Setup(r => r.GetLibroWithDetailsAsync(1))
@@ -150,7 +167,7 @@ public class LibroServiceTests
             .ReturnsAsync(false);
         _mockLibroRepository.Setup(r => r.SerialExistsAsync(libroUpdateDto.Serial))
             .ReturnsAsync(false);
-        _mockUnitOfWork.Setup(u => u.Ubicaciones.GetAllAsync())
+        _mockUbicacionRepository.Setup(u => u.GetAllAsync())
             .ReturnsAsync(ubicaciones);
 
         // Act
@@ -194,7 +211,9 @@ public class LibroServiceTests
                 LibroId = 1, 
                 Titulo = "Libro 1",
                 Autor = new Autor { Nombre = "Autor 1" },
-                Categoria = new Categoria { Nombre = "Categoria 1" }
+                Categoria = new Categoria { Nombre = "Categoria 1" },
+                UbicacionId = 1,
+                Ubicacion = new Ubicacion { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 }
             }
         };
 
@@ -205,7 +224,8 @@ public class LibroServiceTests
                 LibroId = 1, 
                 Titulo = "Libro 1",
                 AutorNombre = "Autor 1",
-                CategoriaNombre = "Categoria 1"
+                CategoriaNombre = "Categoria 1",
+                UbicacionFormateada = "A-1-1"
             }
         };
 
@@ -234,7 +254,8 @@ public class LibroServiceTests
             Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = 1,
-            CategoriaId = 1
+            CategoriaId = 1,
+            UbicacionString = "A-1-1"
         };
 
         var libro = new Libro 
@@ -283,12 +304,13 @@ public class LibroServiceTests
             Titulo = "",  // Invalid title
             ISBN = "1234567890",
             AutorId = 1,
-            CategoriaId = 1
+            CategoriaId = 1,
+            UbicacionString = "A-1-1"
         };
 
         var libro = new Libro();
-        _mockMapper.Setup(m => m.Map<Libro>(libroUpdateDto))
-            .Returns(libro);
+        _mockLibroRepository.Setup(r => r.GetByIdAsync(1))
+            .ReturnsAsync(libro);
         _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
             .ReturnsAsync(false);
 
@@ -311,14 +333,10 @@ public class LibroServiceTests
             Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = 1,
-            CategoriaId = 1
+            CategoriaId = 1,
+            UbicacionString = "A-1-1"
         };
 
-        var libro = new Libro();
-        _mockMapper.Setup(m => m.Map<Libro>(libroUpdateDto))
-            .Returns(libro);
-        _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
-            .ReturnsAsync(true);
         _mockLibroRepository.Setup(r => r.GetByIdAsync(999))
             .ReturnsAsync((Libro?)null);
 
@@ -392,14 +410,18 @@ public class LibroServiceTests
                     LibroId = 1,
                     Titulo = "Libro 1",
                     ISBN = "1234567890",
-                    Categoria = new Categoria { Nombre = "Categoría 1" }
+                    Categoria = new Categoria { Nombre = "Categoría 1" },
+                    UbicacionId = 1,
+                    Ubicacion = new Ubicacion { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 }
                 },
                 new() 
                 { 
                     LibroId = 2,
                     Titulo = "Libro 2",
                     ISBN = "0987654321",
-                    Categoria = new Categoria { Nombre = "Categoría 2" }
+                    Categoria = new Categoria { Nombre = "Categoría 2" },
+                    UbicacionId = 2,
+                    Ubicacion = new Ubicacion { UbicacionId = 2, Estante = "B", Nivel = 2, Posicion = 2 }
                 }
             }
         };
@@ -411,14 +433,16 @@ public class LibroServiceTests
                 LibroId = 1,
                 Titulo = "Libro 1",
                 ISBN = "1234567890",
-                CategoriaNombre = "Categoría 1"
+                CategoriaNombre = "Categoría 1",
+                UbicacionFormateada = "A-1-1"
             },
             new() 
             { 
                 LibroId = 2,
                 Titulo = "Libro 2",
                 ISBN = "0987654321",
-                CategoriaNombre = "Categoría 2"
+                CategoriaNombre = "Categoría 2",
+                UbicacionFormateada = "B-2-2"
             }
         };
 
@@ -484,6 +508,8 @@ public class LibroServiceTests
         // Arrange
         var categoria1 = new Categoria { CategoriaId = 1, Nombre = "Categoría 1" };
         var categoria2 = new Categoria { CategoriaId = 2, Nombre = "Categoría 2" };
+        var ubicacion1 = new Ubicacion { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 };
+        var ubicacion2 = new Ubicacion { UbicacionId = 2, Estante = "B", Nivel = 2, Posicion = 2 };
 
         var autor = new Autor 
         { 
@@ -496,14 +522,16 @@ public class LibroServiceTests
                     LibroId = 1,
                     Titulo = "Libro 1",
                     ISBN = "1234567890",
-                    CategoriaId = 1
+                    CategoriaId = 1,
+                    UbicacionId = 1
                 },
                 new() 
                 { 
                     LibroId = 2,
                     Titulo = "Libro 2",
                     ISBN = "0987654321",
-                    CategoriaId = 2
+                    CategoriaId = 2,
+                    UbicacionId = 2
                 }
             }
         };
@@ -515,14 +543,16 @@ public class LibroServiceTests
                 LibroId = 1,
                 Titulo = "Libro 1",
                 ISBN = "1234567890",
-                CategoriaNombre = "Categoría 1"
+                CategoriaNombre = "Categoría 1",
+                UbicacionFormateada = "A-1-1"
             },
             new() 
             { 
                 LibroId = 2,
                 Titulo = "Libro 2",
                 ISBN = "0987654321",
-                CategoriaNombre = "Categoría 2"
+                CategoriaNombre = "Categoría 2",
+                UbicacionFormateada = "B-2-2"
             }
         };
 
@@ -532,6 +562,10 @@ public class LibroServiceTests
             .ReturnsAsync(categoria1);
         _mockCategoriaRepository.Setup(r => r.GetByIdAsync(2))
             .ReturnsAsync(categoria2);
+        _mockUbicacionRepository.Setup(r => r.GetByIdAsync(1))
+            .ReturnsAsync(ubicacion1);
+        _mockUbicacionRepository.Setup(r => r.GetByIdAsync(2))
+            .ReturnsAsync(ubicacion2);
         _mockMapper.Setup(m => m.Map<IEnumerable<LibroDTO>>(It.IsAny<IEnumerable<Libro>>()))
             .Returns(librosDto);
 
@@ -542,5 +576,6 @@ public class LibroServiceTests
         Assert.NotNull(result);
         Assert.Equal(2, result.Count());
         _mockCategoriaRepository.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Exactly(2));
+        _mockUbicacionRepository.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Exactly(2));
     }
 }
