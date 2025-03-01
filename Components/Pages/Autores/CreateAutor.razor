@@ -1,0 +1,72 @@
+@page "/autores/crear"
+@using LibroManager.Services.Interfaces
+@using LibroManager.DTOs
+@inject IAutorService AutorService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Crear Autor - LibroManager</PageTitle>
+
+<div class="container">
+    <h1>Crear Nuevo Autor</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <EditForm Model="@autorDto" OnValidSubmit="@HandleValidSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre</label>
+                    <InputText id="nombre" class="form-control" @bind-Value="@autorDto.Nombre" />
+                    <ValidationMessage For="@(() => autorDto.Nombre)" />
+                </div>
+
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                    <button type="button" class="btn btn-secondary" @onclick="@Cancelar">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                </div>
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">
+                    @errorMessage
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private AutorCreateDTO autorDto = new();
+    private string errorMessage = string.Empty;
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var result = await AutorService.CreateAsync(autorDto);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/autores");
+            }
+            else
+            {
+                errorMessage = "No se pudo crear el autor";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private void Cancelar()
+    {
+        NavigationManager.NavigateTo("/autores");
+    }
+}
