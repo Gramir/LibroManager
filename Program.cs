@@ -30,6 +30,7 @@ builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 // Agregar los servicios faltantes
 builder.Services.AddScoped<IEstudianteService, EstudianteService>();
 builder.Services.AddScoped<IPrestamoService, PrestamoService>();
+builder.Services.AddScoped<IUbicacionService, UbicacionService>();
 
 var app = builder.Build();
 

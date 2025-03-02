@@ -48,5 +48,11 @@ public class AutoMapperProfile : Profile
         CreateMap<PrestamoCreateDTO, Prestamo>()
             .ForMember(dest => dest.FechaPrestamo, opt => opt.MapFrom(src => DateTime.Now));
         CreateMap<PrestamoUpdateDTO, Prestamo>();
+        
+        // Mapeos de Ubicacion
+        CreateMap<Ubicacion, UbicacionDTO>()
+            .ForMember(dest => dest.EstaDisponible, opt => opt.MapFrom(src => src.Libros == null || !src.Libros.Any()));
+        CreateMap<UbicacionCreateDTO, Ubicacion>();
+        CreateMap<UbicacionUpdateDTO, Ubicacion>();
     }
 }
