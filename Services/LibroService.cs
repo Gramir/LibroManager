@@ -331,6 +331,20 @@ public class LibroService : ILibroService
         }
     }
 
+    public async Task<int> ContarEjemplaresPrestadosPorIsbnAsync(string isbn)
+    {
+        try
+        {
+            var libros = await _unitOfWork.Libros.GetAllAsync();
+            return libros.Count(l => l.ISBN == isbn && l.Estado == EstadoLibro.Prestado);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al contar ejemplares prestados para ISBN {ISBN}", isbn);
+            return 0;
+        }
+    }
+
     public async Task<IEnumerable<LibroDTO>> GetEjemplaresPorIsbnAsync(string isbn)
     {
         try

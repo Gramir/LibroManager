@@ -578,4 +578,93 @@ public class LibroServiceTests
         _mockCategoriaRepository.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Exactly(2));
         _mockUbicacionRepository.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Exactly(2));
     }
+
+    [Fact]
+    public async Task ContarEjemplaresPrestadosPorIsbnAsync_ConLibrosPrestados_ReturnsCantidadCorrecta()
+    {
+        // Arrange
+        var isbn = "1234567890";
+        var libros = new List<Libro>
+        {
+            new() { ISBN = isbn, Estado = EstadoLibro.Prestado },
+            new() { ISBN = isbn, Estado = EstadoLibro.Prestado },
+            new() { ISBN = isbn, Estado = EstadoLibro.Disponible },
+            new() { ISBN = "9876543210", Estado = EstadoLibro.Prestado } // Otro ISBN
+        };
+
+        _mockUnitOfWork.Setup(uow => uow.Libros.GetAllAsync())
+            .ReturnsAsync(libros);
+
+        // Act
+        var result = await _libroService.ContarEjemplaresPrestadosPorIsbnAsync(isbn);
+
+        // Assert
+        Assert.Equal(2, result);
+        _mockUnitOfWork.Verify(uow => uow.Libros.GetAllAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task ContarEjemplaresPrestadosPorIsbnAsync_SinLibrosPrestados_ReturnsZero()
+    {
+        // Arrange
+        var isbn = "1234567890";
+        var libros = new List<Libro>
+        {
+            new() { ISBN = isbn, Estado = EstadoLibro.Disponible },
+            new() { ISBN = isbn, Estado = EstadoLibro.Disponible },
+            new() { ISBN = "9876543210", Estado = EstadoLibro.Prestado } // Otro ISBN
+        };
+
+        _mockUnitOfWork.Setup(uow => uow.Libros.GetAllAsync())
+            .ReturnsAsync(libros);
+
+        // Act
+        var result = await _libroService.ContarEjemplaresPrestadosPorIsbnAsync(isbn);
+
+        // Assert
+        Assert.Equal(0, result);
+        _mockUnitOfWork.Verify(uow => uow.Libros.GetAllAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task ContarEjemplaresPrestadosPorIsbnAsync_CuandoNoExistenLibros_ReturnsZero()
+    {
+        // Arrange
+        var isbn = "1234567890";
+        var libros = new List<Libro>();
+
+        _mockUnitOfWork.Setup(uow => uow.Libros.GetAllAsync())
+            .ReturnsAsync(libros);
+
+        // Act
+        var result = await _libroService.ContarEjemplaresPrestadosPorIsbnAsync(isbn);
+
+        // Assert
+        Assert.Equal(0, result);
+        _mockUnitOfWork.Verify(uow => uow.Libros.GetAllAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task ContarEjemplaresPrestadosPorIsbnAsync_CuandoOcurreError_ReturnsZero()
+    {
+        // Arrange
+        var isbn = "1234567890";
+        _mockUnitOfWork.Setup(uow => uow.Libros.GetAllAsync())
+            .ThrowsAsync(new Exception("Error simulado"));
+
+        // Act
+        var result = await _libroService.ContarEjemplaresPrestadosPorIsbnAsync(isbn);
+
+        // Assert
+        Assert.Equal(0, result);
+        _mockUnitOfWork.Verify(uow => uow.Libros.GetAllAsync(), Times.Once);
+        _mockLogger.Verify(
+            l => l.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error al contar ejemplares prestados")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()!),
+            Times.Once);
+    }
 }

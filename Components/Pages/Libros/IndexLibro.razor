@@ -36,18 +36,33 @@ else
             <tbody>
                 @foreach (var libro in librosUnicos)
                 {
+                    var totalEjemplares = ejemplaresPorIsbn.TryGetValue(libro.ISBN, out var count) ? count : 0;
+                    var prestados = ejemplaresPrestadosPorIsbn.TryGetValue(libro.ISBN, out var prestadosCount) ? prestadosCount : 0;
+                    var disponibles = totalEjemplares - prestados;
+                    var colorClass = disponibles > 0 ? "text-success" : "text-danger";
+
                     <tr>
                         <td>@libro.Titulo</td>
                         <td>@libro.ISBN</td>
-                        <td>@(ejemplaresPorIsbn.TryGetValue(libro.ISBN, out var count) ? count : 0)</td>
+                        <td class="@colorClass">
+                            <strong>@disponibles</strong> disponibles 
+                            <span class="text-muted">|</span> 
+                            @prestados prestados
+                            <span class="text-muted">|</span> 
+                            @totalEjemplares total
+                        </td>
                         <td>@libro.AutorNombre</td>
                         <td>@libro.CategoriaNombre</td>
                         <td>
                             <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(libro.LibroId)">
                                 <i class="bi bi-eye"></i> Detalles
                             </button>
-                            <button class="btn btn-warning btn-sm" @onclick="() => EditarLibro(libro.LibroId)">
+                            <button class="btn btn-warning btn-sm me-1" @onclick="() => EditarLibro(libro.LibroId)">
                                 <i class="bi bi-pencil"></i> Editar
+                            </button>
+                            <button class="btn btn-success btn-sm" @onclick="() => PrestarLibro(libro.LibroId)"
+                                    disabled="@(disponibles <= 0)">
+                                <i class="bi bi-book"></i> Prestar
                             </button>
                         </td>
                     </tr>
@@ -60,14 +75,14 @@ else
 @code {
     private List<LibroDTO>? libros;
     private List<LibroDTO> librosUnicos = new();
-    private Dictionary<string, int> ejemplaresPorIsbn = new Dictionary<string, int>();
+    private Dictionary<string, int> ejemplaresPorIsbn = new();
+    private Dictionary<string, int> ejemplaresPrestadosPorIsbn = new();
 
     protected override async Task OnInitializedAsync()
     {
         libros = (await LibroService.GetAllLibrosAsync()).ToList();
         if (libros != null)
         {
-            // Agrupar por ISBN y tomar el primer libro de cada grupo
             librosUnicos = libros.GroupBy(l => l.ISBN)
                                 .Select(g => g.First())
                                 .ToList();
@@ -79,13 +94,15 @@ else
     {
         if (libros == null) return;
         
-        // Agrupar libros por ISBN para evitar llamadas duplicadas
         var isbnsUnicos = libros.Select(l => l.ISBN).Distinct();
         
         foreach (var isbn in isbnsUnicos)
         {
             var count = await LibroService.ContarEjemplaresPorIsbnAsync(isbn);
             ejemplaresPorIsbn[isbn] = count;
+            
+            var prestados = await LibroService.ContarEjemplaresPrestadosPorIsbnAsync(isbn);
+            ejemplaresPrestadosPorIsbn[isbn] = prestados;
         }
     }
 
@@ -102,5 +119,10 @@ else
     private void EditarLibro(int libroId)
     {
         NavigationManager.NavigateTo($"/libros/editar/{libroId}");
+    }
+
+    private void PrestarLibro(int libroId)
+    {
+        NavigationManager.NavigateTo($"/prestamos/crear/{libroId}");
     }
 }
