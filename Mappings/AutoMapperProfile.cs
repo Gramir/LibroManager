@@ -12,7 +12,8 @@ public class AutoMapperProfile : Profile
         CreateMap<Libro, LibroDTO>()
             .ForMember(dest => dest.AutorNombre, opt => opt.MapFrom(src => src.Autor != null ? src.Autor.Nombre : string.Empty))
             .ForMember(dest => dest.CategoriaNombre, opt => opt.MapFrom(src => src.Categoria != null ? src.Categoria.Nombre : string.Empty))
-            .ForMember(dest => dest.UbicacionFormateada, opt => opt.MapFrom(src => src.Ubicacion != null ? src.Ubicacion.ObtenerUbicacionFormateada() : string.Empty));
+            .ForMember(dest => dest.UbicacionFormateada, opt => opt.MapFrom(src => src.Ubicacion != null ? src.Ubicacion.ObtenerUbicacionFormateada() : string.Empty))
+            .ForMember(dest => dest.EstaPrestado, opt => opt.MapFrom(src => src.Estado == EstadoLibro.Prestado));
 
         CreateMap<LibroCreateDTO, Libro>()
             .ForMember(dest => dest.UbicacionId, opt => opt.Ignore());
@@ -51,7 +52,8 @@ public class AutoMapperProfile : Profile
         
         // Mapeos de Ubicacion
         CreateMap<Ubicacion, UbicacionDTO>()
-            .ForMember(dest => dest.EstaDisponible, opt => opt.MapFrom(src => src.Libros == null || !src.Libros.Any()));
+            .ForMember(dest => dest.EstaDisponible, opt => opt.MapFrom(src => src.Libros == null || !src.Libros.Any()))
+            .ForMember(dest => dest.UbicacionFormateada, opt => opt.MapFrom(src => src.ObtenerUbicacionFormateada()));
         CreateMap<UbicacionCreateDTO, Ubicacion>();
         CreateMap<UbicacionUpdateDTO, Ubicacion>();
     }

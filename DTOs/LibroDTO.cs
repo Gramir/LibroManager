@@ -35,7 +35,6 @@ public class LibroCreateDTO
     public int CategoriaId { get; set; }
 
     [Required(ErrorMessage = "Debe seleccionar una ubicación")]
-    [RegularExpression(@"^[A-Z]-[1-9][0-9]?-[1-4]?[0-9]$", ErrorMessage = "El formato de ubicación debe ser 'A-1-1' (Estante-Nivel-Posición)")]
     public string UbicacionString { get; set; } = string.Empty;
 }
 
@@ -60,6 +59,5 @@ public class LibroUpdateDTO
     public int CategoriaId { get; set; }
 
     [Required(ErrorMessage = "Debe seleccionar una ubicación")]
-    [RegularExpression(@"^[A-Z]-[1-9][0-9]?-[1-4]?[0-9]$", ErrorMessage = "El formato de ubicación debe ser 'A-1-1' (Estante-Nivel-Posición)")]
     public string UbicacionString { get; set; } = string.Empty;
 }

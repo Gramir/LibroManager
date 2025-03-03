@@ -182,4 +182,59 @@ public class LibroValidationServiceTests
         // Assert
         Assert.False(result);
     }
+
+    [Theory]
+    [InlineData("A-1-1", true)]  // Ubicación válida
+    [InlineData("X-99-99", false)]  // Ubicación inválida
+    [InlineData("", false)]  // String vacío
+    [InlineData(null, false)]  // Null
+    public async Task ValidarUbicacionSeleccionada_RetornaResultadoEsperado(string? ubicacionString, bool resultadoEsperado)
+    {
+        // Arrange
+        var ubicaciones = new List<Ubicacion>
+        {
+            new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 },
+            new() { UbicacionId = 2, Estante = "A", Nivel = 1, Posicion = 2 }
+        };
+
+        _context.Ubicaciones.AddRange(ubicaciones);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _validationService.ValidarUbicacionSeleccionada(ubicacionString!);
+
+        // Assert
+        Assert.Equal(resultadoEsperado, result);
+    }
+
+    [Fact]
+    public async Task ValidarUbicacionSeleccionada_RetornaFalse_CuandoNoHayUbicaciones()
+    {
+        // Arrange - No agregar ubicaciones al contexto
+
+        // Act
+        var result = await _validationService.ValidarUbicacionSeleccionada("A-1-1");
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task ValidarUbicacionSeleccionada_ValidaFormato()
+    {
+        // Arrange
+        var ubicaciones = new List<Ubicacion>
+        {
+            new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 }
+        };
+
+        _context.Ubicaciones.AddRange(ubicaciones);
+        await _context.SaveChangesAsync();
+
+        // Act & Assert
+        Assert.True(await _validationService.ValidarUbicacionSeleccionada("A-1-1")); // Formato correcto
+        Assert.False(await _validationService.ValidarUbicacionSeleccionada("A11")); // Sin guiones
+        Assert.False(await _validationService.ValidarUbicacionSeleccionada("A-1")); // Falta componente
+        Assert.False(await _validationService.ValidarUbicacionSeleccionada("A-1-1-2")); // Demasiados componentes
+    }
 }

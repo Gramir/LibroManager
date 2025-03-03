@@ -112,19 +112,15 @@ public class LibroService : ILibroService
     {
         try
         {
-            // Obtener la ubicación antes de crear el libro
-            var partes = libroDto.UbicacionString.Split('-');
-            if (partes.Length != 3)
+            if (!await ValidarUbicacionSeleccionada(libroDto.UbicacionString))
             {
-                _logger.LogWarning("Formato de ubicación inválido: {Ubicacion}", libroDto.UbicacionString);
+                _logger.LogWarning("Ubicación no válida o no seleccionada del listado: {Ubicacion}", libroDto.UbicacionString);
                 return false;
             }
 
+            // Buscar la ubicación en la base de datos
             var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
-            var ubicacion = ubicaciones.FirstOrDefault(u => 
-                u.Estante == partes[0] && 
-                u.Nivel == int.Parse(partes[1]) && 
-                u.Posicion == int.Parse(partes[2]));
+            var ubicacion = ubicaciones.FirstOrDefault(u => u.ObtenerUbicacionFormateada() == libroDto.UbicacionString);
 
             if (ubicacion == null)
             {
@@ -189,6 +185,12 @@ public class LibroService : ILibroService
     {
         try
         {
+            if (!await ValidarUbicacionSeleccionada(libroDto.UbicacionString))
+            {
+                _logger.LogWarning("Ubicación no válida o no seleccionada del listado: {Ubicacion}", libroDto.UbicacionString);
+                return false;
+            }
+
             var existingLibro = await _unitOfWork.Libros.GetByIdAsync(libroDto.LibroId);
             if (existingLibro == null)
             {
@@ -200,19 +202,9 @@ public class LibroService : ILibroService
             libroDto.ISBN = existingLibro.ISBN;
             libroDto.Serial = existingLibro.Serial;
 
-            // Obtener la ubicación
-            var partes = libroDto.UbicacionString.Split('-');
-            if (partes.Length != 3)
-            {
-                _logger.LogWarning("Formato de ubicación inválido: {Ubicacion}", libroDto.UbicacionString);
-                return false;
-            }
-
+            // Buscar la ubicación en la base de datos
             var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
-            var ubicacion = ubicaciones.FirstOrDefault(u => 
-                u.Estante == partes[0] && 
-                u.Nivel == int.Parse(partes[1]) && 
-                u.Posicion == int.Parse(partes[2]));
+            var ubicacion = ubicaciones.FirstOrDefault(u => u.ObtenerUbicacionFormateada() == libroDto.UbicacionString);
 
             if (ubicacion == null)
             {
@@ -374,20 +366,9 @@ public class LibroService : ILibroService
     {
         try
         {
-            // Parsear la ubicación (formato esperado: "A-1-1")
-            var partes = ubicacion.Split('-');
-            if (partes.Length != 3)
-            {
-                _logger.LogWarning("Formato de ubicación inválido: {Ubicacion}", ubicacion);
-                return false;
-            }
-
             // Buscar la ubicación en la base de datos
             var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
-            var ubicacionEncontrada = ubicaciones.FirstOrDefault(u => 
-                u.Estante == partes[0] && 
-                u.Nivel == int.Parse(partes[1]) && 
-                u.Posicion == int.Parse(partes[2]));
+            var ubicacionEncontrada = ubicaciones.FirstOrDefault(u => u.ObtenerUbicacionFormateada() == ubicacion);
 
             if (ubicacionEncontrada == null)
             {
@@ -460,5 +441,11 @@ public class LibroService : ILibroService
             _logger.LogError(ex, "Error al obtener libros para la ubicación {UbicacionId}", ubicacionId);
             return Enumerable.Empty<LibroDTO>();
         }
+    }
+
+    private async Task<bool> ValidarUbicacionSeleccionada(string ubicacionString)
+    {
+        var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
+        return ubicaciones.Any(u => u.ObtenerUbicacionFormateada() == ubicacionString);
     }
 }

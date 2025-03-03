@@ -56,4 +56,17 @@ public class LibroValidationService : ILibroValidationService
 
         return libro != null && estudiante != null;
     }
+
+    public async Task<bool> ValidarUbicacionSeleccionada(string ubicacionString)
+    {
+        if (string.IsNullOrEmpty(ubicacionString))
+            return false;
+
+        var partes = ubicacionString.Split('-');
+        if (partes.Length != 3)
+            return false;
+
+        var ubicaciones = await _context.Ubicaciones.ToListAsync();
+        return ubicaciones.Any(u => u.ObtenerUbicacionFormateada() == ubicacionString);
+    }
 }

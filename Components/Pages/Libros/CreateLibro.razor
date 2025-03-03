@@ -11,6 +11,47 @@
 
 <PageTitle>Crear Libro - LibroManager</PageTitle>
 
+<style>
+    .dropdown-container {
+        position: relative;
+    }
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        display: none;
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 0.5rem 0;
+        margin: 0;
+        background-color: #fff;
+        border: 1px solid rgba(0,0,0,.15);
+        border-radius: 0.25rem;
+    }
+    .dropdown-menu.show {
+        display: block;
+    }
+    .dropdown-item {
+        display: block;
+        width: 100%;
+        padding: 0.25rem 1rem;
+        clear: both;
+        font-weight: 400;
+        color: #212529;
+        text-align: inherit;
+        text-decoration: none;
+        white-space: nowrap;
+        background-color: transparent;
+        border: 0;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+</style>
+
 <div class="container">
     <h1>Crear Nuevo Libro</h1>
 
@@ -59,43 +100,38 @@
             <ValidationMessage For="@(() => libroDto.CategoriaId)" />
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3 dropdown-container" @onclick:stopPropagation>
             <label for="ubicacion" class="form-label">Ubicación</label>
             <div class="input-group">
-                <input type="text" 
-                       class="form-control" 
-                       id="ubicacion"
-                       @bind-value="@searchUbicacion" 
-                       @bind-value:event="oninput"
-                       @onchange="@UbicacionChanged"
-                       @onfocusin="@LoadUbicaciones"
-                       placeholder="Buscar ubicación..."
-                       list="ubicacionesList" />
-                <datalist id="ubicacionesList">
-                    @if (_ubicaciones != null && _ubicaciones.Any())
+                <InputText id="ubicacion" 
+                          class="form-control" 
+                          @bind-Value="libroDto.UbicacionString"
+                          @oninput="FilterUbicaciones"
+                          @onfocus="ShowDropdown"
+                          @onblur="async () => await OnBlur()"
+                          placeholder="Escriba para filtrar ubicaciones..." />
+            </div>
+            <div class="dropdown-menu @(_showDropdown ? "show" : "")">
+                @if (_ubicacionesFiltradas != null && _ubicacionesFiltradas.Any())
+                {
+                    @foreach (var ubicacion in _ubicacionesFiltradas)
                     {
-                        @foreach (var ubicacion in _ubicacionesFiltradas)
-                        {
-                            <option value="@ubicacion.UbicacionFormateada">
-                                @ubicacion.UbicacionFormateada
-                            </option>
-                        }
+                        <div class="dropdown-item" 
+                             @onmousedown="@(() => SelectUbicacion(ubicacion.UbicacionFormateada))">
+                            @ubicacion.UbicacionFormateada
+                        </div>
                     }
-                    else if (_ubicaciones != null)
-                    {
-                        <option value="">No hay ubicaciones disponibles</option>
-                    }
-                </datalist>
+                }
+                else
+                {
+                    <div class="dropdown-item">No se encontraron ubicaciones</div>
+                }
             </div>
             @if (_ubicaciones != null && !_ubicaciones.Any())
             {
                 <div class="alert alert-warning mt-2">
                     No hay ubicaciones disponibles. Por favor, libere alguna ubicación antes de agregar un nuevo libro.
                 </div>
-            }
-            else
-            {
-                <small class="form-text text-muted">Formato: Estante(A-Z)-Nivel(1-10)-Posición(1-50)</small>
             }
             <ValidationMessage For="@(() => libroDto.UbicacionString)" />
         </div>
@@ -119,18 +155,16 @@
     private IEnumerable<AutorDTO>? _autores;
     private IEnumerable<CategoriaDTO>? _categorias;
     private IEnumerable<UbicacionDTO>? _ubicaciones;
-    private IEnumerable<UbicacionDTO> _ubicacionesFiltradas => _ubicaciones?
-        .Where(u => string.IsNullOrEmpty(searchUbicacion) || 
-                    u.UbicacionFormateada.Contains(searchUbicacion, StringComparison.OrdinalIgnoreCase))
-        ?? Enumerable.Empty<UbicacionDTO>();
-    private string searchUbicacion = "";
     private string _errorMessage = string.Empty;
+    private bool _showDropdown;
+    private IEnumerable<UbicacionDTO>? _ubicacionesFiltradas;
 
     protected override async Task OnInitializedAsync()
     {
         _autores = await AutorService.GetAllAsync();
         _categorias = await CategoriaService.GetAllAsync();
         await LoadUbicaciones();
+        _ubicacionesFiltradas = _ubicaciones;
     }
 
     private async Task LoadUbicaciones()
@@ -151,6 +185,13 @@
                 return;
             }
 
+            // Verificar si la ubicación seleccionada está en la lista de ubicaciones disponibles
+            if (_ubicaciones == null || !_ubicaciones.Any(u => u.UbicacionFormateada == libroDto.UbicacionString))
+            {
+                _errorMessage = "Debe seleccionar una ubicación válida del listado desplegable.";
+                return;
+            }
+
             var result = await LibroService.CreateLibroAsync(libroDto);
             if (result)
             {
@@ -158,7 +199,7 @@
             }
             else
             {
-                _errorMessage = "No se pudo crear el libro. Por favor, verifique que la ubicación sea válida e intente nuevamente.";
+                _errorMessage = "No se pudo crear el libro. Por favor, verifique los datos e intente nuevamente.";
             }
         }
         catch (Exception ex)
@@ -172,12 +213,51 @@
         NavigationManager.NavigateTo("/libros");
     }
 
-    private void UbicacionChanged(ChangeEventArgs e)
+    private void FilterUbicaciones(ChangeEventArgs e)
     {
-        if (e.Value is string ubicacionSeleccionada)
+        var searchText = e.Value?.ToString()?.ToLower() ?? string.Empty;
+        
+        if (string.IsNullOrWhiteSpace(searchText))
         {
-            libroDto.UbicacionString = ubicacionSeleccionada;
-            searchUbicacion = ubicacionSeleccionada;
+            _ubicacionesFiltradas = _ubicaciones;
         }
+        else
+        {
+            _ubicacionesFiltradas = _ubicaciones?
+                .Where(u => u.UbicacionFormateada.ToLower().Contains(searchText))
+                .ToList();
+        }
+        _showDropdown = true;
+
+        // Validar si el texto actual no coincide con ninguna ubicación disponible
+        if (_ubicaciones != null && !string.IsNullOrWhiteSpace(searchText) && 
+            !_ubicaciones.Any(u => u.UbicacionFormateada.Equals(libroDto.UbicacionString, StringComparison.OrdinalIgnoreCase)))
+        {
+            _errorMessage = "Por favor, seleccione una ubicación válida del listado desplegable.";
+        }
+        else
+        {
+            _errorMessage = string.Empty;
+        }
+    }
+
+    private void ShowDropdown()
+    {
+        _showDropdown = true;
+    }
+
+    private void SelectUbicacion(string ubicacion)
+    {
+        libroDto.UbicacionString = ubicacion;
+        _showDropdown = false;
+        _errorMessage = string.Empty; // Limpiar mensaje de error cuando se selecciona una ubicación válida
+    }
+
+    private async Task OnBlur()
+    {
+        // Usamos un pequeño delay para permitir que el click en las opciones se procese
+        await Task.Delay(150);
+        _showDropdown = false;
+        StateHasChanged();
     }
 }

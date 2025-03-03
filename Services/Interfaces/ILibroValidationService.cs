@@ -10,4 +10,5 @@ public interface ILibroValidationService
     Task<bool> LibroEstaPrestado(int libroId);
     Task<bool> PrestamoEsValido(Prestamo prestamo);
     bool FechasPrestamoSonValidas(DateTime fechaPrestamo, DateTime fechaVencimiento);
+    Task<bool> ValidarUbicacionSeleccionada(string ubicacionString);
 }
