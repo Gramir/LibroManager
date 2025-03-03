@@ -5,6 +5,7 @@
 @inject ILibroService LibroService
 @inject IAutorService AutorService
 @inject ICategoriaService CategoriaService
+@inject IUbicacionService UbicacionService
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
@@ -59,9 +60,43 @@
         </div>
 
         <div class="mb-3">
-            <label for="ubicacion" class="form-label">Ubicación (formato: A-1-1)</label>
-            <InputText id="ubicacion" class="form-control" @bind-Value="@libroDto.UbicacionString" placeholder="Ejemplo: A-1-1" />
-            <small class="form-text text-muted">Formato: Estante(A-Z)-Nivel(1-10)-Posición(1-50)</small>
+            <label for="ubicacion" class="form-label">Ubicación</label>
+            <div class="input-group">
+                <input type="text" 
+                       class="form-control" 
+                       id="ubicacion"
+                       @bind-value="@searchUbicacion" 
+                       @bind-value:event="oninput"
+                       @onchange="@UbicacionChanged"
+                       @onfocusin="@LoadUbicaciones"
+                       placeholder="Buscar ubicación..."
+                       list="ubicacionesList" />
+                <datalist id="ubicacionesList">
+                    @if (_ubicaciones != null && _ubicaciones.Any())
+                    {
+                        @foreach (var ubicacion in _ubicacionesFiltradas)
+                        {
+                            <option value="@ubicacion.UbicacionFormateada">
+                                @ubicacion.UbicacionFormateada
+                            </option>
+                        }
+                    }
+                    else if (_ubicaciones != null)
+                    {
+                        <option value="">No hay ubicaciones disponibles</option>
+                    }
+                </datalist>
+            </div>
+            @if (_ubicaciones != null && !_ubicaciones.Any())
+            {
+                <div class="alert alert-warning mt-2">
+                    No hay ubicaciones disponibles. Por favor, libere alguna ubicación antes de agregar un nuevo libro.
+                </div>
+            }
+            else
+            {
+                <small class="form-text text-muted">Formato: Estante(A-Z)-Nivel(1-10)-Posición(1-50)</small>
+            }
             <ValidationMessage For="@(() => libroDto.UbicacionString)" />
         </div>
 
@@ -83,12 +118,27 @@
     private readonly LibroCreateDTO libroDto = new();
     private IEnumerable<AutorDTO>? _autores;
     private IEnumerable<CategoriaDTO>? _categorias;
+    private IEnumerable<UbicacionDTO>? _ubicaciones;
+    private IEnumerable<UbicacionDTO> _ubicacionesFiltradas => _ubicaciones?
+        .Where(u => string.IsNullOrEmpty(searchUbicacion) || 
+                    u.UbicacionFormateada.Contains(searchUbicacion, StringComparison.OrdinalIgnoreCase))
+        ?? Enumerable.Empty<UbicacionDTO>();
+    private string searchUbicacion = "";
     private string _errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         _autores = await AutorService.GetAllAsync();
         _categorias = await CategoriaService.GetAllAsync();
+        await LoadUbicaciones();
+    }
+
+    private async Task LoadUbicaciones()
+    {
+        if (_ubicaciones == null)
+        {
+            _ubicaciones = await UbicacionService.GetAvailableUbicacionesAsync();
+        }
     }
 
     private async Task HandleValidSubmit()
@@ -120,5 +170,14 @@
     private void Cancelar()
     {
         NavigationManager.NavigateTo("/libros");
+    }
+
+    private void UbicacionChanged(ChangeEventArgs e)
+    {
+        if (e.Value is string ubicacionSeleccionada)
+        {
+            libroDto.UbicacionString = ubicacionSeleccionada;
+            searchUbicacion = ubicacionSeleccionada;
+        }
     }
 }
