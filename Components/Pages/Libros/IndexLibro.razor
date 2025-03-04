@@ -121,8 +121,20 @@ else
         NavigationManager.NavigateTo($"/libros/editar/{libroId}");
     }
 
-    private void PrestarLibro(int libroId)
+    private async Task PrestarLibro(int libroId)
     {
-        NavigationManager.NavigateTo($"/prestamos/crear/{libroId}");
+        // Obtener el libro seleccionado
+        var libro = libros?.FirstOrDefault(l => l.LibroId == libroId);
+        if (libro == null) return;
+
+        // Buscar un ejemplar disponible del mismo ISBN
+        var ejemplarDisponible = libros?.FirstOrDefault(l => 
+            l.ISBN == libro.ISBN && 
+            !l.EstaPrestado);
+
+        if (ejemplarDisponible != null)
+        {
+            NavigationManager.NavigateTo($"/prestamos/crear/{ejemplarDisponible.LibroId}");
+        }
     }
 }

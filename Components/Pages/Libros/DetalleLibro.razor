@@ -496,6 +496,8 @@
 
     private void PrestarLibro(int libroId)
     {
+        // Como estamos en la vista de detalles, ya tenemos el ejemplar específico
+        // y el botón solo está habilitado si el ejemplar no está prestado
         NavigationManager.NavigateTo($"/prestamos/crear/{libroId}");
     }
 }

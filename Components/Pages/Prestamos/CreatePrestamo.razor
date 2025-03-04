@@ -1,4 +1,5 @@
 @page "/prestamos/crear"
+@page "/prestamos/crear/{LibroId:int?}"
 @using LibroManager.Services.Interfaces
 @using LibroManager.DTOs
 @inject IPrestamoService PrestamoService
@@ -23,7 +24,7 @@
                         <option value="0">Seleccione un libro...</option>
                         @if (Libros != null)
                         {
-                            @foreach (var libro in Libros.Where(l => !l.EstaPrestado))
+                            @foreach (var libro in Libros)
                             {
                                 <option value="@libro.LibroId">@libro.Titulo (@libro.ISBN)</option>
                             }
@@ -74,6 +75,9 @@
 </div>
 
 @code {
+    [Parameter]
+    public int? LibroId { get; set; }
+
     private PrestamoCreateDTO prestamoDto = new()
     {
         FechaVencimiento = DateTime.Now.AddDays(7)
@@ -84,8 +88,45 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Libros = await LibroService.GetAllLibrosAsync();
-        Estudiantes = await EstudianteService.GetAllAsync();
+        try
+        {
+            // Cargar primero todos los estudiantes
+            Estudiantes = await EstudianteService.GetAllAsync();
+
+            var todosLosLibros = await LibroService.GetAllLibrosAsync();
+            
+            // Si tenemos un LibroId, buscar ese libro específico primero
+            if (LibroId.HasValue)
+            {
+                var libroSeleccionado = todosLosLibros.FirstOrDefault(l => l.LibroId == LibroId.Value);
+                if (libroSeleccionado == null)
+                {
+                    errorMessage = "El libro seleccionado no existe.";
+                    return;
+                }
+                
+                if (libroSeleccionado.EstaPrestado)
+                {
+                    errorMessage = "El libro seleccionado no está disponible para préstamo.";
+                    return;
+                }
+
+                // Mostrar todos los libros disponibles más el seleccionado
+                Libros = todosLosLibros.Where(l => !l.EstaPrestado).ToList();
+                
+                // Asignar el libro seleccionado al DTO
+                prestamoDto.LibroId = LibroId.Value;
+            }
+            else
+            {
+                // Si no hay libro preseleccionado, mostrar solo los disponibles
+                Libros = todosLosLibros.Where(l => !l.EstaPrestado).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar los datos: {ex.Message}";
+        }
     }
 
     private async Task HandleValidSubmit()
