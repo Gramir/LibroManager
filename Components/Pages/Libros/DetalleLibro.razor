@@ -2,6 +2,7 @@
 @using LibroManager.DTOs
 @using LibroManager.Services.Interfaces
 @inject ILibroService LibroService
+@inject IPrestamoService PrestamoService
 @inject NavigationManager NavigationManager
 @inject IUbicacionService UbicacionService
 @rendermode InteractiveServer
@@ -121,11 +122,20 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <button class="btn btn-success btn-sm me-2" 
-                                                        @onclick="() => PrestarLibro(ejemplar.LibroId)"
-                                                        disabled="@ejemplar.EstaPrestado">
-                                                    <i class="bi bi-book"></i> Prestar
-                                                </button>
+                                                @if (ejemplar.EstaPrestado)
+                                                {
+                                                    <button class="btn btn-info btn-sm me-2" 
+                                                            @onclick="() => VerPrestamo(ejemplar.LibroId)">
+                                                        <i class="bi bi-eye"></i> Ver préstamo
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <button class="btn btn-success btn-sm me-2" 
+                                                            @onclick="() => PrestarLibro(ejemplar.LibroId)">
+                                                        <i class="bi bi-book"></i> Prestar
+                                                    </button>
+                                                }
                                                 <button class="btn btn-danger btn-sm" 
                                                         @onclick="() => MostrarConfirmacionEjemplar(ejemplar)"
                                                         disabled="@ejemplar.EstaPrestado">
@@ -499,5 +509,15 @@
         // Como estamos en la vista de detalles, ya tenemos el ejemplar específico
         // y el botón solo está habilitado si el ejemplar no está prestado
         NavigationManager.NavigateTo($"/prestamos/crear/{libroId}");
+    }
+
+    private async Task VerPrestamo(int libroId)
+    {
+        var prestamos = await PrestamoService.GetPrestamosByLibroAsync(libroId);
+        var prestamoActivo = prestamos.FirstOrDefault(p => p.EstaActivo);
+        if (prestamoActivo != null)
+        {
+            NavigationManager.NavigateTo($"/prestamos/{prestamoActivo.PrestamoId}");
+        }
     }
 }
