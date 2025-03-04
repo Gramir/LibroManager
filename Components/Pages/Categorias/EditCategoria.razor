@@ -1,0 +1,100 @@
+@page "/categorias/editar/{CategoriaId:int}"
+@using LibroManager.Services.Interfaces
+@using LibroManager.DTOs
+@inject ICategoriaService CategoriaService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Editar Categoría - LibroManager</PageTitle>
+
+<div class="container">
+    <h1>Editar Categoría</h1>
+
+    @if (CategoriaDto == null)
+    {
+        <p><em>Cargando...</em></p>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-6">
+                <EditForm Model="CategoriaDto" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <InputText id="nombre" class="form-control" @bind-Value="CategoriaDto.Nombre" />
+                        <ValidationMessage For="@(() => CategoriaDto.Nombre)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                        <button type="button" class="btn btn-secondary" @onclick="Cancelar">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </button>
+                    </div>
+                </EditForm>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="alert alert-danger mt-3">
+                        @_errorMessage
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int CategoriaId { get; set; }
+
+    private CategoriaUpdateDTO? CategoriaDto;
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var categoria = await CategoriaService.GetByIdAsync(CategoriaId);
+        if (categoria == null)
+        {
+            NavigationManager.NavigateTo("/categorias");
+            return;
+        }
+
+        CategoriaDto = new CategoriaUpdateDTO
+        {
+            CategoriaId = categoria.CategoriaId,
+            Nombre = categoria.Nombre
+        };
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (CategoriaDto == null) return;
+
+        try
+        {
+            var result = await CategoriaService.UpdateAsync(CategoriaDto);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/categorias");
+            }
+            else
+            {
+                _errorMessage = "No se pudo actualizar la categoría. Es posible que ya exista una categoría con ese nombre.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private void Cancelar()
+    {
+        NavigationManager.NavigateTo("/categorias");
+    }
+}

@@ -1,0 +1,194 @@
+@page "/categorias/{CategoriaId:int}"
+@using LibroManager.DTOs
+@using LibroManager.Services.Interfaces
+@inject ICategoriaService CategoriaService
+@inject ILibroService LibroService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Detalle de Categoría</PageTitle>
+
+<div class="container mt-4">
+    @if (_categoria == null)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">@_categoria.Nombre</h3>
+                <div>
+                    <button class="btn btn-warning me-2" @onclick="EditarCategoria">Editar</button>
+                    <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@(_categoria.CantidadLibros > 0)">
+                        Eliminar
+                    </button>
+                    <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+                    @if (_categoria.CantidadLibros > 0)
+                    {
+                        <div class="text-danger mt-2 small">
+                            <i class="bi bi-exclamation-circle"></i> No se puede eliminar una categoría que tiene libros asociados
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Cantidad de Libros:</dt>
+                            <dd class="col-sm-8">@_categoria.CantidadLibros</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                @if (_libros.Any())
+                {
+                    <div class="mt-4">
+                        <h4>Libros en esta Categoría</h4>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>ISBN</th>
+                                        <th>Autor</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var libro in _libros)
+                                    {
+                                        <tr>
+                                            <td>@libro.Titulo</td>
+                                            <td>@libro.ISBN</td>
+                                            <td>@libro.AutorNombre</td>
+                                            <td>
+                                                <span class="badge @(libro.EstaPrestado ? "bg-warning" : "bg-success")">
+                                                    @(libro.EstaPrestado ? "Prestado" : "Disponible")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-primary btn-sm" @onclick="() => VerDetalleLibro(libro.LibroId)">
+                                                    <i class="bi bi-eye"></i> Detalles
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @_errorMessage
+        </div>
+    }
+</div>
+
+@if (_mostrarConfirmacion)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" @onclick="CancelarEliminacion"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea eliminar la categoría '@_categoria?.Nombre'?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelarEliminacion">Cancelar</button>
+                    <button type="button" class="btn btn-danger" @onclick="EliminarCategoria">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter]
+    public int CategoriaId { get; set; }
+
+    private CategoriaDTO? _categoria;
+    private IEnumerable<LibroDTO> _libros = Array.Empty<LibroDTO>();
+    private string _errorMessage = string.Empty;
+    private bool _mostrarConfirmacion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categoria = await CategoriaService.GetByIdAsync(CategoriaId);
+        if (_categoria == null)
+        {
+            NavigationManager.NavigateTo("/categorias");
+            return;
+        }
+
+        // Get books in this category
+        if (_categoria.CantidadLibros > 0)
+        {
+            var libros = await LibroService.GetLibrosPorCategoriaAsync(CategoriaId);
+            _libros = libros ?? Array.Empty<LibroDTO>();
+        }
+    }
+
+    private void EditarCategoria()
+    {
+        NavigationManager.NavigateTo($"/categorias/editar/{CategoriaId}");
+    }
+
+    private void VerDetalleLibro(int libroId)
+    {
+        NavigationManager.NavigateTo($"/libros/{libroId}");
+    }
+
+    private void Volver()
+    {
+        NavigationManager.NavigateTo("/categorias");
+    }
+
+    private void MostrarConfirmacion()
+    {
+        _mostrarConfirmacion = true;
+    }
+
+    private void CancelarEliminacion()
+    {
+        _mostrarConfirmacion = false;
+    }
+
+    private async Task EliminarCategoria()
+    {
+        _mostrarConfirmacion = false;
+        
+        try
+        {
+            var result = await CategoriaService.DeleteAsync(CategoriaId);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/categorias");
+            }
+            else
+            {
+                _errorMessage = "No se pudo eliminar la categoría. Puede que tenga libros asociados o ya no exista.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al eliminar la categoría: {ex.Message}";
+        }
+    }
+}

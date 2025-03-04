@@ -1,0 +1,72 @@
+@page "/categorias/crear"
+@using LibroManager.Services.Interfaces
+@using LibroManager.DTOs
+@inject ICategoriaService CategoriaService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Crear Categoría - LibroManager</PageTitle>
+
+<div class="container">
+    <h1>Crear Nueva Categoría</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <EditForm Model="@categoriaDto" OnValidSubmit="@HandleValidSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre</label>
+                    <InputText id="nombre" class="form-control" @bind-Value="@categoriaDto.Nombre" />
+                    <ValidationMessage For="@(() => categoriaDto.Nombre)" />
+                </div>
+
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                    <button type="button" class="btn btn-secondary" @onclick="@Cancelar">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                </div>
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">
+                    @errorMessage
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly CategoriaCreateDTO categoriaDto = new();
+    private string errorMessage = string.Empty;
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var result = await CategoriaService.CreateAsync(categoriaDto);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/categorias");
+            }
+            else
+            {
+                errorMessage = "No se pudo crear la categoría. Es posible que ya exista una categoría con ese nombre.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private void Cancelar()
+    {
+        NavigationManager.NavigateTo("/categorias");
+    }
+}
