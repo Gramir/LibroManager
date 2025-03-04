@@ -144,14 +144,8 @@ public class LibroService : ILibroService
                 return false;
             }
 
-            // Generar un número de serie único para el primer ejemplar
-            string serial;
-            do
-            {
-                serial = GenerateSerial();
-            } while (await _unitOfWork.Libros.SerialExistsAsync(serial));
-
-            libro.Serial = serial;
+            // Generar el serial para el primer ejemplar (será ISBN-1)
+            libro.Serial = $"{libro.ISBN}-1";
 
             await _unitOfWork.Libros.AddAsync(libro);
             await _unitOfWork.SaveChangesAsync();
@@ -166,19 +160,11 @@ public class LibroService : ILibroService
         }
     }
 
-    private string GenerateSerial()
+    private async Task<string> GenerateSerial(string isbn)
     {
-        // Formato: XXX-XXX-000 (letras mayúsculas, números y guiones)
-        var random = new Random();
-        var letters1 = new string(Enumerable.Range(0, 3)
-            .Select(_ => (char)('A' + random.Next(26)))
-            .ToArray());
-        var letters2 = new string(Enumerable.Range(0, 3)
-            .Select(_ => (char)('A' + random.Next(26)))
-            .ToArray());
-        var numbers = random.Next(1000).ToString("000");
-        
-        return $"{letters1}-{letters2}-{numbers}";
+        var ejemplares = await _unitOfWork.Libros.GetAllAsync();
+        var numeroEjemplar = ejemplares.Count(l => l.ISBN == isbn) + 1;
+        return $"{isbn}-{numeroEjemplar}";
     }
 
     public async Task<bool> UpdateLibroAsync(LibroUpdateDTO libroDto)
@@ -385,12 +371,8 @@ public class LibroService : ILibroService
                 return false;
             }
 
-            // Generar un número de serie único para el nuevo ejemplar
-            string serial;
-            do
-            {
-                serial = GenerateSerial();
-            } while (await _unitOfWork.Libros.SerialExistsAsync(serial));
+            // Generar el serial con el nuevo formato
+            var serial = await GenerateSerial(isbn);
 
             // Crear el nuevo ejemplar con los mismos datos del libro original
             var nuevoEjemplar = new Libro
@@ -407,7 +389,7 @@ public class LibroService : ILibroService
 
             await _unitOfWork.Libros.AddAsync(nuevoEjemplar);
             await _unitOfWork.SaveChangesAsync();
-
+            
             _logger.LogInformation("Nuevo ejemplar creado: ISBN: {ISBN}, Serial: {Serial}, Ubicacion: {Ubicacion}", 
                 isbn, serial, ubicacion);
             return true;

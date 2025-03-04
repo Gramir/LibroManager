@@ -79,6 +79,11 @@
                                                 </span>
                                             </td>
                                             <td>
+                                                <button class="btn btn-success btn-sm me-2" 
+                                                        @onclick="() => PrestarLibro(ejemplar.LibroId)"
+                                                        disabled="@ejemplar.EstaPrestado">
+                                                    <i class="bi bi-book"></i> Prestar
+                                                </button>
                                                 <button class="btn btn-danger btn-sm" 
                                                         @onclick="() => MostrarConfirmacionEjemplar(ejemplar)"
                                                         disabled="@ejemplar.EstaPrestado">
@@ -125,6 +130,18 @@
                     <button type="button" class="btn-close" @onclick="CerrarFormularioEjemplar"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Título del Libro</label>
+                        <input type="text" class="form-control" value="@_libro?.Titulo" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ISBN</label>
+                        <input type="text" class="form-control" value="@_libro?.ISBN" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Serial a Asignar</label>
+                        <input type="text" class="form-control" value="@($"{_libro?.ISBN}-{_ejemplares.Count() + 1}")" readonly />
+                    </div>
                     <div class="mb-3">
                         <label for="ubicacion" class="form-label">Ubicación (formato: A-1-1)</label>
                         <input type="text" class="form-control" id="ubicacion" @bind="_nuevaUbicacion" placeholder="Ejemplo: A-1-1" />
@@ -321,5 +338,10 @@
         {
             _errorMessage = $"Error al crear el ejemplar: {ex.Message}";
         }
+    }
+
+    private void PrestarLibro(int libroId)
+    {
+        NavigationManager.NavigateTo($"/prestamos/crear/{libroId}");
     }
 }
