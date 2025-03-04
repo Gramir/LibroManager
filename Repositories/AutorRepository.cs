@@ -17,17 +17,24 @@ public class AutorRepository : IAutorRepository
 
     public async Task<IEnumerable<Autor>> GetAllAsync()
     {
-        return await _context.Autores.ToListAsync();
+        return await _context.Autores
+            .Include(a => a.Libros)
+            .ToListAsync();
     }
 
     public async Task<Autor?> GetByIdAsync(int id)
     {
-        return await _context.Autores.FindAsync(id);
+        return await _context.Autores
+            .Include(a => a.Libros)
+            .FirstOrDefaultAsync(a => a.AutorId == id);
     }
 
     public async Task<IEnumerable<Autor>> FindAsync(Expression<Func<Autor, bool>> expression)
     {
-        return await _context.Autores.Where(expression).ToListAsync();
+        return await _context.Autores
+            .Include(a => a.Libros)
+            .Where(expression)
+            .ToListAsync();
     }
 
     public async Task AddAsync(Autor autor)

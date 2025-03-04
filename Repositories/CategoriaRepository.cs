@@ -9,9 +9,24 @@ public class CategoriaRepository : GenericRepository<Categoria>, ICategoriaRepos
 {
     public CategoriaRepository(ApplicationDbContext context) : base(context) { }
 
+    public override async Task<IEnumerable<Categoria>> GetAllAsync()
+    {
+        return await _context.Set<Categoria>()
+            .Include(c => c.Libros)
+            .ToListAsync();
+    }
+    
+    public override async Task<Categoria?> GetByIdAsync(int id)
+    {
+        return await _context.Set<Categoria>()
+            .Include(c => c.Libros)
+            .FirstOrDefaultAsync(c => c.CategoriaId == id);
+    }
+
     public async Task<Categoria?> GetByNombreAsync(string nombre)
     {
         return await _context.Set<Categoria>()
+            .Include(c => c.Libros)
             .FirstOrDefaultAsync(c => c.Nombre == nombre);
     }
 
