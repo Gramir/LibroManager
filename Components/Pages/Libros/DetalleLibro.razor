@@ -218,7 +218,12 @@
                                 No hay ubicaciones disponibles. Por favor, libere alguna ubicación antes de agregar un nuevo ejemplar.
                             </div>
                         }
-                        <small class="form-text text-muted">Formato: Estante(A-Z)-Nivel(1-10)-Posición(1-50)</small>
+                        @if (!string.IsNullOrEmpty(_errorMessageUbicacion))
+                        {
+                            <div class="alert alert-danger mt-2">
+                                @_errorMessageUbicacion
+                            </div>
+                        }
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -276,6 +281,7 @@
     private bool _showDropdown;
     private IEnumerable<UbicacionDTO>? _ubicaciones;
     private IEnumerable<UbicacionDTO>? _ubicacionesFiltradas;
+    private string _errorMessageUbicacion = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -429,11 +435,11 @@
         if (_ubicaciones != null && !string.IsNullOrWhiteSpace(searchText) && 
             !_ubicaciones.Any(u => u.UbicacionFormateada.Equals(_nuevaUbicacion, StringComparison.OrdinalIgnoreCase)))
         {
-            _errorMessage = "Por favor, seleccione una ubicación válida del listado desplegable.";
+            _errorMessageUbicacion = "Por favor, seleccione una ubicación válida del listado desplegable.";
         }
         else
         {
-            _errorMessage = string.Empty;
+            _errorMessageUbicacion = string.Empty;
         }
     }
 
@@ -446,7 +452,7 @@
     {
         _nuevaUbicacion = ubicacion;
         _showDropdown = false;
-        _errorMessage = string.Empty;
+        _errorMessageUbicacion = string.Empty;
     }
 
     private async Task OnBlur()
@@ -464,7 +470,7 @@
         // Verificar si la ubicación seleccionada está en la lista de ubicaciones disponibles
         if (_ubicaciones == null || !_ubicaciones.Any(u => u.UbicacionFormateada == _nuevaUbicacion))
         {
-            _errorMessage = "Debe seleccionar una ubicación válida del listado desplegable.";
+            _errorMessageUbicacion = "Debe seleccionar una ubicación válida del listado desplegable.";
             return;
         }
 
