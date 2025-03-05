@@ -20,7 +20,7 @@
 
                 <div class="mb-3">
                     <label for="titulo" class="form-label">Título del Libro</label>
-                    <InputSelect id="titulo" class="form-select" @bind-Value="selectedIsbn" @oninput="OnLibroSeleccionado">
+                    <InputSelect id="titulo" @bind-Value="selectedIsbn" @oninput="OnLibroSeleccionado" class="@GetTituloClasses()">
                         <option value="">Seleccione un libro...</option>
                         @if (LibrosUnicos != null)
                         {
@@ -34,7 +34,7 @@
 
                 <div class="mb-3">
                     <label for="ejemplar" class="form-label">Ejemplar</label>
-                    <InputSelect id="ejemplar" class="form-select" @bind-Value="prestamoDto.LibroId" disabled="@(string.IsNullOrEmpty(selectedIsbn))">
+                    <InputSelect id="ejemplar" @bind-Value="prestamoDto.LibroId" disabled="@(string.IsNullOrEmpty(selectedIsbn))" class="@GetEjemplarClasses()">
                         <option value="0">Seleccione un ejemplar...</option>
                         @if (EjemplaresDisponibles != null)
                         {
@@ -49,7 +49,7 @@
 
                 <div class="mb-3">
                     <label for="estudiante" class="form-label">Estudiante</label>
-                    <InputSelect id="estudiante" class="form-select" @bind-Value="prestamoDto.EstudianteId">
+                    <InputSelect id="estudiante" @bind-Value="prestamoDto.EstudianteId" class="@GetEstudianteClasses()">
                         <option value="0">Seleccione un estudiante...</option>
                         @if (Estudiantes != null)
                         {
@@ -64,7 +64,7 @@
 
                 <div class="mb-3">
                     <label for="fechaVencimiento" class="form-label">Fecha de Vencimiento</label>
-                    <InputDate id="fechaVencimiento" class="form-control" @bind-Value="prestamoDto.FechaVencimiento" />
+                    <InputDate id="fechaVencimiento" @bind-Value="prestamoDto.FechaVencimiento" class="@GetFechaVencimientoClasses()" />
                     <ValidationMessage For="@(() => prestamoDto.FechaVencimiento)" />
                 </div>
 
@@ -200,5 +200,30 @@
     private void Cancelar()
     {
         NavigationManager.NavigateTo("/prestamos");
+    }
+
+    private bool IsValidFechaVencimiento()
+    {
+        return prestamoDto.FechaVencimiento > DateTime.Now;
+    }
+
+    private string GetTituloClasses()
+    {
+        return $"form-select{(string.IsNullOrEmpty(selectedIsbn) ? " is-invalid" : "")}";
+    }
+
+    private string GetEjemplarClasses()
+    {
+        return $"form-select{(prestamoDto.LibroId == 0 ? " is-invalid" : "")}";
+    }
+
+    private string GetEstudianteClasses()
+    {
+        return $"form-select{(prestamoDto.EstudianteId == 0 ? " is-invalid" : "")}";
+    }
+
+    private string GetFechaVencimientoClasses()
+    {
+        return $"form-control{(!IsValidFechaVencimiento() ? " is-invalid" : "")}";
     }
 }
