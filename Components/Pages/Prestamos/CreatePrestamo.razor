@@ -19,14 +19,28 @@
                 <DataAnnotationsValidator />
 
                 <div class="mb-3">
-                    <label for="libro" class="form-label">Libro</label>
-                    <InputSelect id="libro" class="form-select" @bind-Value="prestamoDto.LibroId">
-                        <option value="0">Seleccione un libro...</option>
-                        @if (Libros != null)
+                    <label for="titulo" class="form-label">Título del Libro</label>
+                    <InputSelect id="titulo" class="form-select" @bind-Value="selectedIsbn" @oninput="OnLibroSeleccionado">
+                        <option value="">Seleccione un libro...</option>
+                        @if (LibrosUnicos != null)
                         {
-                            @foreach (var libro in Libros)
+                            @foreach (var libro in LibrosUnicos)
                             {
-                                <option value="@libro.LibroId">@libro.Titulo (@libro.ISBN)</option>
+                                <option value="@libro.ISBN">@libro.Titulo</option>
+                            }
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
+                    <label for="ejemplar" class="form-label">Ejemplar</label>
+                    <InputSelect id="ejemplar" class="form-select" @bind-Value="prestamoDto.LibroId" disabled="@(string.IsNullOrEmpty(selectedIsbn))">
+                        <option value="0">Seleccione un ejemplar...</option>
+                        @if (EjemplaresDisponibles != null)
+                        {
+                            @foreach (var ejemplar in EjemplaresDisponibles)
+                            {
+                                <option value="@ejemplar.LibroId">@ejemplar.Serial (Ubicación: @ejemplar.UbicacionFormateada)</option>
                             }
                         }
                     </InputSelect>
@@ -83,8 +97,11 @@
         FechaVencimiento = DateTime.Now.AddDays(7)
     };
     private IEnumerable<LibroDTO>? Libros;
+    private IEnumerable<LibroDTO>? LibrosUnicos;
+    private IEnumerable<LibroDTO>? EjemplaresDisponibles;
     private IEnumerable<EstudianteDTO>? Estudiantes;
     private string errorMessage = string.Empty;
+    private string selectedIsbn = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -95,10 +112,20 @@
 
             var todosLosLibros = await LibroService.GetAllLibrosAsync();
             
+            if (todosLosLibros != null)
+            {
+                // Crear una lista de libros únicos por ISBN
+                LibrosUnicos = todosLosLibros.GroupBy(l => l.ISBN)
+                                  .Select(g => g.First())
+                                  .ToList();
+
+                Libros = todosLosLibros;
+            }
+
             // Si tenemos un LibroId, buscar ese libro específico primero
             if (LibroId.HasValue)
             {
-                var libroSeleccionado = todosLosLibros.FirstOrDefault(l => l.LibroId == LibroId.Value);
+                var libroSeleccionado = Libros?.FirstOrDefault(l => l.LibroId == LibroId.Value);
                 if (libroSeleccionado == null)
                 {
                     errorMessage = "El libro seleccionado no existe.";
@@ -111,22 +138,43 @@
                     return;
                 }
 
-                // Mostrar todos los libros disponibles más el seleccionado
-                Libros = todosLosLibros.Where(l => !l.EstaPrestado).ToList();
+                // Preseleccionar el ISBN y cargar los ejemplares disponibles
+                selectedIsbn = libroSeleccionado.ISBN;
+                await CargarEjemplaresDisponibles();
                 
                 // Asignar el libro seleccionado al DTO
                 prestamoDto.LibroId = LibroId.Value;
-            }
-            else
-            {
-                // Si no hay libro preseleccionado, mostrar solo los disponibles
-                Libros = todosLosLibros.Where(l => !l.EstaPrestado).ToList();
             }
         }
         catch (Exception ex)
         {
             errorMessage = $"Error al cargar los datos: {ex.Message}";
         }
+    }
+
+    private async Task OnLibroSeleccionado(ChangeEventArgs e)
+    {
+        selectedIsbn = e.Value?.ToString() ?? string.Empty;
+        
+        // Resetear el LibroId cuando cambie la selección
+        prestamoDto.LibroId = 0;
+        
+        await CargarEjemplaresDisponibles();
+    }
+
+    private async Task CargarEjemplaresDisponibles()
+    {
+        if (string.IsNullOrEmpty(selectedIsbn))
+        {
+            EjemplaresDisponibles = Array.Empty<LibroDTO>();
+            return;
+        }
+
+        // Cargar todos los ejemplares para el ISBN seleccionado
+        var ejemplares = await LibroService.GetEjemplaresPorIsbnAsync(selectedIsbn);
+        
+        // Filtrar solo los ejemplares disponibles
+        EjemplaresDisponibles = ejemplares.Where(e => !e.EstaPrestado).ToList();
     }
 
     private async Task HandleValidSubmit()
