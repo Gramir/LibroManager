@@ -45,10 +45,11 @@ public class PrestamoRepository : GenericRepository<Prestamo>, IPrestamoReposito
 
     public async Task<IEnumerable<Prestamo>> GetPrestamosActivosAsync()
     {
+        var now = DateTime.Now;
         return await _context.Set<Prestamo>()
             .Include(p => p.Libro)
             .Include(p => p.Estudiante)
-            .Where(p => p.Estado == EstadoPrestamo.Activo)
+            .Where(p => p.Estado == EstadoPrestamo.Activo && p.FechaVencimiento >= now)
             .ToListAsync();
     }
 }
