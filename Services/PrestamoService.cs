@@ -26,11 +26,45 @@ public class PrestamoService : IPrestamoService
         _logger = logger;
     }
 
+    private async Task VerificarYActualizarEstadoPrestamo(Prestamo prestamo)
+    {
+        // Si tiene fecha de devolución, está concluido
+        if (prestamo.FechaDevolucion.HasValue && prestamo.Estado != EstadoPrestamo.Concluido)
+        {
+            prestamo.Estado = EstadoPrestamo.Concluido;
+            var libro = await _unitOfWork.Libros.GetByIdAsync(prestamo.LibroId);
+            if (libro != null)
+            {
+                libro.Estado = EstadoLibro.Disponible;
+                _unitOfWork.Libros.Update(libro);
+            }
+            _unitOfWork.Prestamos.Update(prestamo);
+            await _unitOfWork.SaveChangesAsync();
+        }
+        // Si no tiene fecha de devolución y está vencido, marcar como expirado
+        else if (!prestamo.FechaDevolucion.HasValue && prestamo.FechaVencimiento < DateTime.Now && prestamo.Estado != EstadoPrestamo.Expirado)
+        {
+            prestamo.Estado = EstadoPrestamo.Expirado;
+            var libro = await _unitOfWork.Libros.GetByIdAsync(prestamo.LibroId);
+            if (libro != null)
+            {
+                libro.Estado = EstadoLibro.Perdido;
+                _unitOfWork.Libros.Update(libro);
+            }
+            _unitOfWork.Prestamos.Update(prestamo);
+            await _unitOfWork.SaveChangesAsync();
+        }
+    }
+
     public async Task<IEnumerable<PrestamoDTO>> GetAllAsync()
     {
         try
         {
             var prestamos = await _unitOfWork.Prestamos.GetAllAsync();
+            foreach (var prestamo in prestamos)
+            {
+                await VerificarYActualizarEstadoPrestamo(prestamo);
+            }
             return _mapper.Map<IEnumerable<PrestamoDTO>>(prestamos);
         }
         catch (Exception ex)
@@ -45,6 +79,10 @@ public class PrestamoService : IPrestamoService
         try
         {
             var prestamo = await _unitOfWork.Prestamos.GetByIdAsync(id);
+            if (prestamo != null)
+            {
+                await VerificarYActualizarEstadoPrestamo(prestamo);
+            }
             return _mapper.Map<PrestamoDTO>(prestamo);
         }
         catch (Exception ex)
@@ -59,6 +97,10 @@ public class PrestamoService : IPrestamoService
         try
         {
             var prestamos = await _unitOfWork.Prestamos.GetPrestamosByEstudianteAsync(estudianteId);
+            foreach (var prestamo in prestamos)
+            {
+                await VerificarYActualizarEstadoPrestamo(prestamo);
+            }
             return _mapper.Map<IEnumerable<PrestamoDTO>>(prestamos);
         }
         catch (Exception ex)
@@ -73,6 +115,10 @@ public class PrestamoService : IPrestamoService
         try
         {
             var prestamos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(libroId);
+            foreach (var prestamo in prestamos)
+            {
+                await VerificarYActualizarEstadoPrestamo(prestamo);
+            }
             return _mapper.Map<IEnumerable<PrestamoDTO>>(prestamos);
         }
         catch (Exception ex)
@@ -87,6 +133,10 @@ public class PrestamoService : IPrestamoService
         try
         {
             var prestamos = await _unitOfWork.Prestamos.GetPrestamosActivosAsync();
+            foreach (var prestamo in prestamos)
+            {
+                await VerificarYActualizarEstadoPrestamo(prestamo);
+            }
             return _mapper.Map<IEnumerable<PrestamoDTO>>(prestamos);
         }
         catch (Exception ex)
@@ -170,23 +220,28 @@ public class PrestamoService : IPrestamoService
             prestamoExistente.FechaPrestamo = prestamoUpdateDto.FechaPrestamo;
             prestamoExistente.FechaVencimiento = prestamoUpdateDto.FechaVencimiento;
             prestamoExistente.FechaDevolucion = prestamoUpdateDto.FechaDevolucion;
-            prestamoExistente.Estado = prestamoUpdateDto.Estado;
             
-            // Si el préstamo ha sido devuelto
-            if (prestamoExistente.FechaDevolucion.HasValue && prestamoExistente.Estado == EstadoPrestamo.Concluido)
+            // Determinar el estado automáticamente
+            if (prestamoExistente.FechaDevolucion.HasValue)
             {
+                prestamoExistente.Estado = EstadoPrestamo.Concluido;
                 libro.Estado = EstadoLibro.Disponible;
                 _unitOfWork.Libros.Update(libro);
                 _logger.LogInformation("Estado del libro actualizado a Disponible: {LibroId}", libro.LibroId);
             }
-            // Si el préstamo está expirado
-            else if (prestamoExistente.Estado == EstadoPrestamo.Expirado || 
-                     (prestamoExistente.FechaVencimiento < DateTime.Now && prestamoExistente.Estado == EstadoPrestamo.Activo))
+            else if (prestamoExistente.FechaVencimiento < DateTime.Now)
             {
                 prestamoExistente.Estado = EstadoPrestamo.Expirado;
                 libro.Estado = EstadoLibro.Perdido;
                 _unitOfWork.Libros.Update(libro);
                 _logger.LogInformation("Estado del libro actualizado a Perdido: {LibroId}", libro.LibroId);
+            }
+            else
+            {
+                prestamoExistente.Estado = EstadoPrestamo.Activo;
+                libro.Estado = EstadoLibro.Prestado;
+                _unitOfWork.Libros.Update(libro);
+                _logger.LogInformation("Estado del libro actualizado a Prestado: {LibroId}", libro.LibroId);
             }
 
             // Actualizar el préstamo

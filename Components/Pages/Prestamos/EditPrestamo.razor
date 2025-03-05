@@ -101,24 +101,13 @@
                     <div class="mb-3">
                         <label for="fechaDevolucion" class="form-label">Fecha de Devolución</label>
                         <InputDate id="fechaDevolucion" class="@GetFechaDevolucionClasses()" @bind-Value="_prestamoDto.FechaDevolucion" />
-                        <small class="form-text text-muted">Complete este campo solo cuando el libro sea devuelto.</small>
+                        <small class="form-text text-muted">Complete este campo cuando el libro sea devuelto.</small>
                         @if (!IsValidFechaDevolucion())
                         {
                             <div class="invalid-feedback">
                                 La fecha de devolución no puede ser anterior a la fecha de préstamo
                             </div>
                         }
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="estado" class="form-label">Estado</label>
-                        <InputSelect id="estado" class="@GetEstadoClasses()" @bind-Value="_prestamoDto.Estado">
-                            @foreach (var estado in Enum.GetValues(typeof(EstadoPrestamo)))
-                            {
-                                <option value="@estado">@estado</option>
-                            }
-                        </InputSelect>
-                        <ValidationMessage For="@(() => _prestamoDto.Estado)" />
                     </div>
 
                     <div class="mb-3">
@@ -268,8 +257,9 @@
 
     private bool IsFormValid()
     {
-        return _prestamoDto != null && 
-               !string.IsNullOrEmpty(_selectedIsbn) &&
+        if (_prestamoDto == null) return false;
+
+        return !string.IsNullOrEmpty(_selectedIsbn) &&
                _prestamoDto.LibroId != 0 &&
                _prestamoDto.EstudianteId != 0 &&
                IsValidFechaVencimiento() && 
@@ -301,11 +291,5 @@
     {
         if (_prestamoDto?.FechaDevolucion == null) return "form-control";
         return $"form-control{(!IsValidFechaDevolucion() ? " is-invalid" : " is-valid")}";
-    }
-
-    private string GetEstadoClasses()
-    {
-        if (_prestamoDto == null) return "form-select";
-        return "form-select is-valid";
     }
 }
