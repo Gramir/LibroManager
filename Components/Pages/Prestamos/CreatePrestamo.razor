@@ -2,6 +2,7 @@
 @page "/prestamos/crear/{LibroId:int?}"
 @using LibroManager.Services.Interfaces
 @using LibroManager.DTOs
+@using Microsoft.AspNetCore.Components.Forms
 @inject IPrestamoService PrestamoService
 @inject ILibroService LibroService
 @inject IEstudianteService EstudianteService
@@ -30,6 +31,10 @@
                             }
                         }
                     </InputSelect>
+                    @if (string.IsNullOrEmpty(selectedIsbn))
+                    {
+                        <div class="invalid-feedback">Debe seleccionar un libro</div>
+                    }
                 </div>
 
                 <div class="mb-3">
@@ -45,6 +50,10 @@
                         }
                     </InputSelect>
                     <ValidationMessage For="@(() => prestamoDto.LibroId)" />
+                    @if (prestamoDto.LibroId == 0 && !string.IsNullOrEmpty(selectedIsbn))
+                    {
+                        <div class="invalid-feedback">Debe seleccionar un ejemplar disponible</div>
+                    }
                 </div>
 
                 <div class="mb-3">
@@ -60,16 +69,26 @@
                         }
                     </InputSelect>
                     <ValidationMessage For="@(() => prestamoDto.EstudianteId)" />
+                    @if (prestamoDto.EstudianteId == 0)
+                    {
+                        <div class="invalid-feedback">Debe seleccionar un estudiante</div>
+                    }
                 </div>
 
                 <div class="mb-3">
                     <label for="fechaVencimiento" class="form-label">Fecha de Vencimiento</label>
                     <InputDate id="fechaVencimiento" @bind-Value="prestamoDto.FechaVencimiento" class="@GetFechaVencimientoClasses()" />
                     <ValidationMessage For="@(() => prestamoDto.FechaVencimiento)" />
+                    @if (!IsValidFechaVencimiento())
+                    {
+                        <div class="invalid-feedback">
+                            La fecha de vencimiento debe ser posterior a la fecha actual y no puede exceder 30 días
+                        </div>
+                    }
                 </div>
 
                 <div class="mb-3">
-                    <button type="submit" class="btn btn-primary me-2">
+                    <button type="submit" class="btn btn-primary me-2" disabled="@(!IsFormValid())">
                         <i class="bi bi-save"></i> Guardar
                     </button>
                     <button type="button" class="btn btn-secondary" @onclick="@Cancelar">
@@ -204,26 +223,37 @@
 
     private bool IsValidFechaVencimiento()
     {
-        return prestamoDto.FechaVencimiento > DateTime.Now;
+        var today = DateTime.Today;
+        var maxDate = today.AddDays(30);
+        return prestamoDto.FechaVencimiento > today && prestamoDto.FechaVencimiento <= maxDate;
+    }
+
+    private bool IsFormValid()
+    {
+        return !string.IsNullOrEmpty(selectedIsbn) &&
+               prestamoDto.LibroId != 0 &&
+               prestamoDto.EstudianteId != 0 &&
+               IsValidFechaVencimiento();
     }
 
     private string GetTituloClasses()
     {
-        return $"form-select{(string.IsNullOrEmpty(selectedIsbn) ? " is-invalid" : "")}";
+        return $"form-select{(string.IsNullOrEmpty(selectedIsbn) ? " is-invalid" : " is-valid")}";
     }
 
     private string GetEjemplarClasses()
     {
-        return $"form-select{(prestamoDto.LibroId == 0 ? " is-invalid" : "")}";
+        if (string.IsNullOrEmpty(selectedIsbn)) return "form-select";
+        return $"form-select{(prestamoDto.LibroId == 0 ? " is-invalid" : " is-valid")}";
     }
 
     private string GetEstudianteClasses()
     {
-        return $"form-select{(prestamoDto.EstudianteId == 0 ? " is-invalid" : "")}";
+        return $"form-select{(prestamoDto.EstudianteId == 0 ? " is-invalid" : " is-valid")}";
     }
 
     private string GetFechaVencimientoClasses()
     {
-        return $"form-control{(!IsValidFechaVencimiento() ? " is-invalid" : "")}";
+        return $"form-control{(!IsValidFechaVencimiento() ? " is-invalid" : " is-valid")}";
     }
 }
