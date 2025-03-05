@@ -121,7 +121,7 @@ else
         NavigationManager.NavigateTo($"/libros/editar/{libroId}");
     }
 
-    private async Task PrestarLibro(int libroId)
+    private void PrestarLibro(int libroId)
     {
         // Obtener el libro seleccionado
         var libro = libros?.FirstOrDefault(l => l.LibroId == libroId);
