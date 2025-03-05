@@ -48,7 +48,7 @@ public class PrestamoRepository : GenericRepository<Prestamo>, IPrestamoReposito
         return await _context.Set<Prestamo>()
             .Include(p => p.Libro)
             .Include(p => p.Estudiante)
-            .Where(p => p.FechaVencimiento >= DateTime.Now)
+            .Where(p => p.Estado == EstadoPrestamo.Activo)
             .ToListAsync();
     }
 }

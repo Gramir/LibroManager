@@ -1,6 +1,7 @@
 @page "/prestamos"
 @using LibroManager.DTOs
 @using LibroManager.Services.Interfaces
+@using LibroManager.Models
 @inject IPrestamoService PrestamoService
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
@@ -56,9 +57,27 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="badge @(prestamo.EstaActivo ? "bg-warning" : "bg-success")">
-                                    @(prestamo.EstaActivo ? "Activo" : "Concluido")
-                                </span>
+                                @{
+                                    string badgeClass;
+                                    string estadoTexto;
+                                    
+                                    if (prestamo.EstaActivo)
+                                    {
+                                        badgeClass = "bg-warning";
+                                        estadoTexto = "Activo";
+                                    }
+                                    else if (prestamo.FechaDevolucion.HasValue)
+                                    {
+                                        badgeClass = "bg-success";
+                                        estadoTexto = "Concluido";
+                                    }
+                                    else
+                                    {
+                                        badgeClass = "bg-danger";
+                                        estadoTexto = "Expirado";
+                                    }
+                                }
+                                <span class="badge @badgeClass">@estadoTexto</span>
                             </td>
                             <td>
                                 <a href="/prestamos/@prestamo.PrestamoId" class="btn btn-primary btn-sm me-2">

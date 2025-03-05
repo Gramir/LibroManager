@@ -45,7 +45,9 @@ public class AutoMapperProfile : Profile
         CreateMap<Prestamo, PrestamoDTO>()
             .ForMember(dest => dest.LibroTitulo, opt => opt.MapFrom(src => src.Libro != null ? src.Libro.Titulo : string.Empty))
             .ForMember(dest => dest.EstudianteNombre, opt => opt.MapFrom(src => src.Estudiante != null ? src.Estudiante.Nombre : string.Empty))
-            .ForMember(dest => dest.EstaActivo, opt => opt.MapFrom(src => src.FechaVencimiento >= DateTime.Now));
+            .ForMember(dest => dest.EstaActivo, opt => opt.MapFrom(src => 
+                src.Estado == EstadoPrestamo.Activo && 
+                !src.FechaDevolucion.HasValue));
         CreateMap<PrestamoCreateDTO, Prestamo>()
             .ForMember(dest => dest.FechaPrestamo, opt => opt.MapFrom(src => DateTime.Now));
         CreateMap<PrestamoUpdateDTO, Prestamo>();

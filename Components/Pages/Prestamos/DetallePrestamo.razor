@@ -58,9 +58,27 @@
 
                             <dt class="col-sm-4">Estado:</dt>
                             <dd class="col-sm-8">
-                                <span class="badge @GetEstadoBadgeClass(_prestamo.EstaActivo)">
-                                    @(_prestamo.EstaActivo ? "Activo" : "Concluido")
-                                </span>
+                                @{
+                                    string badgeClass;
+                                    string estadoTexto;
+                                    
+                                    if (_prestamo.EstaActivo)
+                                    {
+                                        badgeClass = "bg-warning";
+                                        estadoTexto = "Activo";
+                                    }
+                                    else if (_prestamo.FechaDevolucion.HasValue)
+                                    {
+                                        badgeClass = "bg-success";
+                                        estadoTexto = "Concluido";
+                                    }
+                                    else
+                                    {
+                                        badgeClass = "bg-danger";
+                                        estadoTexto = "Expirado";
+                                    }
+                                }
+                                <span class="badge @badgeClass">@estadoTexto</span>
                             </dd>
                         </dl>
                     </div>
@@ -115,11 +133,6 @@
             NavigationManager.NavigateTo("/prestamos");
             return;
         }
-    }
-
-    private string GetEstadoBadgeClass(bool estaActivo)
-    {
-        return estaActivo ? "bg-warning" : "bg-success";
     }
 
     private void EditarPrestamo()
