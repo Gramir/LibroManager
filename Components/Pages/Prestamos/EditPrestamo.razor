@@ -3,6 +3,8 @@
 @using LibroManager.DTOs
 @using LibroManager.Models
 @inject IPrestamoService PrestamoService
+@inject ILibroService LibroService
+@inject IEstudianteService EstudianteService
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
@@ -11,7 +13,7 @@
 <div class="container">
     <h1>Editar Préstamo</h1>
 
-    @if (PrestamoDto == null)
+    @if (_prestamoDto == null)
     {
         <p><em>Cargando...</em></p>
     }
@@ -19,49 +21,108 @@
     {
         <div class="row">
             <div class="col-md-6">
-                <EditForm Model="PrestamoDto" OnValidSubmit="HandleValidSubmit">
+                <EditForm Model="_prestamoDto" OnValidSubmit="HandleValidSubmit">
                     <DataAnnotationsValidator />
 
                     <div class="mb-3">
-                        <label class="form-label">Libro</label>
-                        <input type="text" class="form-control" value="@Prestamo?.LibroTitulo" disabled />
+                        <label for="titulo" class="form-label">Título del Libro</label>
+                        <InputSelect id="titulo" @bind-Value="_selectedIsbn" @oninput="OnLibroSeleccionado" class="@GetTituloClasses()">
+                            <option value="">Seleccione un libro...</option>
+                            @if (_librosUnicos != null)
+                            {
+                                @foreach (var libro in _librosUnicos)
+                                {
+                                    <option value="@libro.ISBN">@libro.Titulo</option>
+                                }
+                            }
+                        </InputSelect>
+                        @if (string.IsNullOrEmpty(_selectedIsbn))
+                        {
+                            <div class="invalid-feedback">Debe seleccionar un libro</div>
+                        }
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Estudiante</label>
-                        <input type="text" class="form-control" value="@Prestamo?.EstudianteNombre" disabled />
+                        <label for="ejemplar" class="form-label">Ejemplar</label>
+                        <InputSelect id="ejemplar" @bind-Value="_prestamoDto.LibroId" disabled="@(string.IsNullOrEmpty(_selectedIsbn))" class="@GetEjemplarClasses()">
+                            <option value="0">Seleccione un ejemplar...</option>
+                            @if (_ejemplaresDisponibles != null)
+                            {
+                                @foreach (var ejemplar in _ejemplaresDisponibles)
+                                {
+                                    <option value="@ejemplar.LibroId">@ejemplar.Serial (Ubicación: @ejemplar.UbicacionFormateada)</option>
+                                }
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => _prestamoDto.LibroId)" />
+                        @if (_prestamoDto.LibroId == 0 && !string.IsNullOrEmpty(_selectedIsbn))
+                        {
+                            <div class="invalid-feedback">Debe seleccionar un ejemplar disponible</div>
+                        }
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Fecha de Préstamo</label>
-                        <input type="text" class="form-control" value="@Prestamo?.FechaPrestamo.ToShortDateString()" disabled />
+                        <label for="estudiante" class="form-label">Estudiante</label>
+                        <InputSelect id="estudiante" @bind-Value="_prestamoDto.EstudianteId" class="@GetEstudianteClasses()">
+                            <option value="0">Seleccione un estudiante...</option>
+                            @if (_estudiantes != null)
+                            {
+                                @foreach (var estudiante in _estudiantes)
+                                {
+                                    <option value="@estudiante.EstudianteId">@estudiante.Nombre (@estudiante.Email)</option>
+                                }
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => _prestamoDto.EstudianteId)" />
+                        @if (_prestamoDto.EstudianteId == 0)
+                        {
+                            <div class="invalid-feedback">Debe seleccionar un estudiante</div>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fechaPrestamo" class="form-label">Fecha de Préstamo</label>
+                        <InputDate id="fechaPrestamo" class="form-control" @bind-Value="_prestamoDto.FechaPrestamo" />
+                        <ValidationMessage For="@(() => _prestamoDto.FechaPrestamo)" />
                     </div>
 
                     <div class="mb-3">
                         <label for="fechaVencimiento" class="form-label">Fecha de Vencimiento</label>
-                        <InputDate id="fechaVencimiento" class="form-control" @bind-Value="PrestamoDto.FechaVencimiento" />
-                        <ValidationMessage For="@(() => PrestamoDto.FechaVencimiento)" />
+                        <InputDate id="fechaVencimiento" class="@GetFechaVencimientoClasses()" @bind-Value="_prestamoDto.FechaVencimiento" />
+                        <ValidationMessage For="@(() => _prestamoDto.FechaVencimiento)" />
+                        @if (!IsValidFechaVencimiento())
+                        {
+                            <div class="invalid-feedback">
+                                La fecha de vencimiento debe ser posterior a la fecha actual y no puede exceder 30 días desde la fecha de préstamo
+                            </div>
+                        }
                     </div>
 
                     <div class="mb-3">
                         <label for="fechaDevolucion" class="form-label">Fecha de Devolución</label>
-                        <InputDate id="fechaDevolucion" class="form-control" @bind-Value="PrestamoDto.FechaDevolucion" />
+                        <InputDate id="fechaDevolucion" class="@GetFechaDevolucionClasses()" @bind-Value="_prestamoDto.FechaDevolucion" />
                         <small class="form-text text-muted">Complete este campo solo cuando el libro sea devuelto.</small>
+                        @if (!IsValidFechaDevolucion())
+                        {
+                            <div class="invalid-feedback">
+                                La fecha de devolución no puede ser anterior a la fecha de préstamo
+                            </div>
+                        }
                     </div>
 
                     <div class="mb-3">
                         <label for="estado" class="form-label">Estado</label>
-                        <InputSelect id="estado" class="form-select" @bind-Value="PrestamoDto.Estado">
+                        <InputSelect id="estado" class="@GetEstadoClasses()" @bind-Value="_prestamoDto.Estado">
                             @foreach (var estado in Enum.GetValues(typeof(EstadoPrestamo)))
                             {
                                 <option value="@estado">@estado</option>
                             }
                         </InputSelect>
-                        <ValidationMessage For="@(() => PrestamoDto.Estado)" />
+                        <ValidationMessage For="@(() => _prestamoDto.Estado)" />
                     </div>
 
                     <div class="mb-3">
-                        <button type="submit" class="btn btn-primary me-2">
+                        <button type="submit" class="btn btn-primary me-2" disabled="@(!IsFormValid())">
                             <i class="bi bi-save"></i> Guardar
                         </button>
                         <button type="button" class="btn btn-secondary" @onclick="Cancelar">
@@ -85,34 +146,92 @@
     [Parameter]
     public int PrestamoId { get; set; }
 
-    private PrestamoUpdateDTO? PrestamoDto;
-    private PrestamoDTO? Prestamo;
+    private PrestamoUpdateDTO? _prestamoDto;
+    private PrestamoDTO? _prestamo;
     private string _errorMessage = string.Empty;
+    private IEnumerable<LibroDTO>? _libros;
+    private IEnumerable<LibroDTO>? _librosUnicos;
+    private IEnumerable<LibroDTO>? _ejemplaresDisponibles;
+    private IEnumerable<EstudianteDTO>? _estudiantes;
+    private string _selectedIsbn = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        Prestamo = await PrestamoService.GetByIdAsync(PrestamoId);
-        if (Prestamo == null)
+        try
         {
-            NavigationManager.NavigateTo("/prestamos");
+            _prestamo = await PrestamoService.GetByIdAsync(PrestamoId);
+            if (_prestamo == null)
+            {
+                NavigationManager.NavigateTo("/prestamos");
+                return;
+            }
+
+            // Cargar estudiantes
+            _estudiantes = await EstudianteService.GetAllAsync();
+
+            // Cargar libros
+            var todosLosLibros = await LibroService.GetAllLibrosAsync();
+            if (todosLosLibros != null)
+            {
+                _libros = todosLosLibros;
+                _librosUnicos = todosLosLibros.GroupBy(l => l.ISBN)
+                                           .Select(g => g.First())
+                                           .ToList();
+
+                // Establecer el ISBN seleccionado
+                var libroActual = todosLosLibros.FirstOrDefault(l => l.LibroId == _prestamo.LibroId);
+                if (libroActual != null)
+                {
+                    _selectedIsbn = libroActual.ISBN;
+                    await CargarEjemplaresDisponibles(incluirPrestamoActual: true);
+                }
+            }
+
+            _prestamoDto = new PrestamoUpdateDTO
+            {
+                PrestamoId = PrestamoId,
+                LibroId = _prestamo.LibroId,
+                EstudianteId = _prestamo.EstudianteId,
+                FechaPrestamo = _prestamo.FechaPrestamo,
+                FechaVencimiento = _prestamo.FechaVencimiento,
+                FechaDevolucion = _prestamo.FechaDevolucion,
+                Estado = _prestamo.EstaActivo ? EstadoPrestamo.Activo : EstadoPrestamo.Concluido
+            };
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al cargar los datos: {ex.Message}";
+        }
+    }
+
+    private async Task OnLibroSeleccionado(ChangeEventArgs e)
+    {
+        _selectedIsbn = e.Value?.ToString() ?? string.Empty;
+        if (_prestamoDto != null) _prestamoDto.LibroId = 0;
+        await CargarEjemplaresDisponibles();
+    }
+
+    private async Task CargarEjemplaresDisponibles(bool incluirPrestamoActual = false)
+    {
+        if (string.IsNullOrEmpty(_selectedIsbn))
+        {
+            _ejemplaresDisponibles = Array.Empty<LibroDTO>();
             return;
         }
 
-        PrestamoDto = new PrestamoUpdateDTO
-        {
-            PrestamoId = PrestamoId,
-            FechaVencimiento = Prestamo.FechaVencimiento,
-            Estado = Prestamo.EstaActivo ? EstadoPrestamo.Activo : EstadoPrestamo.Concluido
-        };
+        var ejemplares = await LibroService.GetEjemplaresPorIsbnAsync(_selectedIsbn);
+        
+        // Filtrar solo los ejemplares disponibles o el ejemplar actual del préstamo
+        _ejemplaresDisponibles = ejemplares.Where(e => !e.EstaPrestado || (incluirPrestamoActual && e.LibroId == _prestamo?.LibroId)).ToList();
     }
 
     private async Task HandleValidSubmit()
     {
-        if (PrestamoDto == null) return;
+        if (_prestamoDto == null) return;
 
         try
         {
-            var result = await PrestamoService.UpdateAsync(PrestamoDto);
+            var result = await PrestamoService.UpdateAsync(_prestamoDto);
             if (result)
             {
                 NavigationManager.NavigateTo("/prestamos");
@@ -131,5 +250,62 @@
     private void Cancelar()
     {
         NavigationManager.NavigateTo("/prestamos");
+    }
+
+    private bool IsValidFechaVencimiento()
+    {
+        if (_prestamoDto == null) return false;
+        var maxDate = _prestamoDto.FechaPrestamo.AddDays(30);
+        return _prestamoDto.FechaVencimiento > _prestamoDto.FechaPrestamo && 
+               _prestamoDto.FechaVencimiento <= maxDate;
+    }
+
+    private bool IsValidFechaDevolucion()
+    {
+        if (_prestamoDto?.FechaDevolucion == null) return true;
+        return _prestamoDto.FechaDevolucion >= _prestamoDto.FechaPrestamo;
+    }
+
+    private bool IsFormValid()
+    {
+        return _prestamoDto != null && 
+               !string.IsNullOrEmpty(_selectedIsbn) &&
+               _prestamoDto.LibroId != 0 &&
+               _prestamoDto.EstudianteId != 0 &&
+               IsValidFechaVencimiento() && 
+               IsValidFechaDevolucion();
+    }
+
+    private string GetTituloClasses()
+    {
+        return $"form-select{(string.IsNullOrEmpty(_selectedIsbn) ? " is-invalid" : " is-valid")}";
+    }
+
+    private string GetEjemplarClasses()
+    {
+        if (string.IsNullOrEmpty(_selectedIsbn)) return "form-select";
+        return $"form-select{(_prestamoDto?.LibroId == 0 ? " is-invalid" : " is-valid")}";
+    }
+
+    private string GetEstudianteClasses()
+    {
+        return $"form-select{(_prestamoDto?.EstudianteId == 0 ? " is-invalid" : " is-valid")}";
+    }
+
+    private string GetFechaVencimientoClasses()
+    {
+        return $"form-control{(!IsValidFechaVencimiento() ? " is-invalid" : " is-valid")}";
+    }
+
+    private string GetFechaDevolucionClasses()
+    {
+        if (_prestamoDto?.FechaDevolucion == null) return "form-control";
+        return $"form-control{(!IsValidFechaDevolucion() ? " is-invalid" : " is-valid")}";
+    }
+
+    private string GetEstadoClasses()
+    {
+        if (_prestamoDto == null) return "form-select";
+        return "form-select is-valid";
     }
 }
