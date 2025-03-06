@@ -13,7 +13,8 @@ public class AutoMapperProfile : Profile
             .ForMember(dest => dest.AutorNombre, opt => opt.MapFrom(src => src.Autor != null ? src.Autor.Nombre : string.Empty))
             .ForMember(dest => dest.CategoriaNombre, opt => opt.MapFrom(src => src.Categoria != null ? src.Categoria.Nombre : string.Empty))
             .ForMember(dest => dest.UbicacionFormateada, opt => opt.MapFrom(src => src.Ubicacion != null ? src.Ubicacion.ObtenerUbicacionFormateada() : string.Empty))
-            .ForMember(dest => dest.EstaPrestado, opt => opt.MapFrom(src => src.Estado == EstadoLibro.Prestado));
+            .ForMember(dest => dest.EstaPrestado, opt => opt.MapFrom(src => src.Estado == EstadoLibro.Prestado))
+            .ForMember(dest => dest.EstaPerdido, opt => opt.MapFrom(src => src.Estado == EstadoLibro.Perdido));
 
         CreateMap<LibroCreateDTO, Libro>()
             .ForMember(dest => dest.UbicacionId, opt => opt.Ignore());

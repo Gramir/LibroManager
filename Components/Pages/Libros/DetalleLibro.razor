@@ -117,19 +117,19 @@
                                             <td>@ejemplar.Serial</td>
                                             <td>@ejemplar.UbicacionFormateada</td>
                                             <td>
-                                                <span class="badge @(ejemplar.EstaPrestado ? "bg-warning" : "bg-success")">
-                                                    @(ejemplar.EstaPrestado ? "Prestado" : "Disponible")
+                                                <span class="badge @GetEstadoBadgeClass(ejemplar)">
+                                                    @GetEstadoText(ejemplar)
                                                 </span>
                                             </td>
                                             <td>
-                                                @if (ejemplar.EstaPrestado)
+                                                @if (ejemplar.EstaPrestado && !ejemplar.EstaPerdido)
                                                 {
                                                     <button class="btn btn-info btn-sm me-2" 
                                                             @onclick="() => VerPrestamo(ejemplar.LibroId)">
                                                         <i class="bi bi-eye"></i> Ver préstamo
                                                     </button>
                                                 }
-                                                else
+                                                else if (!ejemplar.EstaPrestado && !ejemplar.EstaPerdido)
                                                 {
                                                     <button class="btn btn-success btn-sm me-2" 
                                                             @onclick="() => PrestarLibro(ejemplar.LibroId)">
@@ -519,5 +519,23 @@
         {
             NavigationManager.NavigateTo($"/prestamos/{prestamoActivo.PrestamoId}");
         }
+    }
+
+    private string GetEstadoBadgeClass(LibroDTO ejemplar)
+    {
+        if (ejemplar.EstaPerdido)
+            return "bg-danger";
+        if (ejemplar.EstaPrestado)
+            return "bg-warning";
+        return "bg-success";
+    }
+
+    private string GetEstadoText(LibroDTO ejemplar)
+    {
+        if (ejemplar.EstaPerdido)
+            return "Perdido";
+        if (ejemplar.EstaPrestado)
+            return "Prestado";
+        return "Disponible";
     }
 }

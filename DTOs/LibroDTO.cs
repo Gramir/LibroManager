@@ -11,6 +11,7 @@ public class LibroDTO
     public string AutorNombre { get; set; } = string.Empty;
     public string CategoriaNombre { get; set; } = string.Empty;
     public bool EstaPrestado { get; set; }
+    public bool EstaPerdido { get; set; }
     public int UbicacionId { get; set; }
     public string UbicacionFormateada { get; set; } = string.Empty;
 }

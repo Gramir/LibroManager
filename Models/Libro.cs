@@ -52,7 +52,9 @@ public class Libro
 
     [NotMapped]
     public bool EstaPrestado => Estado == EstadoLibro.Prestado;
-    
+
+    [NotMapped]
+    public bool EstaPerdido => Estado == EstadoLibro.Perdido;
     
     public static int GetCantidadEjemplares(IEnumerable<Libro> libros, string isbn)
     {
