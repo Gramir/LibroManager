@@ -61,6 +61,13 @@ public class PrestamoService : IPrestamoService
         try
         {
             var prestamos = await _unitOfWork.Prestamos.GetAllAsync();
+            
+            // Verificar y actualizar el estado de cada préstamo antes de mapearlos
+            foreach (var prestamo in prestamos)
+            {
+                await VerificarYActualizarEstadoPrestamo(prestamo);
+            }
+            
             var prestamosDto = _mapper.Map<IEnumerable<PrestamoDTO>>(prestamos);
             
             if (!prestamosDto.Any())
