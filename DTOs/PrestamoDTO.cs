@@ -9,6 +9,7 @@ public class PrestamoDTO
     public int LibroId { get; set; }
     public int EstudianteId { get; set; }
     public string LibroTitulo { get; set; } = string.Empty;
+    public string LibroSerial { get; set; } = string.Empty;
     public string EstudianteNombre { get; set; } = string.Empty;
     public DateTime FechaPrestamo { get; set; }
     public DateTime FechaVencimiento { get; set; }

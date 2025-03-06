@@ -45,6 +45,7 @@ public class AutoMapperProfile : Profile
         // Mapeos de Prestamo
         CreateMap<Prestamo, PrestamoDTO>()
             .ForMember(dest => dest.LibroTitulo, opt => opt.MapFrom(src => src.Libro != null ? src.Libro.Titulo : string.Empty))
+            .ForMember(dest => dest.LibroSerial, opt => opt.MapFrom(src => src.Libro != null ? src.Libro.Serial : string.Empty))
             .ForMember(dest => dest.EstudianteNombre, opt => opt.MapFrom(src => src.Estudiante != null ? src.Estudiante.Nombre : string.Empty))
             .ForMember(dest => dest.EstaActivo, opt => opt.MapFrom(src => 
                 src.Estado == EstadoPrestamo.Activo && 

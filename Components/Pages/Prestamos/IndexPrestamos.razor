@@ -5,6 +5,7 @@
 @inject IPrestamoService PrestamoService
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
+@using System.Diagnostics
 
 <PageTitle>Préstamos - LibroManager</PageTitle>
 
@@ -37,6 +38,7 @@ else
             <thead>
                 <tr>
                     <th>Libro</th>
+                    <th>Serial</th>
                     <th>Estudiante</th>
                     <th>Fecha de Préstamo</th>
                     <th>Fecha de Vencimiento</th>
@@ -49,6 +51,7 @@ else
                 {
                     <tr>
                         <td>@prestamo.LibroTitulo</td>
+                        <td>@(!string.IsNullOrEmpty(prestamo.LibroSerial) ? prestamo.LibroSerial : "No disponible")</td>
                         <td>@prestamo.EstudianteNombre</td>
                         <td>@prestamo.FechaPrestamo.ToShortDateString()</td>
                         <td>
@@ -92,7 +95,7 @@ else
             </tbody>
         </table>
     </div>
-}
+    }
 
 @code {
     private IEnumerable<PrestamoDTO>? _prestamos;
@@ -100,5 +103,14 @@ else
     protected override async Task OnInitializedAsync()
     {
         _prestamos = await PrestamoService.GetAllAsync();
+        
+        // Código de depuración para comprobar los valores recibidos
+        if (_prestamos != null && _prestamos.Any())
+        {
+            foreach (var prestamo in _prestamos)
+            {
+                Debug.WriteLine($"Préstamo {prestamo.PrestamoId} - Libro: {prestamo.LibroTitulo}, Serial: {prestamo.LibroSerial}");
+            }
+        }
     }
 }
