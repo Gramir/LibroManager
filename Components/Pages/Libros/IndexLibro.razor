@@ -38,7 +38,8 @@ else
                 {
                     var totalEjemplares = ejemplaresPorIsbn.TryGetValue(libro.ISBN, out var count) ? count : 0;
                     var prestados = ejemplaresPrestadosPorIsbn.TryGetValue(libro.ISBN, out var prestadosCount) ? prestadosCount : 0;
-                    var disponibles = totalEjemplares - prestados;
+                    var perdidos = ejemplaresPerdidosPorIsbn.TryGetValue(libro.ISBN, out var perdidosCount) ? perdidosCount : 0;
+                    var disponibles = totalEjemplares - prestados - perdidos;
                     var colorClass = disponibles > 0 ? "text-success" : "text-danger";
 
                     <tr>
@@ -47,7 +48,9 @@ else
                         <td class="@colorClass">
                             <strong>@disponibles</strong> disponibles 
                             <span class="text-muted">|</span> 
-                            @prestados prestados
+                            <span class="@(prestados > 0 ? "text-orange" : "")">@prestados prestados</span>
+                            <span class="text-muted">|</span> 
+                            <span class="@(perdidos > 0 ? "text-danger" : "")">@perdidos perdidos</span>
                             <span class="text-muted">|</span> 
                             @totalEjemplares total
                         </td>
@@ -77,6 +80,7 @@ else
     private List<LibroDTO> librosUnicos = new();
     private Dictionary<string, int> ejemplaresPorIsbn = new();
     private Dictionary<string, int> ejemplaresPrestadosPorIsbn = new();
+    private Dictionary<string, int> ejemplaresPerdidosPorIsbn = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -103,6 +107,9 @@ else
             
             var prestados = await LibroService.ContarEjemplaresPrestadosPorIsbnAsync(isbn);
             ejemplaresPrestadosPorIsbn[isbn] = prestados;
+
+            var perdidos = await LibroService.ContarEjemplaresPerdidosPorIsbnAsync(isbn);
+            ejemplaresPerdidosPorIsbn[isbn] = perdidos;
         }
     }
 

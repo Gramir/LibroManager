@@ -14,6 +14,7 @@ public interface ILibroService
     Task<bool> ExisteSerialAsync(string serial);
     Task<int> ContarEjemplaresPorIsbnAsync(string isbn);
     Task<int> ContarEjemplaresPrestadosPorIsbnAsync(string isbn);
+    Task<int> ContarEjemplaresPerdidosPorIsbnAsync(string isbn);
     Task<IEnumerable<LibroDTO>> GetEjemplaresPorIsbnAsync(string isbn);
     Task<bool> CreateEjemplarAsync(string isbn, string ubicacion);
     Task<IEnumerable<LibroDTO>> GetLibrosPorUbicacionAsync(int ubicacionId);
