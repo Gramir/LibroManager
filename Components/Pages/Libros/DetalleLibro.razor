@@ -1,13 +1,19 @@
 @page "/libros/{LibroId:int}"
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
 @using LibroManager.DTOs
 @using LibroManager.Services.Interfaces
+@using LibroManager.Models
+@using System.Linq
 @inject ILibroService LibroService
 @inject IPrestamoService PrestamoService
 @inject NavigationManager NavigationManager
 @inject IUbicacionService UbicacionService
 @rendermode InteractiveServer
 
-<PageTitle>Detalle del Libro</PageTitle>
+<HeadContent>
+    <title>Detalle del Libro</title>
+</HeadContent>
 
 <style>
     .dropdown-container {
@@ -122,14 +128,14 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                @if (ejemplar.EstaPrestado && !ejemplar.EstaPerdido)
+                                                @if (ejemplar.EstaPrestado || ejemplar.EstaPerdido)
                                                 {
                                                     <button class="btn btn-info btn-sm me-2" 
                                                             @onclick="() => VerPrestamo(ejemplar.LibroId)">
                                                         <i class="bi bi-eye"></i> Ver préstamo
                                                     </button>
                                                 }
-                                                else if (!ejemplar.EstaPrestado && !ejemplar.EstaPerdido)
+                                                @if (!ejemplar.EstaPrestado && !ejemplar.EstaPerdido)
                                                 {
                                                     <button class="btn btn-success btn-sm me-2" 
                                                             @onclick="() => PrestarLibro(ejemplar.LibroId)">
@@ -192,7 +198,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Serial a Asignar</label>
-                        <input type="text" class="form-control" value="@($"{_libro?.ISBN}-{_ejemplares.Count() + 1}")" readonly />
+                        <input type="text" class="form-control" value="@(_libro?.ISBN + "-" + (_ejemplares.Count() + 1))" readonly />
                     </div>
                     <div class="mb-3 dropdown-container" @onclick:stopPropagation>
                         <label for="ubicacion" class="form-label">Ubicación</label>
@@ -514,10 +520,13 @@
     private async Task VerPrestamo(int libroId)
     {
         var prestamos = await PrestamoService.GetPrestamosByLibroAsync(libroId);
-        var prestamoActivo = prestamos.FirstOrDefault(p => p.EstaActivo);
-        if (prestamoActivo != null)
+        var prestamo = prestamos
+            .OrderByDescending(p => p.FechaVencimiento)
+            .FirstOrDefault();
+                              
+        if (prestamo != null)
         {
-            NavigationManager.NavigateTo($"/prestamos/{prestamoActivo.PrestamoId}");
+            NavigationManager.NavigateTo($"/prestamos/{prestamo.PrestamoId}");
         }
     }
 
