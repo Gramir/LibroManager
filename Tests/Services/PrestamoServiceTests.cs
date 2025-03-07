@@ -37,8 +37,11 @@ public class PrestamoServiceTests
                 PrestamoId = 1, 
                 LibroId = 1, 
                 EstudianteId = 1,
-                Libro = new Libro { Titulo = "Libro 1" },
-                Estudiante = new Estudiante { Nombre = "Estudiante 1" }
+                Libro = new Libro { LibroId = 1, Titulo = "Libro 1" },
+                Estudiante = new Estudiante { Nombre = "Estudiante 1" },
+                FechaPrestamo = DateTime.Now,
+                FechaVencimiento = DateTime.Now.AddDays(7),
+                Estado = EstadoPrestamo.Activo
             }
         };
 
@@ -53,7 +56,13 @@ public class PrestamoServiceTests
 
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetAllAsync())
             .ReturnsAsync(prestamos);
-        _mockMapper.Setup(m => m.Map<IEnumerable<PrestamoDTO>>(prestamos))
+        _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(1))
+            .ReturnsAsync(new Libro { LibroId = 1, Titulo = "Libro 1" });
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.Update(It.IsAny<Prestamo>()));
+        _mockUnitOfWork.Setup(uow => uow.Libros.Update(It.IsAny<Libro>()));
+        _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
+            .ReturnsAsync(1);
+        _mockMapper.Setup(m => m.Map<IEnumerable<PrestamoDTO>>(It.IsAny<IEnumerable<Prestamo>>()))
             .Returns(prestamosDto);
 
         // Act
@@ -61,6 +70,8 @@ public class PrestamoServiceTests
 
         // Assert
         Assert.Equal(prestamosDto.Count, result.Count());
+        Assert.Equal(prestamosDto.First().LibroTitulo, result.First().LibroTitulo);
+        Assert.Equal(prestamosDto.First().EstudianteNombre, result.First().EstudianteNombre);
     }
 
     [Fact]
