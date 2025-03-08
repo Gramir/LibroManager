@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using LibroManager.Models;
 using System;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace LibroManager.Data.Context
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -22,6 +23,12 @@ namespace LibroManager.Data.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Configuración de Identity
+            modelBuilder.Entity<ApplicationUser>()
+                .Property(u => u.NombreCompleto)
+                .HasMaxLength(100)
+                .IsRequired();
 
             // Configuración de relaciones y borrado en cascada
             modelBuilder.Entity<Libro>()
