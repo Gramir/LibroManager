@@ -43,6 +43,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
 .AddDefaultTokenProviders();
 
 // Configure cookie settings
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
