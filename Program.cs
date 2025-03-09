@@ -1,4 +1,4 @@
-using LibroManager.Components;
+﻿using LibroManager.Components;
 using LibroManager.Data.Context;
 using LibroManager.Services;
 using LibroManager.Services.Interfaces;
@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using LibroManager.Models;
 using LibroManager.Constants;
+using LibroManager.Components.Account;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,10 +69,10 @@ builder.Services.AddAuthorization(options =>
     // Entity-specific policies
     options.AddPolicy("ManageLibros", policy =>
         policy.RequireClaim(RoleConstants.Permissions.Libros.Manage));
-        
+
     options.AddPolicy("ManagePrestamos", policy =>
         policy.RequireClaim(RoleConstants.Permissions.Prestamos.Manage));
-        
+
     options.AddPolicy("ManageUsers", policy =>
         policy.RequireClaim(RoleConstants.Permissions.Users.ManageUsers));
 });
@@ -87,7 +89,31 @@ builder.Services.AddScoped<IEstudianteService, EstudianteService>();
 builder.Services.AddScoped<IPrestamoService, PrestamoService>();
 builder.Services.AddScoped<IUbicacionService, UbicacionService>();
 
+builder.Services.AddCascadingAuthenticationState();
+
+builder.Services.AddScoped<IdentityUserAccessor>();
+
+builder.Services.AddScoped<IdentityRedirectManager>();
+
+builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+
+// Remove or comment out these lines
+// builder.Services.AddAuthentication(options =>
+// {
+//     options.DefaultScheme = IdentityConstants.ApplicationScheme;
+//     options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+// })
+//     .AddIdentityCookies();
+//{
+  //  options.DefaultScheme = IdentityConstants.ApplicationScheme;
+  //  options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+//})
+    //.AddIdentityCookies();
+
+
+builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 var app = builder.Build();
+// Change this line to use the non-generic class without type parameters
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -147,5 +173,7 @@ using (var scope = app.Services.CreateScope())
         }
     }
 }
+
+app.MapAdditionalIdentityEndpoints(); ;
 
 app.Run();
