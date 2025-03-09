@@ -41,18 +41,25 @@ public class PrestamoService : IPrestamoService
             _unitOfWork.Prestamos.Update(prestamo);
             await _unitOfWork.SaveChangesAsync();
         }
-        // Si no tiene fecha de devolución y está vencido, marcar como expirado
-        else if (!prestamo.FechaDevolucion.HasValue && prestamo.FechaVencimiento < DateTime.Now && prestamo.Estado != EstadoPrestamo.Expirado)
+        // Si no tiene fecha de devolución y está vencido, marcar como expirado y libro como perdido
+        else if (!prestamo.FechaDevolucion.HasValue && prestamo.FechaVencimiento < DateTime.Now)
         {
-            prestamo.Estado = EstadoPrestamo.Expirado;
+            // Solo actualizar si no estaba ya expirado o el libro no estaba perdido
             var libro = await _unitOfWork.Libros.GetByIdAsync(prestamo.LibroId);
-            if (libro != null)
+            if (libro != null && (prestamo.Estado != EstadoPrestamo.Expirado || libro.Estado != EstadoLibro.Perdido))
             {
+                prestamo.Estado = EstadoPrestamo.Expirado;
                 libro.Estado = EstadoLibro.Perdido;
                 _unitOfWork.Libros.Update(libro);
+                _unitOfWork.Prestamos.Update(prestamo);
+                await _unitOfWork.SaveChangesAsync();
+                
+                _logger.LogInformation(
+                    "Préstamo marcado como expirado y libro como perdido: Préstamo {PrestamoId}, Libro {LibroId}", 
+                    prestamo.PrestamoId, 
+                    prestamo.LibroId
+                );
             }
-            _unitOfWork.Prestamos.Update(prestamo);
-            await _unitOfWork.SaveChangesAsync();
         }
     }
 
