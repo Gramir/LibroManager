@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LibroManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250304005240_UpdateSerialsToIsbnFormat")]
-    partial class UpdateSerialsToIsbnFormat
+    [Migration("20250309172710_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,79 @@ namespace LibroManager.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("LibroManager.Models.ApplicationUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("NombreCompleto")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.ToTable("AspNetUsers", (string)null);
+                });
 
             modelBuilder.Entity("LibroManager.Models.Autor", b =>
                 {
@@ -273,7 +346,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9780307474728",
-                            Serial = "GAB-SOL-001",
+                            Serial = "9780307474728-1",
                             Titulo = "Cien años de soledad",
                             UbicacionId = 1
                         },
@@ -285,7 +358,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9788478884452",
-                            Serial = "ROW-HP1-001",
+                            Serial = "9788478884452-1",
                             Titulo = "Harry Potter y la piedra filosofal",
                             UbicacionId = 5
                         },
@@ -297,7 +370,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9788497593793",
-                            Serial = "KIN-RES-001",
+                            Serial = "9788497593793-1",
                             Titulo = "El resplandor",
                             UbicacionId = 8
                         },
@@ -309,7 +382,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9780525433477",
-                            Serial = "ALL-ESP-001",
+                            Serial = "9780525433477-1",
                             Titulo = "La casa de los espíritus",
                             UbicacionId = 2
                         },
@@ -321,7 +394,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9788483835043",
-                            Serial = "MUR-TOK-001",
+                            Serial = "9788483835043-1",
                             Titulo = "Tokio blues",
                             UbicacionId = 3
                         },
@@ -333,7 +406,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9780307387264",
-                            Serial = "GAB-AMO-001",
+                            Serial = "9780307387264-1",
                             Titulo = "El amor en los tiempos del cólera",
                             UbicacionId = 4
                         },
@@ -345,7 +418,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9788478884957",
-                            Serial = "ROW-HP2-001",
+                            Serial = "9788478884957-1",
                             Titulo = "Harry Potter y la cámara secreta",
                             UbicacionId = 6
                         },
@@ -357,7 +430,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9781501142970",
-                            Serial = "KIN-IT-001",
+                            Serial = "9781501142970-1",
                             Titulo = "It",
                             UbicacionId = 9
                         },
@@ -369,7 +442,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9780307474728",
-                            Serial = "GAB-SOL-002",
+                            Serial = "9780307474728-2",
                             Titulo = "Cien años de soledad",
                             UbicacionId = 10
                         },
@@ -381,7 +454,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9780307474728",
-                            Serial = "GAB-SOL-003",
+                            Serial = "9780307474728-3",
                             Titulo = "Cien años de soledad",
                             UbicacionId = 11
                         },
@@ -393,7 +466,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9788478884452",
-                            Serial = "ROW-HP1-002",
+                            Serial = "9788478884452-2",
                             Titulo = "Harry Potter y la piedra filosofal",
                             UbicacionId = 12
                         },
@@ -405,7 +478,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9788478884452",
-                            Serial = "ROW-HP1-003",
+                            Serial = "9788478884452-3",
                             Titulo = "Harry Potter y la piedra filosofal",
                             UbicacionId = 13
                         },
@@ -417,7 +490,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9788478884452",
-                            Serial = "ROW-HP1-004",
+                            Serial = "9788478884452-4",
                             Titulo = "Harry Potter y la piedra filosofal",
                             UbicacionId = 5
                         },
@@ -429,7 +502,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9788497593793",
-                            Serial = "KIN-RES-002",
+                            Serial = "9788497593793-2",
                             Titulo = "El resplandor",
                             UbicacionId = 14
                         },
@@ -441,7 +514,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9780525433477",
-                            Serial = "ALL-ESP-002",
+                            Serial = "9780525433477-2",
                             Titulo = "La casa de los espíritus",
                             UbicacionId = 15
                         },
@@ -453,7 +526,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9780525433477",
-                            Serial = "ALL-ESP-003",
+                            Serial = "9780525433477-3",
                             Titulo = "La casa de los espíritus",
                             UbicacionId = 2
                         },
@@ -465,7 +538,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9788478884957",
-                            Serial = "ROW-HP2-002",
+                            Serial = "9788478884957-2",
                             Titulo = "Harry Potter y la cámara secreta",
                             UbicacionId = 6
                         },
@@ -477,7 +550,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9788478884957",
-                            Serial = "ROW-HP2-003",
+                            Serial = "9788478884957-3",
                             Titulo = "Harry Potter y la cámara secreta",
                             UbicacionId = 7
                         },
@@ -489,7 +562,7 @@ namespace LibroManager.Migrations
                             Estado = 0,
                             FechaCreacion = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             ISBN = "9781501142970",
-                            Serial = "KIN-IT-002",
+                            Serial = "9781501142970-2",
                             Titulo = "It",
                             UbicacionId = 9
                         });
@@ -637,80 +710,444 @@ namespace LibroManager.Migrations
                         new
                         {
                             UbicacionId = 5,
-                            Estante = "B",
+                            Estante = "A",
                             Nivel = 2,
                             Posicion = 1
                         },
                         new
                         {
                             UbicacionId = 6,
-                            Estante = "B",
+                            Estante = "A",
                             Nivel = 2,
                             Posicion = 2
                         },
                         new
                         {
                             UbicacionId = 7,
-                            Estante = "B",
+                            Estante = "A",
                             Nivel = 2,
                             Posicion = 3
                         },
                         new
                         {
                             UbicacionId = 8,
-                            Estante = "C",
-                            Nivel = 3,
-                            Posicion = 1
+                            Estante = "A",
+                            Nivel = 2,
+                            Posicion = 4
                         },
                         new
                         {
                             UbicacionId = 9,
-                            Estante = "C",
+                            Estante = "A",
                             Nivel = 3,
-                            Posicion = 2
+                            Posicion = 1
                         },
                         new
                         {
                             UbicacionId = 10,
                             Estante = "A",
-                            Nivel = 2,
-                            Posicion = 1
+                            Nivel = 3,
+                            Posicion = 2
                         },
                         new
                         {
                             UbicacionId = 11,
                             Estante = "A",
-                            Nivel = 2,
-                            Posicion = 2
+                            Nivel = 3,
+                            Posicion = 3
                         },
                         new
                         {
                             UbicacionId = 12,
-                            Estante = "B",
-                            Nivel = 1,
-                            Posicion = 1
+                            Estante = "A",
+                            Nivel = 3,
+                            Posicion = 4
                         },
                         new
                         {
                             UbicacionId = 13,
                             Estante = "B",
                             Nivel = 1,
-                            Posicion = 2
+                            Posicion = 1
                         },
                         new
                         {
                             UbicacionId = 14,
+                            Estante = "B",
+                            Nivel = 1,
+                            Posicion = 2
+                        },
+                        new
+                        {
+                            UbicacionId = 15,
+                            Estante = "B",
+                            Nivel = 1,
+                            Posicion = 3
+                        },
+                        new
+                        {
+                            UbicacionId = 16,
+                            Estante = "B",
+                            Nivel = 1,
+                            Posicion = 4
+                        },
+                        new
+                        {
+                            UbicacionId = 17,
+                            Estante = "B",
+                            Nivel = 2,
+                            Posicion = 1
+                        },
+                        new
+                        {
+                            UbicacionId = 18,
+                            Estante = "B",
+                            Nivel = 2,
+                            Posicion = 2
+                        },
+                        new
+                        {
+                            UbicacionId = 19,
+                            Estante = "B",
+                            Nivel = 2,
+                            Posicion = 3
+                        },
+                        new
+                        {
+                            UbicacionId = 20,
+                            Estante = "B",
+                            Nivel = 2,
+                            Posicion = 4
+                        },
+                        new
+                        {
+                            UbicacionId = 21,
+                            Estante = "B",
+                            Nivel = 3,
+                            Posicion = 1
+                        },
+                        new
+                        {
+                            UbicacionId = 22,
+                            Estante = "B",
+                            Nivel = 3,
+                            Posicion = 2
+                        },
+                        new
+                        {
+                            UbicacionId = 23,
+                            Estante = "B",
+                            Nivel = 3,
+                            Posicion = 3
+                        },
+                        new
+                        {
+                            UbicacionId = 24,
+                            Estante = "B",
+                            Nivel = 3,
+                            Posicion = 4
+                        },
+                        new
+                        {
+                            UbicacionId = 25,
                             Estante = "C",
                             Nivel = 1,
                             Posicion = 1
                         },
                         new
                         {
-                            UbicacionId = 15,
+                            UbicacionId = 26,
                             Estante = "C",
                             Nivel = 1,
                             Posicion = 2
+                        },
+                        new
+                        {
+                            UbicacionId = 27,
+                            Estante = "C",
+                            Nivel = 1,
+                            Posicion = 3
+                        },
+                        new
+                        {
+                            UbicacionId = 28,
+                            Estante = "C",
+                            Nivel = 1,
+                            Posicion = 4
+                        },
+                        new
+                        {
+                            UbicacionId = 29,
+                            Estante = "C",
+                            Nivel = 2,
+                            Posicion = 1
+                        },
+                        new
+                        {
+                            UbicacionId = 30,
+                            Estante = "C",
+                            Nivel = 2,
+                            Posicion = 2
+                        },
+                        new
+                        {
+                            UbicacionId = 31,
+                            Estante = "C",
+                            Nivel = 2,
+                            Posicion = 3
+                        },
+                        new
+                        {
+                            UbicacionId = 32,
+                            Estante = "C",
+                            Nivel = 2,
+                            Posicion = 4
+                        },
+                        new
+                        {
+                            UbicacionId = 33,
+                            Estante = "C",
+                            Nivel = 3,
+                            Posicion = 1
+                        },
+                        new
+                        {
+                            UbicacionId = 34,
+                            Estante = "C",
+                            Nivel = 3,
+                            Posicion = 2
+                        },
+                        new
+                        {
+                            UbicacionId = 35,
+                            Estante = "C",
+                            Nivel = 3,
+                            Posicion = 3
+                        },
+                        new
+                        {
+                            UbicacionId = 36,
+                            Estante = "C",
+                            Nivel = 3,
+                            Posicion = 4
+                        },
+                        new
+                        {
+                            UbicacionId = 37,
+                            Estante = "D",
+                            Nivel = 1,
+                            Posicion = 1
+                        },
+                        new
+                        {
+                            UbicacionId = 38,
+                            Estante = "D",
+                            Nivel = 1,
+                            Posicion = 2
+                        },
+                        new
+                        {
+                            UbicacionId = 39,
+                            Estante = "D",
+                            Nivel = 1,
+                            Posicion = 3
+                        },
+                        new
+                        {
+                            UbicacionId = 40,
+                            Estante = "D",
+                            Nivel = 1,
+                            Posicion = 4
+                        },
+                        new
+                        {
+                            UbicacionId = 41,
+                            Estante = "D",
+                            Nivel = 2,
+                            Posicion = 1
+                        },
+                        new
+                        {
+                            UbicacionId = 42,
+                            Estante = "D",
+                            Nivel = 2,
+                            Posicion = 2
+                        },
+                        new
+                        {
+                            UbicacionId = 43,
+                            Estante = "D",
+                            Nivel = 2,
+                            Posicion = 3
+                        },
+                        new
+                        {
+                            UbicacionId = 44,
+                            Estante = "D",
+                            Nivel = 2,
+                            Posicion = 4
+                        },
+                        new
+                        {
+                            UbicacionId = 45,
+                            Estante = "D",
+                            Nivel = 3,
+                            Posicion = 1
+                        },
+                        new
+                        {
+                            UbicacionId = 46,
+                            Estante = "D",
+                            Nivel = 3,
+                            Posicion = 2
+                        },
+                        new
+                        {
+                            UbicacionId = 47,
+                            Estante = "D",
+                            Nivel = 3,
+                            Posicion = 3
+                        },
+                        new
+                        {
+                            UbicacionId = 48,
+                            Estante = "D",
+                            Nivel = 3,
+                            Posicion = 4
                         });
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RoleId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
                 });
 
             modelBuilder.Entity("LibroManager.Models.Libro", b =>
@@ -757,6 +1194,57 @@ namespace LibroManager.Migrations
                     b.Navigation("Estudiante");
 
                     b.Navigation("Libro");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.HasOne("LibroManager.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.HasOne("LibroManager.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LibroManager.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.HasOne("LibroManager.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("LibroManager.Models.Autor", b =>
