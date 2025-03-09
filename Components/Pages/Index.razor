@@ -1,16 +1,40 @@
 @page "/"
+@using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>LibroManager - Inicio</PageTitle>
 
-<h1>Bienvenido a LibroManager</h1>
+<AuthorizeView>
+    <Authorized>
+        <h1>Bienvenido a LibroManager</h1>
 
-<div class="row mt-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Sistema de Gestión de Biblioteca</h5>
-                <p class="card-text">Gestiona de manera eficiente los libros, estudiantes y préstamos de tu biblioteca.</p>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Sistema de Gestión de Biblioteca</h5>
+                        <p class="card-text">Gestiona de manera eficiente los libros, estudiantes y préstamos de tu biblioteca.</p>
+                        <hr />
+                        <p>Bienvenido, @context.User.Identity?.Name!</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="container mt-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8 text-center">
+                    <h1>Bienvenido a LibroManager</h1>
+                    <p class="lead mt-4">Sistema de Gestión de Biblioteca</p>
+                    <div class="card mt-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Acceso Restringido</h5>
+                            <p class="card-text">Para acceder al sistema, por favor inicia sesión.</p>
+                            <a href="Account/Login" class="btn btn-primary">Iniciar Sesión</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
