@@ -3,7 +3,7 @@ namespace LibroManager.Constants;
 public static class RoleConstants
 {
     public const string AdminRole = "Admin";
-    public const string BibliotecarioRole = "Bibliotecario";
+    public const string LibrarianRole = "Librarian";
 
     public static class Permissions
     {

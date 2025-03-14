@@ -62,9 +62,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireAdmin", policy =>
         policy.RequireRole(RoleConstants.AdminRole));
 
-    // Bibliotecario policy
-    options.AddPolicy("RequireBibliotecario", policy =>
-        policy.RequireRole(RoleConstants.BibliotecarioRole, RoleConstants.AdminRole));
+    // Librarian policy
+    options.AddPolicy("RequireLibrarian", policy =>
+        policy.RequireRole(RoleConstants.LibrarianRole, RoleConstants.AdminRole));
 
     // Entity-specific policies
     options.AddPolicy("ManageLibros", policy =>
@@ -96,19 +96,6 @@ builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
-
-// Remove or comment out these lines
-// builder.Services.AddAuthentication(options =>
-// {
-//     options.DefaultScheme = IdentityConstants.ApplicationScheme;
-//     options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-// })
-//     .AddIdentityCookies();
-//{
-  //  options.DefaultScheme = IdentityConstants.ApplicationScheme;
-  //  options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-//})
-    //.AddIdentityCookies();
 
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
@@ -142,7 +129,7 @@ using (var scope = app.Services.CreateScope())
     var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
     // Create roles if they don't exist
-    var roles = new[] { RoleConstants.AdminRole, RoleConstants.BibliotecarioRole };
+    var roles = new[] { RoleConstants.AdminRole, RoleConstants.LibrarianRole };
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))

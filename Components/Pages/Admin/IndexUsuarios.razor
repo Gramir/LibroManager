@@ -1,0 +1,363 @@
+@page "/admin/usuarios"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using System.ComponentModel.DataAnnotations
+@using LibroManager.Models
+@using LibroManager.Data.Context
+@using LibroManager.Constants
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+@inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = RoleConstants.AdminRole)]
+@rendermode InteractiveServer
+
+<PageTitle>Gestión de Usuarios - LibroManager</PageTitle>
+
+<div class="container">
+    <h1>Gestión de Usuarios</h1>
+
+    <div class="mb-3">
+        <button class="btn btn-primary" @onclick="MostrarModalCrearUsuario">
+            <i class="bi bi-person-plus"></i> Crear Usuario
+        </button>
+    </div>
+
+    @if (_usuarios == null)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Nombre</th>
+                        <th>Roles</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var usuario in _usuarios)
+                    {
+                        <tr>
+                            <td>@usuario.Email</td>
+                            <td>@usuario.NombreCompleto</td>
+                            <td>
+                                @string.Join(", ", _usuariosRoles.GetValueOrDefault(usuario.Id, new List<string>()).Select(rol => rol switch
+                                {
+                                    RoleConstants.AdminRole => "Administrador",
+                                    RoleConstants.LibrarianRole => "Bibliotecario",
+                                    _ => rol
+                                }))
+                            </td>
+                            <td>
+                                <button class="btn btn-warning btn-sm me-1" @onclick="() => EditarUsuario(usuario)">
+                                    <i class="bi bi-pencil"></i> Editar
+                                </button>
+                                @if (_usuariosRoles.GetValueOrDefault(usuario.Id, new List<string>()).Contains(RoleConstants.AdminRole) == false)
+                                {
+                                    <button class="btn btn-danger btn-sm" @onclick="() => EliminarUsuario(usuario)">
+                                        <i class="bi bi-trash"></i> Eliminar
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (_mostrarModalCrear)
+    {
+        <div class="modal fade show" style="display: block;" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Crear Usuario</h5>
+                        <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+                    </div>
+                    <EditForm Model="@_nuevoUsuario" OnValidSubmit="CrearUsuario">
+                        <DataAnnotationsValidator />
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <InputText @bind-Value="_nuevoUsuario.Email" class="form-control" />
+                                <ValidationMessage For="@(() => _nuevoUsuario.Email)" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nombre Completo</label>
+                                <InputText @bind-Value="_nuevoUsuario.NombreCompleto" class="form-control" />
+                                <ValidationMessage For="@(() => _nuevoUsuario.NombreCompleto)" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Contraseña</label>
+                                <InputText type="password" @bind-Value="_nuevoUsuario.Password" class="form-control" />
+                                <ValidationMessage For="@(() => _nuevoUsuario.Password)" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Confirmar Contraseña</label>
+                                <InputText type="password" @bind-Value="_nuevoUsuario.ConfirmPassword" class="form-control" />
+                                <ValidationMessage For="@(() => _nuevoUsuario.ConfirmPassword)" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Roles</label>
+                                @foreach (var role in _roles)
+                                {
+                                    <div class="form-check">
+                                        <InputCheckbox class="form-check-input" 
+                                                    @bind-Value="_rolesSeleccionados[role]" />
+                                        <label class="form-check-label">
+                                            @role
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show"></div>
+    }
+
+    @if (_mostrarModalEditar && _usuarioEditar != null)
+    {
+        <div class="modal fade show" style="display: block;" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Editar Usuario</h5>
+                        <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+                    </div>
+                    <EditForm Model="@_usuarioEditar" OnValidSubmit="GuardarEdicionUsuario">
+                        <DataAnnotationsValidator />
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <InputText @bind-Value="@_usuarioEditar.Email" class="form-control" disabled />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nombre Completo</label>
+                                <InputText @bind-Value="@_usuarioEditar.NombreCompleto" class="form-control" />
+                                <ValidationMessage For="@(() => _usuarioEditar.NombreCompleto)" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Roles</label>
+                                @foreach (var role in _roles.Where(r => r != RoleConstants.AdminRole || 
+                                    _usuariosRoles.GetValueOrDefault(_usuarioEditar.Id, new List<string>()).Contains(RoleConstants.AdminRole)))
+                                {
+                                    <div class="form-check">
+                                        <InputCheckbox class="form-check-input" 
+                                                    @bind-Value="_rolesSeleccionados[role]" 
+                                                    disabled="@(role == RoleConstants.AdminRole && 
+                                                             _usuariosRoles.GetValueOrDefault(_usuarioEditar.Id, new List<string>()).Contains(RoleConstants.AdminRole))" />
+                                        <label class="form-check-label">
+                                            @role
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show"></div>
+    }
+
+    @if (!string.IsNullOrEmpty(_mensajeError))
+    {
+        <div class="alert alert-danger mt-3">
+            @_mensajeError
+        </div>
+    }
+</div>
+
+@code {
+    private List<ApplicationUser>? _usuarios;
+    private Dictionary<string, List<string>> _usuariosRoles = new();
+    private List<string> _roles = new();
+    private Dictionary<string, bool> _rolesSeleccionados = new();
+    private bool _mostrarModalCrear;
+    private bool _mostrarModalEditar;
+    private string? _mensajeError;
+
+    private class NuevoUsuarioModel
+    {
+        [Required(ErrorMessage = "El email es requerido")]
+        [EmailAddress(ErrorMessage = "El email no tiene un formato válido")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "El nombre es requerido")]
+        public string NombreCompleto { get; set; } = "";
+
+        [Required(ErrorMessage = "La contraseña es requerida")]
+        [StringLength(100, ErrorMessage = "La contraseña debe tener al menos {2} caracteres.", MinimumLength = 6)]
+        public string Password { get; set; } = "";
+
+        [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]
+        public string ConfirmPassword { get; set; } = "";
+    }
+
+    private NuevoUsuarioModel _nuevoUsuario = new();
+    private ApplicationUser? _usuarioEditar;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        try
+        {
+            _usuarios = (await UserManager.Users.ToListAsync()).OrderBy(u => u.Email).ToList();
+            _roles = (await RoleManager.Roles.Select(r => r.Name)
+                .Where(n => n != null)
+                .Select(n => n!)
+                .ToListAsync())
+                .OrderBy(r => r)
+                .ToList();
+
+            _usuariosRoles.Clear();
+            foreach (var usuario in _usuarios)
+            {
+                _usuariosRoles[usuario.Id] = (await UserManager.GetRolesAsync(usuario)).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            _mensajeError = $"Error al cargar los datos: {ex.Message}";
+        }
+    }
+
+    private void MostrarModalCrearUsuario()
+    {
+        _nuevoUsuario = new NuevoUsuarioModel();
+        _rolesSeleccionados = _roles.ToDictionary(r => r, _ => false);
+        _mostrarModalCrear = true;
+    }
+
+    private async Task CrearUsuario()
+    {
+        try
+        {
+            var usuario = new ApplicationUser
+            {
+                UserName = _nuevoUsuario.Email,
+                Email = _nuevoUsuario.Email,
+                NombreCompleto = _nuevoUsuario.NombreCompleto,
+                EmailConfirmed = true,
+                FechaCreacion = DateTime.UtcNow
+            };
+
+            var result = await UserManager.CreateAsync(usuario, _nuevoUsuario.Password);
+            if (result.Succeeded)
+            {
+                var rolesSeleccionados = _rolesSeleccionados.Where(r => r.Value).Select(r => r.Key).ToList();
+                if (rolesSeleccionados.Any())
+                {
+                    await UserManager.AddToRolesAsync(usuario, rolesSeleccionados);
+                }
+
+                await CargarDatos();
+                CerrarModal();
+            }
+            else
+            {
+                _mensajeError = string.Join(", ", result.Errors.Select(e => e.Description));
+            }
+        }
+        catch (Exception ex)
+        {
+            _mensajeError = $"Error al crear el usuario: {ex.Message}";
+        }
+    }
+
+    private void EditarUsuario(ApplicationUser usuario)
+    {
+        _usuarioEditar = usuario;
+        _rolesSeleccionados = _roles.ToDictionary(r => r, r => _usuariosRoles[usuario.Id].Contains(r));
+        _mostrarModalEditar = true;
+    }
+
+    private async Task GuardarEdicionUsuario()
+    {
+        try
+        {
+            if (_usuarioEditar == null) return;
+
+            _usuarioEditar.NombreCompleto = _usuarioEditar.NombreCompleto;
+            var result = await UserManager.UpdateAsync(_usuarioEditar);
+
+            if (result.Succeeded)
+            {
+                var rolesActuales = await UserManager.GetRolesAsync(_usuarioEditar);
+                var rolesSeleccionados = _rolesSeleccionados.Where(r => r.Value).Select(r => r.Key).ToList();
+
+                var rolesAgregar = rolesSeleccionados.Except(rolesActuales);
+                var rolesQuitar = rolesActuales.Except(rolesSeleccionados);
+
+                if (rolesAgregar.Any())
+                    await UserManager.AddToRolesAsync(_usuarioEditar, rolesAgregar);
+
+                if (rolesQuitar.Any())
+                    await UserManager.RemoveFromRolesAsync(_usuarioEditar, rolesQuitar);
+
+                await CargarDatos();
+                CerrarModal();
+            }
+            else
+            {
+                _mensajeError = String.Join(", ", result.Errors.Select(e => e.Description));
+            }
+        }
+        catch (Exception ex)
+        {
+            _mensajeError = $"Error al actualizar el usuario: {ex.Message}";
+        }
+    }
+
+    private async Task EliminarUsuario(ApplicationUser usuario)
+    {
+        try
+        {
+            var result = await UserManager.DeleteAsync(usuario);
+            if (result.Succeeded)
+            {
+                await CargarDatos();
+            }
+            else
+            {
+                _mensajeError = string.Join(", ", result.Errors.Select(e => e.Description));
+            }
+        }
+        catch (Exception ex)
+        {
+            _mensajeError = $"Error al eliminar el usuario: {ex.Message}";
+        }
+    }
+
+    private void CerrarModal()
+    {
+        _mostrarModalCrear = false;
+        _mostrarModalEditar = false;
+        _mensajeError = null;
+    }
+}

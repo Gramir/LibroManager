@@ -1,6 +1,7 @@
 ﻿@implements IDisposable
 @inject NavigationManager NavigationManager
 @using Microsoft.AspNetCore.Components.Authorization
+@using LibroManager.Constants
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -29,7 +30,7 @@
 
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="prestamos">
-                        <span class="bi bi-clipboard-check" aria-hidden="true"></span> Préstamos
+                        <span class="bi bi-bookmark" aria-hidden="true"></span> Préstamos
                     </NavLink>
                 </div>
 
@@ -41,13 +42,13 @@
 
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="autores">
-                        <span class="bi bi-person" aria-hidden="true"></span> Autores
+                        <span class="bi bi-person-badge" aria-hidden="true"></span> Autores
                     </NavLink>
                 </div>
 
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="categorias">
-                        <span class="bi bi-tags" aria-hidden="true"></span> Categorías
+                        <span class="bi bi-tag" aria-hidden="true"></span> Categorías
                     </NavLink>
                 </div>
 
@@ -56,6 +57,22 @@
                         <span class="bi bi-geo-alt" aria-hidden="true"></span> Ubicaciones
                     </NavLink>
                 </div>
+
+                <AuthorizeView Roles="@RoleConstants.AdminRole">
+                    <Authorized Context="adminContext">
+                        <hr class="nav-divider" />
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="admin/usuarios">
+                                <span class="bi bi-people-fill" aria-hidden="true"></span> Usuarios
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="admin/roles">
+                                <span class="bi bi-shield-lock" aria-hidden="true"></span> Roles
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
             </Authorized>
         </AuthorizeView>
     </nav>
@@ -64,21 +81,22 @@
 @code {
     private bool collapseNavMenu = true;
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.Uri;
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
     }
 
-    private string? currentUrl;
-    protected override void OnInitialized()
-    {
-        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        NavigationManager.LocationChanged += OnLocationChanged;
-    }
-
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        currentUrl = e.Location;
         StateHasChanged();
     }
 
