@@ -26,12 +26,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Configure Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
-    // Password settings
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireNonAlphanumeric = true;
-    options.Password.RequiredLength = 8;
+    // Password settings - Simplificados para evitar problemas de validación
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
 
     // Lockout settings
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);

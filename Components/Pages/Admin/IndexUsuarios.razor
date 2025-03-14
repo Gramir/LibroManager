@@ -91,6 +91,10 @@
                                 <label class="form-label">Email</label>
                                 <InputText @bind-Value="_nuevoUsuario.Email" class="form-control" />
                                 <ValidationMessage For="@(() => _nuevoUsuario.Email)" />
+                                @if (_emailExistente)
+                                {
+                                    <div class="text-danger">Este correo electrónico ya está en uso</div>
+                                }
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Nombre Completo</label>
@@ -197,6 +201,7 @@
     private bool _mostrarModalCrear;
     private bool _mostrarModalEditar;
     private string? _mensajeError;
+    private bool _emailExistente;
 
     private class NuevoUsuarioModel
     {
@@ -252,12 +257,21 @@
         _nuevoUsuario = new NuevoUsuarioModel();
         _rolesSeleccionados = _roles.ToDictionary(r => r, _ => false);
         _mostrarModalCrear = true;
+        _emailExistente = false;
     }
 
     private async Task CrearUsuario()
     {
         try
         {
+            // Verificar si ya existe un usuario con el mismo email
+            var existeUsuario = await UserManager.FindByEmailAsync(_nuevoUsuario.Email);
+            if (existeUsuario != null)
+            {
+                _emailExistente = true;
+                return;
+            }
+
             var usuario = new ApplicationUser
             {
                 UserName = _nuevoUsuario.Email,
@@ -359,5 +373,6 @@
         _mostrarModalCrear = false;
         _mostrarModalEditar = false;
         _mensajeError = null;
+        _emailExistente = false;
     }
 }
