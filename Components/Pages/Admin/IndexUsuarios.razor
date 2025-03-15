@@ -1,13 +1,10 @@
 @page "/admin/usuarios"
-@using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.EntityFrameworkCore
-@using System.ComponentModel.DataAnnotations
 @using LibroManager.Models
-@using LibroManager.Data.Context
 @using LibroManager.Constants
-@inject UserManager<ApplicationUser> UserManager
-@inject RoleManager<IdentityRole> RoleManager
+@using LibroManager.Services.Interfaces
+@using System.ComponentModel.DataAnnotations
+@inject IUserService UserService
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Roles = RoleConstants.AdminRole)]
 @rendermode InteractiveServer
@@ -202,24 +199,6 @@
     private bool _mostrarModalEditar;
     private string? _mensajeError;
     private bool _emailExistente;
-
-    private class NuevoUsuarioModel
-    {
-        [Required(ErrorMessage = "El email es requerido")]
-        [EmailAddress(ErrorMessage = "El email no tiene un formato válido")]
-        public string Email { get; set; } = "";
-
-        [Required(ErrorMessage = "El nombre es requerido")]
-        public string NombreCompleto { get; set; } = "";
-
-        [Required(ErrorMessage = "La contraseña es requerida")]
-        [StringLength(100, ErrorMessage = "La contraseña debe tener al menos {2} caracteres.", MinimumLength = 6)]
-        public string Password { get; set; } = "";
-
-        [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]
-        public string ConfirmPassword { get; set; } = "";
-    }
-
     private NuevoUsuarioModel _nuevoUsuario = new();
     private ApplicationUser? _usuarioEditar;
 
@@ -232,19 +211,8 @@
     {
         try
         {
-            _usuarios = (await UserManager.Users.ToListAsync()).OrderBy(u => u.Email).ToList();
-            _roles = (await RoleManager.Roles.Select(r => r.Name)
-                .Where(n => n != null)
-                .Select(n => n!)
-                .ToListAsync())
-                .OrderBy(r => r)
-                .ToList();
-
-            _usuariosRoles.Clear();
-            foreach (var usuario in _usuarios)
-            {
-                _usuariosRoles[usuario.Id] = (await UserManager.GetRolesAsync(usuario)).ToList();
-            }
+            _usuarios = (await UserService.GetAllUsersAsync()).ToList();
+            _usuariosRoles = await UserService.GetAllUsersWithRolesAsync();
         }
         catch (Exception ex)
         {
@@ -265,7 +233,7 @@
         try
         {
             // Verificar si ya existe un usuario con el mismo email
-            var existeUsuario = await UserManager.FindByEmailAsync(_nuevoUsuario.Email);
+            var existeUsuario = await UserService.GetUserByEmailAsync(_nuevoUsuario.Email);
             if (existeUsuario != null)
             {
                 _emailExistente = true;
@@ -281,15 +249,11 @@
                 FechaCreacion = DateTime.UtcNow
             };
 
-            var result = await UserManager.CreateAsync(usuario, _nuevoUsuario.Password);
+            var rolesSeleccionados = _rolesSeleccionados.Where(r => r.Value).Select(r => r.Key).ToList();
+            var (result, user) = await UserService.CreateUserAsync(usuario, _nuevoUsuario.Password, rolesSeleccionados);
+
             if (result.Succeeded)
             {
-                var rolesSeleccionados = _rolesSeleccionados.Where(r => r.Value).Select(r => r.Key).ToList();
-                if (rolesSeleccionados.Any())
-                {
-                    await UserManager.AddToRolesAsync(usuario, rolesSeleccionados);
-                }
-
                 await CargarDatos();
                 CerrarModal();
             }
@@ -317,23 +281,11 @@
         {
             if (_usuarioEditar == null) return;
 
-            _usuarioEditar.NombreCompleto = _usuarioEditar.NombreCompleto;
-            var result = await UserManager.UpdateAsync(_usuarioEditar);
+            var rolesSeleccionados = _rolesSeleccionados.Where(r => r.Value).Select(r => r.Key).ToList();
+            var result = await UserService.UpdateUserAsync(_usuarioEditar, rolesSeleccionados);
 
             if (result.Succeeded)
             {
-                var rolesActuales = await UserManager.GetRolesAsync(_usuarioEditar);
-                var rolesSeleccionados = _rolesSeleccionados.Where(r => r.Value).Select(r => r.Key).ToList();
-
-                var rolesAgregar = rolesSeleccionados.Except(rolesActuales);
-                var rolesQuitar = rolesActuales.Except(rolesSeleccionados);
-
-                if (rolesAgregar.Any())
-                    await UserManager.AddToRolesAsync(_usuarioEditar, rolesAgregar);
-
-                if (rolesQuitar.Any())
-                    await UserManager.RemoveFromRolesAsync(_usuarioEditar, rolesQuitar);
-
                 await CargarDatos();
                 CerrarModal();
             }
@@ -352,7 +304,7 @@
     {
         try
         {
-            var result = await UserManager.DeleteAsync(usuario);
+            var result = await UserService.DeleteUserAsync(usuario.Id);
             if (result.Succeeded)
             {
                 await CargarDatos();
@@ -374,5 +326,22 @@
         _mostrarModalEditar = false;
         _mensajeError = null;
         _emailExistente = false;
+    }
+
+    private class NuevoUsuarioModel
+    {
+        [Required(ErrorMessage = "El email es requerido")]
+        [EmailAddress(ErrorMessage = "El email no tiene un formato válido")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "El nombre es requerido")]
+        public string NombreCompleto { get; set; } = "";
+
+        [Required(ErrorMessage = "La contraseña es requerida")]
+        [StringLength(100, ErrorMessage = "La contraseña debe tener al menos {2} caracteres.", MinimumLength = 6)]
+        public string Password { get; set; } = "";
+
+        [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]
+        public string ConfirmPassword { get; set; } = "";
     }
 }

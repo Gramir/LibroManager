@@ -8,5 +8,7 @@ public interface IUnitOfWork : IDisposable
     IEstudianteRepository Estudiantes { get; }
     ICategoriaRepository Categorias { get; }
     IUbicacionRepository Ubicaciones { get; }
+    IUserRepository Users { get; }
+    IRoleRepository Roles { get; }
     Task<int> SaveChangesAsync();
 }

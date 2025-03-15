@@ -1,13 +1,10 @@
 @page "/admin/roles"
-@using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.EntityFrameworkCore
-@using System.ComponentModel.DataAnnotations
-@using LibroManager.Models
-@using LibroManager.Data.Context
+@using Microsoft.AspNetCore.Identity
 @using LibroManager.Constants
-@inject UserManager<ApplicationUser> UserManager
-@inject RoleManager<IdentityRole> RoleManager
+@using LibroManager.Services.Interfaces
+@using System.ComponentModel.DataAnnotations
+@inject IRoleService RoleService
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Roles = RoleConstants.AdminRole)]
 @rendermode InteractiveServer
@@ -221,13 +218,6 @@
     private bool _mostrarConfirmacion;
     private IdentityRole? _roleAEliminar;
     private bool _tieneUsuariosAsignados;
-
-    private class RoleModel
-    {
-        [Required(ErrorMessage = "El nombre del rol es requerido")]
-        public string Name { get; set; } = "";
-    }
-
     private RoleModel _nuevoRole = new();
     private RoleModel _roleEditar = new();
     private IdentityRole? _roleActual;
@@ -257,16 +247,8 @@
     {
         try
         {
-            _roles = await RoleManager.Roles.OrderBy(r => r.Name).ToListAsync();
-            _rolesPermisos.Clear();
-
-            foreach (var role in _roles)
-            {
-                var claims = await RoleManager.GetClaimsAsync(role);
-                _rolesPermisos[role.Id] = claims.Where(c => c.Type == "Permission")
-                    .Select(c => c.Value)
-                    .ToList();
-            }
+            _roles = (await RoleService.GetAllRolesAsync()).ToList();
+            _rolesPermisos = await RoleService.GetAllRolesWithPermissionsAsync();
         }
         catch (Exception ex)
         {
@@ -292,29 +274,21 @@
     {
         try
         {
-            var roleResult = await RoleManager.CreateAsync(new IdentityRole(_nuevoRole.Name));
-            if (roleResult.Succeeded)
+            var permisosSeleccionados = _permisosSeleccionados
+                .Where(p => p.Value)
+                .Select(p => p.Key)
+                .ToList();
+
+            var result = await RoleService.CreateRoleAsync(_nuevoRole.Name, permisosSeleccionados);
+
+            if (result.Succeeded)
             {
-                var role = await RoleManager.FindByNameAsync(_nuevoRole.Name);
-                if (role != null)
-                {
-                    var permisosSeleccionados = _permisosSeleccionados
-                        .Where(p => p.Value)
-                        .Select(p => p.Key)
-                        .ToList();
-
-                    foreach (var permiso in permisosSeleccionados)
-                    {
-                        await RoleManager.AddClaimAsync(role, new System.Security.Claims.Claim("Permission", permiso));
-                    }
-                }
-
                 await CargarDatos();
                 CerrarModal();
             }
             else
             {
-                _mensajeError = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                _mensajeError = string.Join(", ", result.Errors.Select(e => e.Description));
             }
         }
         catch (Exception ex)
@@ -327,8 +301,8 @@
     {
         _roleActual = role;
         _roleEditar = new RoleModel { Name = role.Name ?? "" };
-        var claims = await RoleManager.GetClaimsAsync(role);
-        var permisos = claims.Where(c => c.Type == "Permission")
+        var permisos = (await RoleService.GetRolePermissionsAsync(role.Id))
+            .Where(c => c.Type == "Permission")
             .Select(c => c.Value)
             .ToList();
         InitPermisosSeleccionados(permisos);
@@ -341,35 +315,22 @@
         {
             if (_roleActual == null) return;
 
-            if (_roleActual.Name != _roleEditar.Name)
-            {
-                var roleUpdateResult = await RoleManager.SetRoleNameAsync(_roleActual, _roleEditar.Name);
-                if (!roleUpdateResult.Succeeded)
-                {
-                    _mensajeError = string.Join(", ", roleUpdateResult.Errors.Select(e => e.Description));
-                    return;
-                }
-            }
-
-            // Actualizar permisos
-            var claims = await RoleManager.GetClaimsAsync(_roleActual);
-            foreach (var claim in claims)
-            {
-                await RoleManager.RemoveClaimAsync(_roleActual, claim);
-            }
-
             var permisosSeleccionados = _permisosSeleccionados
                 .Where(p => p.Value)
                 .Select(p => p.Key)
                 .ToList();
 
-            foreach (var permiso in permisosSeleccionados)
-            {
-                await RoleManager.AddClaimAsync(_roleActual, new System.Security.Claims.Claim("Permission", permiso));
-            }
+            var result = await RoleService.UpdateRoleAsync(_roleActual, permisosSeleccionados);
 
-            await CargarDatos();
-            CerrarModal();
+            if (result.Succeeded)
+            {
+                await CargarDatos();
+                CerrarModal();
+            }
+            else
+            {
+                _mensajeError = string.Join(", ", result.Errors.Select(e => e.Description));
+            }
         }
         catch (Exception ex)
         {
@@ -380,7 +341,7 @@
     private async Task MostrarConfirmacion(IdentityRole role)
     {
         _roleAEliminar = role;
-        _tieneUsuariosAsignados = (await UserManager.GetUsersInRoleAsync(role.Name!)).Any();
+        _tieneUsuariosAsignados = !(await RoleService.CanDeleteRoleAsync(role.Id));
         _mostrarConfirmacion = true;
     }
 
@@ -397,14 +358,7 @@
         {
             if (_roleAEliminar == null) return;
 
-            // Verificar nuevamente si tiene usuarios asignados
-            if ((await UserManager.GetUsersInRoleAsync(_roleAEliminar.Name!)).Any())
-            {
-                _mensajeError = "No se puede eliminar el rol porque tiene usuarios asignados.";
-                return;
-            }
-
-            var result = await RoleManager.DeleteAsync(_roleAEliminar);
+            var result = await RoleService.DeleteRoleAsync(_roleAEliminar.Id);
             if (result.Succeeded)
             {
                 await CargarDatos();
@@ -493,8 +447,9 @@
         _ => accion
     };
 
-    private async Task<bool> IsUserLibrarian(ApplicationUser user)
+    private class RoleModel
     {
-        return await UserManager.IsInRoleAsync(user, RoleConstants.LibrarianRole);
+        [Required(ErrorMessage = "El nombre del rol es requerido")]
+        public string Name { get; set; } = "";
     }
 }
