@@ -1,8 +1,11 @@
 @page "/estudiantes"
-@using LibroManager.DTOs
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.Services.Interfaces
+@using LibroManager.DTOs
+@using LibroManager.Constants
 @inject IEstudianteService EstudianteService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Policy = RoleConstants.Permissions.Estudiantes.Read)]
 @rendermode InteractiveServer
 
 <PageTitle>Estudiantes - LibroManager</PageTitle>

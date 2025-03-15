@@ -1,0 +1,11 @@
+@page "/ubicaciones"
+@using Microsoft.AspNetCore.Authorization
+@using LibroManager.DTOs
+@using LibroManager.Services.Interfaces
+@using LibroManager.Constants
+@inject IUbicacionService UbicacionService
+@inject NavigationManager NavigationManager
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+// ...existing code...

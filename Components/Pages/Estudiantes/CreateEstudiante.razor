@@ -1,8 +1,11 @@
 @page "/estudiantes/crear"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.Services.Interfaces
 @using LibroManager.DTOs
+@using LibroManager.Constants
 @inject IEstudianteService EstudianteService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Policy = RoleConstants.Permissions.Estudiantes.Create)]
 @rendermode InteractiveServer
 
 <PageTitle>Crear Estudiante - LibroManager</PageTitle>

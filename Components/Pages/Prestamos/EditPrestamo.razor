@@ -1,11 +1,14 @@
 @page "/prestamos/editar/{PrestamoId:int}"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.Services.Interfaces
 @using LibroManager.DTOs
 @using LibroManager.Models
+@using LibroManager.Constants
 @inject IPrestamoService PrestamoService
 @inject ILibroService LibroService
 @inject IEstudianteService EstudianteService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Policy = RoleConstants.Permissions.Prestamos.Update)]
 @rendermode InteractiveServer
 
 <PageTitle>Editar Préstamo - LibroManager</PageTitle>

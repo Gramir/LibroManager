@@ -1,9 +1,12 @@
 @page "/prestamos"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.DTOs
 @using LibroManager.Services.Interfaces
 @using LibroManager.Models
+@using LibroManager.Constants
 @inject IPrestamoService PrestamoService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Policy = RoleConstants.Permissions.Prestamos.Read)]
 @rendermode InteractiveServer
 @using System.Diagnostics
 

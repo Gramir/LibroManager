@@ -1,9 +1,12 @@
 @page "/autores/{AutorId:int}"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.DTOs
 @using LibroManager.Services.Interfaces
+@using LibroManager.Constants
 @inject IAutorService AutorService
 @inject ILibroService LibroService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Policy = RoleConstants.Permissions.Autores.Read)]
 @rendermode InteractiveServer
 
 <PageTitle>Detalle del Autor</PageTitle>

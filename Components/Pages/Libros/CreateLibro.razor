@@ -1,12 +1,15 @@
 @page "/libros/crear"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.Services.Interfaces
 @using LibroManager.DTOs
 @using LibroManager.Models
+@using LibroManager.Constants
 @inject ILibroService LibroService
 @inject IAutorService AutorService
 @inject ICategoriaService CategoriaService
 @inject IUbicacionService UbicacionService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Policy = RoleConstants.Permissions.Libros.Create)]
 @rendermode InteractiveServer
 
 <PageTitle>Crear Libro - LibroManager</PageTitle>

@@ -6,7 +6,7 @@
 @using System.ComponentModel.DataAnnotations
 @inject IRoleService RoleService
 @inject NavigationManager NavigationManager
-@attribute [Authorize(Roles = RoleConstants.AdminRole)]
+@attribute [Authorize(Policy = RoleConstants.Permissions.Users.ManageRoles)]
 @rendermode InteractiveServer
 
 <PageTitle>Gestión de Roles - LibroManager</PageTitle>

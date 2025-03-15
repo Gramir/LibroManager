@@ -1,8 +1,11 @@
 @page "/autores/crear"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.Services.Interfaces
 @using LibroManager.DTOs
+@using LibroManager.Constants
 @inject IAutorService AutorService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Policy = RoleConstants.Permissions.Autores.Create)]
 @rendermode InteractiveServer
 
 <PageTitle>Crear Autor - LibroManager</PageTitle>

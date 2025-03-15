@@ -1,8 +1,11 @@
 @page "/autores/editar/{AutorId:int}"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.Services.Interfaces
 @using LibroManager.DTOs
+@using LibroManager.Constants
 @inject IAutorService AutorService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Policy = RoleConstants.Permissions.Autores.Update)]
 @rendermode InteractiveServer
 
 <PageTitle>Editar Autor - LibroManager</PageTitle>

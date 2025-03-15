@@ -1,14 +1,17 @@
 @page "/libros/{LibroId:int}"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Web
 @using LibroManager.DTOs
 @using LibroManager.Services.Interfaces
 @using LibroManager.Models
+@using LibroManager.Constants
 @using System.Linq
 @inject ILibroService LibroService
 @inject IPrestamoService PrestamoService
 @inject NavigationManager NavigationManager
 @inject IUbicacionService UbicacionService
+@attribute [Authorize(Policy = RoleConstants.Permissions.Libros.Read)]
 @rendermode InteractiveServer
 
 <HeadContent>

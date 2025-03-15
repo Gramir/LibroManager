@@ -1,8 +1,11 @@
 @page "/libros"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.Services.Interfaces
 @using LibroManager.DTOs
+@using LibroManager.Constants
 @inject ILibroService LibroService
 @inject NavigationManager NavigationManager
+@attribute [Authorize]
 @rendermode InteractiveServer
 
 <PageTitle>Libros - LibroManager</PageTitle>

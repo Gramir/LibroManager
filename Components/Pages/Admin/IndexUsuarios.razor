@@ -1,12 +1,13 @@
 @page "/admin/usuarios"
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
 @using LibroManager.Models
 @using LibroManager.Constants
 @using LibroManager.Services.Interfaces
 @using System.ComponentModel.DataAnnotations
 @inject IUserService UserService
 @inject NavigationManager NavigationManager
-@attribute [Authorize(Roles = RoleConstants.AdminRole)]
+@attribute [Authorize(Policy = RoleConstants.Permissions.Users.ManageUsers)]
 @rendermode InteractiveServer
 
 <PageTitle>Gestión de Usuarios - LibroManager</PageTitle>

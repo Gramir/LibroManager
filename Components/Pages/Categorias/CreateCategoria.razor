@@ -1,8 +1,11 @@
 @page "/categorias/crear"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.Services.Interfaces
 @using LibroManager.DTOs
+@using LibroManager.Constants
 @inject ICategoriaService CategoriaService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = RoleConstants.AdminRole)]
 @rendermode InteractiveServer
 
 <PageTitle>Crear Categoría - LibroManager</PageTitle>

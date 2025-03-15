@@ -1,12 +1,15 @@
 @page "/prestamos/crear"
 @page "/prestamos/crear/{LibroId:int?}"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.Services.Interfaces
 @using LibroManager.DTOs
+@using LibroManager.Constants
 @using Microsoft.AspNetCore.Components.Forms
 @inject IPrestamoService PrestamoService
 @inject ILibroService LibroService
 @inject IEstudianteService EstudianteService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Policy = RoleConstants.Permissions.Prestamos.Create)]
 @rendermode InteractiveServer
 
 <PageTitle>Crear Préstamo - LibroManager</PageTitle>
