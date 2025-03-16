@@ -134,9 +134,16 @@
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
         await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
 
+        // Usar el claim del nombre del proveedor externo o el email como nombre completo
+        var nombreCompleto = externalLoginInfo.Principal.FindFirstValue(ClaimTypes.Name) ?? Input.Email;
+        user.NombreCompleto = nombreCompleto;
+
         var result = await UserManager.CreateAsync(user);
         if (result.Succeeded)
         {
+            // Añadir el claim de NombreCompleto
+            await UserManager.AddClaimAsync(user, new System.Security.Claims.Claim("NombreCompleto", nombreCompleto));
+
             result = await UserManager.AddLoginAsync(user, externalLoginInfo);
             if (result.Succeeded)
             {

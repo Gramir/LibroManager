@@ -3,6 +3,7 @@ using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace LibroManager.Repositories;
 
@@ -58,5 +59,20 @@ public class UserRepository : IUserRepository
     public async Task<IdentityResult> RemoveFromRolesAsync(ApplicationUser user, IEnumerable<string> roles)
     {
         return await _userManager.RemoveFromRolesAsync(user, roles);
+    }
+
+    public async Task<IList<Claim>> GetClaimsAsync(ApplicationUser user)
+    {
+        return await _userManager.GetClaimsAsync(user);
+    }
+
+    public async Task<IdentityResult> AddClaimAsync(ApplicationUser user, Claim claim)
+    {
+        return await _userManager.AddClaimAsync(user, claim);
+    }
+
+    public async Task<IdentityResult> RemoveClaimAsync(ApplicationUser user, Claim claim)
+    {
+        return await _userManager.RemoveClaimAsync(user, claim);
     }
 }

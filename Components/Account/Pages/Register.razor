@@ -35,6 +35,11 @@
                 <ValidationMessage For="() => Input.Email" class="text-danger" />
             </div>
             <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.NombreCompleto" class="form-control" aria-required="true" placeholder="Nombre Completo" />
+                <label for="nombreCompleto">Nombre Completo</label>
+                <ValidationMessage For="() => Input.NombreCompleto" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
                 <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
                 <label for="password">Password</label>
                 <ValidationMessage For="() => Input.Password" class="text-danger" />
@@ -74,6 +79,8 @@
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
         var emailStore = GetEmailStore();
         await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+        user.NombreCompleto = Input.NombreCompleto;
+
         var result = await UserManager.CreateAsync(user, Input.Password);
 
         if (!result.Succeeded)
@@ -81,6 +88,9 @@
             identityErrors = result.Errors;
             return;
         }
+
+        // Añadir el claim de NombreCompleto
+        await UserManager.AddClaimAsync(user, new System.Security.Claims.Claim("NombreCompleto", Input.NombreCompleto));
 
         Logger.LogInformation("User created a new account with password.");
 
@@ -132,6 +142,10 @@
         [EmailAddress]
         [Display(Name = "Email")]
         public string Email { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Nombre Completo")]
+        public string NombreCompleto { get; set; } = "";
 
         [Required]
         [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]

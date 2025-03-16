@@ -36,6 +36,13 @@ public class AuthService : IAuthService
         var result = await _signInManager.PasswordSignInAsync(user, password, rememberMe, lockoutOnFailure: true);
         if (result.Succeeded)
         {
+            // Añadir el claim de NombreCompleto
+            var claims = await _userManager.GetClaimsAsync(user);
+            if (!claims.Any(c => c.Type == "NombreCompleto"))
+            {
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("NombreCompleto", user.NombreCompleto));
+                await _signInManager.RefreshSignInAsync(user);
+            }
             return (true, Array.Empty<string>());
         }
 
@@ -67,6 +74,9 @@ public class AuthService : IAuthService
         var result = await _userManager.CreateAsync(user, password);
         if (result.Succeeded)
         {
+            // Añadir el claim de NombreCompleto
+            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("NombreCompleto", nombreCompleto));
+
             if (await _roleManager.RoleExistsAsync(role))
             {
                 await _userManager.AddToRoleAsync(user, role);

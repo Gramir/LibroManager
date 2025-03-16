@@ -63,6 +63,9 @@ public class UserService : IUserService
 
         if (result.Succeeded)
         {
+            // Añadir el claim de NombreCompleto
+            await _unitOfWork.Users.AddClaimAsync(user, new System.Security.Claims.Claim("NombreCompleto", user.NombreCompleto));
+
             if (roles.Any())
             {
                 var roleResult = await _unitOfWork.Users.AddToRolesAsync(user, roles);
@@ -91,11 +94,21 @@ public class UserService : IUserService
             return IdentityResult.Failed(new IdentityError { Description = "Usuario no encontrado" });
         }
 
+        // Actualizar el nombre completo
         existingUser.NombreCompleto = user.NombreCompleto;
         var result = await _unitOfWork.Users.UpdateAsync(existingUser);
 
         if (result.Succeeded)
         {
+            // Actualizar el claim de NombreCompleto
+            var claims = await _unitOfWork.Users.GetClaimsAsync(existingUser);
+            var nombreCompletoClaim = claims.FirstOrDefault(c => c.Type == "NombreCompleto");
+            if (nombreCompletoClaim != null)
+            {
+                await _unitOfWork.Users.RemoveClaimAsync(existingUser, nombreCompletoClaim);
+            }
+            await _unitOfWork.Users.AddClaimAsync(existingUser, new System.Security.Claims.Claim("NombreCompleto", user.NombreCompleto));
+
             var currentRoles = await _unitOfWork.Users.GetRolesAsync(existingUser);
             
             // Remover roles actuales
