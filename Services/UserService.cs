@@ -4,6 +4,8 @@ using LibroManager.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
+using LibroManager.Constants;
+using System.Linq;
 
 namespace LibroManager.Services;
 
@@ -51,6 +53,12 @@ public class UserService : IUserService
 
     public async Task<(IdentityResult Result, ApplicationUser? User)> CreateUserAsync(ApplicationUser user, string password, IEnumerable<string> roles)
     {
+        // Validar que solo se asignen roles permitidos
+        if (roles.Any(r => r != RoleConstants.AdminRole && r != RoleConstants.LibrarianRole))
+        {
+            return (IdentityResult.Failed(new IdentityError { Description = "Solo se permiten los roles: Admin y Librarian" }), null);
+        }
+
         var result = await _unitOfWork.Users.CreateAsync(user, password);
 
         if (result.Succeeded)
@@ -71,10 +79,16 @@ public class UserService : IUserService
 
     public async Task<IdentityResult> UpdateUserAsync(ApplicationUser user, IEnumerable<string> roles)
     {
+        // Validar que solo se asignen roles permitidos
+        if (roles.Any(r => r != RoleConstants.AdminRole && r != RoleConstants.LibrarianRole))
+        {
+            return IdentityResult.Failed(new IdentityError { Description = "Solo se permiten los roles: Admin y Librarian" });
+        }
+
         var existingUser = await _unitOfWork.Users.FindByIdAsync(user.Id);
         if (existingUser == null)
         {
-            return IdentityResult.Failed(new IdentityError { Description = "User not found" });
+            return IdentityResult.Failed(new IdentityError { Description = "Usuario no encontrado" });
         }
 
         existingUser.NombreCompleto = user.NombreCompleto;
@@ -83,17 +97,17 @@ public class UserService : IUserService
         if (result.Succeeded)
         {
             var currentRoles = await _unitOfWork.Users.GetRolesAsync(existingUser);
-            var rolesToRemove = currentRoles.ToList();
-            var rolesToAdd = roles.ToList();
-
-            if (rolesToRemove.Any())
+            
+            // Remover roles actuales
+            if (currentRoles.Any())
             {
-                await _unitOfWork.Users.RemoveFromRolesAsync(existingUser, rolesToRemove);
+                await _unitOfWork.Users.RemoveFromRolesAsync(existingUser, currentRoles);
             }
 
-            if (rolesToAdd.Any())
+            // Agregar nuevos roles
+            if (roles.Any())
             {
-                await _unitOfWork.Users.AddToRolesAsync(existingUser, rolesToAdd);
+                await _unitOfWork.Users.AddToRolesAsync(existingUser, roles);
             }
         }
 
@@ -105,7 +119,7 @@ public class UserService : IUserService
         var user = await _unitOfWork.Users.FindByIdAsync(userId);
         if (user == null)
         {
-            return IdentityResult.Failed(new IdentityError { Description = "User not found" });
+            return IdentityResult.Failed(new IdentityError { Description = "Usuario no encontrado" });
         }
 
         return await _unitOfWork.Users.DeleteAsync(user);

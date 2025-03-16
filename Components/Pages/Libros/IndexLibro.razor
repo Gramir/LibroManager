@@ -5,7 +5,7 @@
 @using LibroManager.Constants
 @inject ILibroService LibroService
 @inject NavigationManager NavigationManager
-@attribute [Authorize]
+@attribute [Authorize(Policy = RoleConstants.Permissions.Libros.Read)]
 @rendermode InteractiveServer
 
 <PageTitle>Libros - LibroManager</PageTitle>

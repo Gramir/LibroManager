@@ -37,29 +37,26 @@
                     <tr>
                         <th>Email</th>
                         <th>Nombre</th>
-                        <th>Roles</th>
+                        <th>Rol</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var usuario in _usuarios)
                     {
+                        var roles = _usuariosRoles.GetValueOrDefault(usuario.Id, new List<string>());
+                        var isAdmin = roles.Contains(RoleConstants.AdminRole);
                         <tr>
                             <td>@usuario.Email</td>
                             <td>@usuario.NombreCompleto</td>
                             <td>
-                                @string.Join(", ", _usuariosRoles.GetValueOrDefault(usuario.Id, new List<string>()).Select(rol => rol switch
-                                {
-                                    RoleConstants.AdminRole => "Administrador",
-                                    RoleConstants.LibrarianRole => "Bibliotecario",
-                                    _ => rol
-                                }))
+                                @(isAdmin ? "Administrador" : "Bibliotecario")
                             </td>
                             <td>
                                 <button class="btn btn-warning btn-sm me-1" @onclick="() => EditarUsuario(usuario)">
                                     <i class="bi bi-pencil"></i> Editar
                                 </button>
-                                @if (_usuariosRoles.GetValueOrDefault(usuario.Id, new List<string>()).Contains(RoleConstants.AdminRole) == false)
+                                @if (!isAdmin)
                                 {
                                     <button class="btn btn-danger btn-sm" @onclick="() => EliminarUsuario(usuario)">
                                         <i class="bi bi-trash"></i> Eliminar
@@ -110,17 +107,19 @@
                                 <ValidationMessage For="@(() => _nuevoUsuario.ConfirmPassword)" />
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Roles</label>
-                                @foreach (var role in _roles)
-                                {
-                                    <div class="form-check">
-                                        <InputCheckbox class="form-check-input" 
-                                                    @bind-Value="_rolesSeleccionados[role]" />
-                                        <label class="form-check-label">
-                                            @role
-                                        </label>
-                                    </div>
-                                }
+                                <label class="form-label">Rol</label>
+                                <div class="form-check">
+                                    <InputRadioGroup @bind-Value="_nuevoUsuario.Role" class="btn-group" Name="roles">
+                                        <div class="mb-2">
+                                            <InputRadio Value="@RoleConstants.AdminRole" class="btn-check" id="admin-role" />
+                                            <label class="btn btn-outline-primary" for="admin-role">Administrador</label>
+                                        </div>
+                                        <div>
+                                            <InputRadio Value="@RoleConstants.LibrarianRole" class="btn-check" id="librarian-role" />
+                                            <label class="btn btn-outline-primary" for="librarian-role">Bibliotecario</label>
+                                        </div>
+                                    </InputRadioGroup>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -155,22 +154,28 @@
                                 <InputText @bind-Value="@_usuarioEditar.NombreCompleto" class="form-control" />
                                 <ValidationMessage For="@(() => _usuarioEditar.NombreCompleto)" />
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Roles</label>
-                                @foreach (var role in _roles.Where(r => r != RoleConstants.AdminRole || 
-                                    _usuariosRoles.GetValueOrDefault(_usuarioEditar.Id, new List<string>()).Contains(RoleConstants.AdminRole)))
-                                {
+                            @{
+                                var roles = _usuariosRoles.GetValueOrDefault(_usuarioEditar.Id, new List<string>());
+                                var isAdmin = roles.Contains(RoleConstants.AdminRole);
+                            }
+                            @if (!isAdmin)
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label">Rol</label>
                                     <div class="form-check">
-                                        <InputCheckbox class="form-check-input" 
-                                                    @bind-Value="_rolesSeleccionados[role]" 
-                                                    disabled="@(role == RoleConstants.AdminRole && 
-                                                             _usuariosRoles.GetValueOrDefault(_usuarioEditar.Id, new List<string>()).Contains(RoleConstants.AdminRole))" />
-                                        <label class="form-check-label">
-                                            @role
-                                        </label>
+                                        <InputRadioGroup @bind-Value="_rolEditar" class="btn-group" Name="roles">
+                                            <div class="mb-2">
+                                                <InputRadio Value="@RoleConstants.AdminRole" class="btn-check" id="edit-admin-role" />
+                                                <label class="btn btn-outline-primary" for="edit-admin-role">Administrador</label>
+                                            </div>
+                                            <div>
+                                                <InputRadio Value="@RoleConstants.LibrarianRole" class="btn-check" id="edit-librarian-role" />
+                                                <label class="btn btn-outline-primary" for="edit-librarian-role">Bibliotecario</label>
+                                            </div>
+                                        </InputRadioGroup>
                                     </div>
-                                }
-                            </div>
+                                </div>
+                            }
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
@@ -194,14 +199,13 @@
 @code {
     private List<ApplicationUser>? _usuarios;
     private Dictionary<string, List<string>> _usuariosRoles = new();
-    private List<string> _roles = new();
-    private Dictionary<string, bool> _rolesSeleccionados = new();
     private bool _mostrarModalCrear;
     private bool _mostrarModalEditar;
     private string? _mensajeError;
     private bool _emailExistente;
     private NuevoUsuarioModel _nuevoUsuario = new();
     private ApplicationUser? _usuarioEditar;
+    private string _rolEditar = RoleConstants.LibrarianRole;
 
     protected override async Task OnInitializedAsync()
     {
@@ -223,8 +227,7 @@
 
     private void MostrarModalCrearUsuario()
     {
-        _nuevoUsuario = new NuevoUsuarioModel();
-        _rolesSeleccionados = _roles.ToDictionary(r => r, _ => false);
+        _nuevoUsuario = new NuevoUsuarioModel { Role = RoleConstants.LibrarianRole };
         _mostrarModalCrear = true;
         _emailExistente = false;
     }
@@ -250,8 +253,8 @@
                 FechaCreacion = DateTime.UtcNow
             };
 
-            var rolesSeleccionados = _rolesSeleccionados.Where(r => r.Value).Select(r => r.Key).ToList();
-            var (result, user) = await UserService.CreateUserAsync(usuario, _nuevoUsuario.Password, rolesSeleccionados);
+            var roles = new List<string> { _nuevoUsuario.Role };
+            var (result, user) = await UserService.CreateUserAsync(usuario, _nuevoUsuario.Password, roles);
 
             if (result.Succeeded)
             {
@@ -272,7 +275,8 @@
     private void EditarUsuario(ApplicationUser usuario)
     {
         _usuarioEditar = usuario;
-        _rolesSeleccionados = _roles.ToDictionary(r => r, r => _usuariosRoles[usuario.Id].Contains(r));
+        var roles = _usuariosRoles.GetValueOrDefault(usuario.Id, new List<string>());
+        _rolEditar = roles.Contains(RoleConstants.AdminRole) ? RoleConstants.AdminRole : RoleConstants.LibrarianRole;
         _mostrarModalEditar = true;
     }
 
@@ -282,8 +286,8 @@
         {
             if (_usuarioEditar == null) return;
 
-            var rolesSeleccionados = _rolesSeleccionados.Where(r => r.Value).Select(r => r.Key).ToList();
-            var result = await UserService.UpdateUserAsync(_usuarioEditar, rolesSeleccionados);
+            var roles = new List<string> { _rolEditar };
+            var result = await UserService.UpdateUserAsync(_usuarioEditar, roles);
 
             if (result.Succeeded)
             {
@@ -344,5 +348,8 @@
 
         [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]
         public string ConfirmPassword { get; set; } = "";
+
+        [Required(ErrorMessage = "El rol es requerido")]
+        public string Role { get; set; } = RoleConstants.LibrarianRole;
     }
 }

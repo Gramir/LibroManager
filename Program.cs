@@ -66,15 +66,55 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireLibrarian", policy =>
         policy.RequireRole(RoleConstants.LibrarianRole, RoleConstants.AdminRole));
 
-    // Entity-specific policies
-    options.AddPolicy("ManageLibros", policy =>
-        policy.RequireClaim(RoleConstants.Permissions.Libros.Manage));
+    // Libros policies
+    options.AddPolicy(RoleConstants.Permissions.Libros.Create, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Create));
+    options.AddPolicy(RoleConstants.Permissions.Libros.Read, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Read));
+    options.AddPolicy(RoleConstants.Permissions.Libros.Update, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Update));
+    options.AddPolicy(RoleConstants.Permissions.Libros.Delete, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Delete));
+    options.AddPolicy(RoleConstants.Permissions.Libros.Manage, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Manage));
 
-    options.AddPolicy("ManagePrestamos", policy =>
-        policy.RequireClaim(RoleConstants.Permissions.Prestamos.Manage));
+    // Autores policies
+    options.AddPolicy(RoleConstants.Permissions.Autores.Create, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Autores.Create));
+    options.AddPolicy(RoleConstants.Permissions.Autores.Read, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Autores.Read));
+    options.AddPolicy(RoleConstants.Permissions.Autores.Update, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Autores.Update));
+    options.AddPolicy(RoleConstants.Permissions.Autores.Delete, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Autores.Delete));
 
-    options.AddPolicy("ManageUsers", policy =>
-        policy.RequireClaim(RoleConstants.Permissions.Users.ManageUsers));
+    // Prestamos policies
+    options.AddPolicy(RoleConstants.Permissions.Prestamos.Create, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Create));
+    options.AddPolicy(RoleConstants.Permissions.Prestamos.Read, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Read));
+    options.AddPolicy(RoleConstants.Permissions.Prestamos.Update, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Update));
+    options.AddPolicy(RoleConstants.Permissions.Prestamos.Delete, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Delete));
+    options.AddPolicy(RoleConstants.Permissions.Prestamos.Manage, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Manage));
+
+    // Estudiantes policies
+    options.AddPolicy(RoleConstants.Permissions.Estudiantes.Create, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Create));
+    options.AddPolicy(RoleConstants.Permissions.Estudiantes.Read, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Read));
+    options.AddPolicy(RoleConstants.Permissions.Estudiantes.Update, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Update));
+    options.AddPolicy(RoleConstants.Permissions.Estudiantes.Delete, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Delete));
+
+    // Users policies
+    options.AddPolicy(RoleConstants.Permissions.Users.ManageRoles, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Users.ManageRoles));
+    options.AddPolicy(RoleConstants.Permissions.Users.ManageUsers, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Users.ManageUsers));
 });
 
 // Add Repositories
@@ -88,6 +128,8 @@ builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IEstudianteService, EstudianteService>();
 builder.Services.AddScoped<IPrestamoService, PrestamoService>();
 builder.Services.AddScoped<IUbicacionService, UbicacionService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services.AddCascadingAuthenticationState();
 
@@ -97,10 +139,9 @@ builder.Services.AddScoped<IdentityRedirectManager>();
 
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
-
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
 var app = builder.Build();
-// Change this line to use the non-generic class without type parameters
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -127,18 +168,12 @@ using (var scope = app.Services.CreateScope())
     var serviceProvider = scope.ServiceProvider;
     var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var roleService = serviceProvider.GetRequiredService<IRoleService>();
 
-    // Create roles if they don't exist
-    var roles = new[] { RoleConstants.AdminRole, RoleConstants.LibrarianRole };
-    foreach (var role in roles)
-    {
-        if (!await roleManager.RoleExistsAsync(role))
-        {
-            await roleManager.CreateAsync(new IdentityRole(role));
-        }
-    }
+    // Asegurar que los roles existan con sus permisos
+    await roleService.EnsureDefaultRolesExistAsync();
 
-    // Create default admin user if it doesn't exist
+    // Crear usuario administrador predeterminado si no existe
     var adminEmail = "admin@libromanager.com";
     var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
@@ -161,6 +196,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.MapAdditionalIdentityEndpoints(); ;
+app.MapAdditionalIdentityEndpoints();
 
 app.Run();

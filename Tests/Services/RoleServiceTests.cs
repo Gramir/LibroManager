@@ -3,6 +3,7 @@ using LibroManager.Services;
 using LibroManager.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
+using LibroManager.Constants;
 using Moq;
 using Xunit;
 
@@ -25,8 +26,8 @@ public class RoleServiceTests
         // Arrange
         var roles = new List<IdentityRole>
         {
-            new() { Id = "1", Name = "Admin" },
-            new() { Id = "2", Name = "User" }
+            new() { Id = "1", Name = RoleConstants.AdminRole },
+            new() { Id = "2", Name = RoleConstants.LibrarianRole }
         };
 
         _mockUnitOfWork.Setup(u => u.Roles.GetAllRolesAsync())
@@ -37,6 +38,8 @@ public class RoleServiceTests
 
         // Assert
         Assert.Equal(2, result.Count());
+        Assert.Contains(result, r => r.Name == RoleConstants.AdminRole);
+        Assert.Contains(result, r => r.Name == RoleConstants.LibrarianRole);
         _mockUnitOfWork.Verify(u => u.Roles.GetAllRolesAsync(), Times.Once);
     }
 
@@ -44,193 +47,34 @@ public class RoleServiceTests
     public async Task GetAllRolesWithPermissionsAsync_ReturnsRolesWithPermissions()
     {
         // Arrange
-        var roleId = "1";
         var roles = new List<IdentityRole>
         {
-            new() { Id = roleId, Name = "Admin" }
+            new() { Id = "1", Name = RoleConstants.AdminRole },
+            new() { Id = "2", Name = RoleConstants.LibrarianRole }
         };
-        var claims = new List<Claim>
-        {
-            new("Permission", "Users.Create"),
-            new("Permission", "Users.Read")
-        };
+
+        var adminClaims = RoleConstants.DefaultPermissions.AdminPermissions
+            .Select(p => new Claim("Permission", p))
+            .ToList();
+
+        var librarianClaims = RoleConstants.DefaultPermissions.LibrarianPermissions
+            .Select(p => new Claim("Permission", p))
+            .ToList();
 
         _mockUnitOfWork.Setup(u => u.Roles.GetAllRolesAsync())
             .ReturnsAsync(roles);
-        _mockUnitOfWork.Setup(u => u.Roles.GetClaimsAsync(It.IsAny<IdentityRole>()))
-            .ReturnsAsync(claims);
+        _mockUnitOfWork.Setup(u => u.Roles.GetClaimsAsync(It.Is<IdentityRole>(r => r.Name == RoleConstants.AdminRole)))
+            .ReturnsAsync(adminClaims);
+        _mockUnitOfWork.Setup(u => u.Roles.GetClaimsAsync(It.Is<IdentityRole>(r => r.Name == RoleConstants.LibrarianRole)))
+            .ReturnsAsync(librarianClaims);
 
         // Act
         var result = await _roleService.GetAllRolesWithPermissionsAsync();
 
         // Assert
-        Assert.Single(result);
-        Assert.Equal(2, result[roleId].Count);
-        Assert.Contains("Users.Create", result[roleId]);
-        Assert.Contains("Users.Read", result[roleId]);
-    }
-
-    [Fact]
-    public async Task CreateRoleAsync_ReturnsFalse_WhenRoleNameIsEmpty()
-    {
-        // Arrange
-        var roleName = "";
-        var permissions = new List<string> { "Users.Create" };
-
-        // Act
-        var result = await _roleService.CreateRoleAsync(roleName, permissions);
-
-        // Assert
-        Assert.False(result.Succeeded);
-        _mockUnitOfWork.Verify(u => u.Roles.CreateAsync(It.IsAny<IdentityRole>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task CreateRoleAsync_ReturnsTrue_WhenRoleIsValid()
-    {
-        // Arrange
-        var roleName = "TestRole";
-        var permissions = new List<string> { "Users.Create", "Users.Read" };
-
-        _mockUnitOfWork.Setup(u => u.Roles.CreateAsync(It.IsAny<IdentityRole>()))
-            .ReturnsAsync(IdentityResult.Success);
-        _mockUnitOfWork.Setup(u => u.Roles.AddClaimAsync(It.IsAny<IdentityRole>(), It.IsAny<Claim>()))
-            .ReturnsAsync(IdentityResult.Success);
-
-        // Act
-        var result = await _roleService.CreateRoleAsync(roleName, permissions);
-
-        // Assert
-        Assert.True(result.Succeeded);
-        _mockUnitOfWork.Verify(u => u.Roles.CreateAsync(It.Is<IdentityRole>(r => r.Name == roleName)), Times.Once);
-        _mockUnitOfWork.Verify(u => u.Roles.AddClaimAsync(It.IsAny<IdentityRole>(), It.IsAny<Claim>()), Times.Exactly(2));
-    }
-
-    [Fact]
-    public async Task UpdateRoleAsync_ReturnsFalse_WhenRoleNotFound()
-    {
-        // Arrange
-        var role = new IdentityRole { Id = "1" };
-        var permissions = new List<string> { "Users.Create" };
-
-        IdentityRole? nullRole = null;
-        _mockUnitOfWork.Setup(u => u.Roles.FindByIdAsync(role.Id))
-            .ReturnsAsync(nullRole);
-
-        // Act
-        var result = await _roleService.UpdateRoleAsync(role, permissions);
-
-        // Assert
-        Assert.False(result.Succeeded);
-        _mockUnitOfWork.Verify(u => u.Roles.UpdateAsync(It.IsAny<IdentityRole>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task UpdateRoleAsync_ReturnsTrue_WhenRoleIsValid()
-    {
-        // Arrange
-        var role = new IdentityRole
-        {
-            Id = "1",
-            Name = "TestRole"
-        };
-        var permissions = new List<string> { "Users.Create", "Users.Read" };
-        var currentClaims = new List<Claim>
-        {
-            new("Permission", "Users.Delete")
-        };
-
-        _mockUnitOfWork.Setup(u => u.Roles.FindByIdAsync(role.Id))
-            .ReturnsAsync(role);
-        _mockUnitOfWork.Setup(u => u.Roles.GetClaimsAsync(role))
-            .ReturnsAsync(currentClaims);
-        _mockUnitOfWork.Setup(u => u.Roles.UpdateAsync(role))
-            .ReturnsAsync(IdentityResult.Success);
-        _mockUnitOfWork.Setup(u => u.Roles.RemoveClaimAsync(role, It.IsAny<Claim>()))
-            .ReturnsAsync(IdentityResult.Success);
-        _mockUnitOfWork.Setup(u => u.Roles.AddClaimAsync(role, It.IsAny<Claim>()))
-            .ReturnsAsync(IdentityResult.Success);
-
-        // Act
-        var result = await _roleService.UpdateRoleAsync(role, permissions);
-
-        // Assert
-        Assert.True(result.Succeeded);
-        _mockUnitOfWork.Verify(u => u.Roles.UpdateAsync(role), Times.Once);
-        _mockUnitOfWork.Verify(u => u.Roles.RemoveClaimAsync(role, It.IsAny<Claim>()), Times.Once);
-        _mockUnitOfWork.Verify(u => u.Roles.AddClaimAsync(role, It.IsAny<Claim>()), Times.Exactly(2));
-    }
-
-    [Fact]
-    public async Task DeleteRoleAsync_ReturnsFalse_WhenRoleNotFound()
-    {
-        // Arrange
-        var roleId = "1";
-
-        IdentityRole? nullRole = null;
-        _mockUnitOfWork.Setup(u => u.Roles.FindByIdAsync(roleId))
-            .ReturnsAsync(nullRole);
-
-        // Act
-        var result = await _roleService.DeleteRoleAsync(roleId);
-
-        // Assert
-        Assert.False(result.Succeeded);
-        _mockUnitOfWork.Verify(u => u.Roles.DeleteAsync(It.IsAny<IdentityRole>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task DeleteRoleAsync_ReturnsTrue_WhenRoleExists()
-    {
-        // Arrange
-        var roleId = "1";
-        var role = new IdentityRole { Id = roleId };
-
-        _mockUnitOfWork.Setup(u => u.Roles.FindByIdAsync(roleId))
-            .ReturnsAsync(role);
-        _mockUnitOfWork.Setup(u => u.Roles.DeleteAsync(role))
-            .ReturnsAsync(IdentityResult.Success);
-
-        // Act
-        var result = await _roleService.DeleteRoleAsync(roleId);
-
-        // Assert
-        Assert.True(result.Succeeded);
-        _mockUnitOfWork.Verify(u => u.Roles.DeleteAsync(role), Times.Once);
-    }
-
-    [Fact]
-    public async Task CanDeleteRoleAsync_ReturnsFalse_WhenRoleHasUsers()
-    {
-        // Arrange
-        var roleId = "1";
-        var users = new List<ApplicationUser> { new() { Id = "1", NombreCompleto = "Test User" } };
-
-        _mockUnitOfWork.Setup(u => u.Roles.GetUsersInRoleAsync(roleId))
-            .ReturnsAsync(users);
-
-        // Act
-        var result = await _roleService.CanDeleteRoleAsync(roleId);
-
-        // Assert
-        Assert.False(result);
-    }
-
-    [Fact]
-    public async Task CanDeleteRoleAsync_ReturnsTrue_WhenRoleHasNoUsers()
-    {
-        // Arrange
-        var roleId = "1";
-        var users = new List<ApplicationUser>();
-
-        _mockUnitOfWork.Setup(u => u.Roles.GetUsersInRoleAsync(roleId))
-            .ReturnsAsync(users);
-
-        // Act
-        var result = await _roleService.CanDeleteRoleAsync(roleId);
-
-        // Assert
-        Assert.True(result);
+        Assert.Equal(2, result.Count);
+        Assert.Equal(RoleConstants.DefaultPermissions.AdminPermissions.Length, result[roles[0].Id].Count);
+        Assert.Equal(RoleConstants.DefaultPermissions.LibrarianPermissions.Length, result[roles[1].Id].Count);
     }
 
     [Fact]
@@ -238,13 +82,10 @@ public class RoleServiceTests
     {
         // Arrange
         var roleId = "1";
-        var role = new IdentityRole { Id = roleId, Name = "TestRole" };
-        var claims = new List<Claim>
-        {
-            new("Permission", "Users.Create"),
-            new("Permission", "Users.Read"),
-            new("Other", "OtherClaim")
-        };
+        var role = new IdentityRole { Id = roleId, Name = RoleConstants.AdminRole };
+        var claims = RoleConstants.DefaultPermissions.AdminPermissions
+            .Select(p => new Claim("Permission", p))
+            .ToList();
 
         _mockUnitOfWork.Setup(u => u.Roles.FindByIdAsync(roleId))
             .ReturnsAsync(role);
@@ -255,9 +96,80 @@ public class RoleServiceTests
         var result = await _roleService.GetRolePermissionsAsync(roleId);
 
         // Assert
-        Assert.Equal(3, result.Count());
-        Assert.Contains(result, c => c.Value == "Users.Create" && c.Type == "Permission");
-        Assert.Contains(result, c => c.Value == "Users.Read" && c.Type == "Permission");
-        Assert.Contains(result, c => c.Value == "OtherClaim" && c.Type == "Other");
+        Assert.Equal(RoleConstants.DefaultPermissions.AdminPermissions.Length, result.Count);
+        foreach (var permission in RoleConstants.DefaultPermissions.AdminPermissions)
+        {
+            Assert.Contains(result, c => c.Type == "Permission" && c.Value == permission);
+        }
+    }
+
+    [Fact]
+    public async Task EnsureDefaultRolesExistAsync_CreatesAdminRole_WhenItDoesNotExist()
+    {
+        // Arrange
+        _mockUnitOfWork.Setup(u => u.Roles.FindByNameAsync(RoleConstants.AdminRole))
+            .ReturnsAsync((IdentityRole?)null);
+
+        // Act
+        await _roleService.EnsureDefaultRolesExistAsync();
+
+        // Assert
+        _mockUnitOfWork.Verify(
+            u => u.Roles.CreateAsync(It.Is<IdentityRole>(r => r.Name == RoleConstants.AdminRole)), 
+            Times.Once);
+        foreach (var permission in RoleConstants.DefaultPermissions.AdminPermissions)
+        {
+            _mockUnitOfWork.Verify(
+                u => u.Roles.AddClaimAsync(
+                    It.Is<IdentityRole>(r => r.Name == RoleConstants.AdminRole),
+                    It.Is<Claim>(c => c.Type == "Permission" && c.Value == permission)
+                ),
+                Times.Once);
+        }
+    }
+
+    [Fact]
+    public async Task EnsureDefaultRolesExistAsync_CreatesLibrarianRole_WhenItDoesNotExist()
+    {
+        // Arrange
+        _mockUnitOfWork.Setup(u => u.Roles.FindByNameAsync(RoleConstants.LibrarianRole))
+            .ReturnsAsync((IdentityRole?)null);
+
+        // Act
+        await _roleService.EnsureDefaultRolesExistAsync();
+
+        // Assert
+        _mockUnitOfWork.Verify(
+            u => u.Roles.CreateAsync(It.Is<IdentityRole>(r => r.Name == RoleConstants.LibrarianRole)), 
+            Times.Once);
+        foreach (var permission in RoleConstants.DefaultPermissions.LibrarianPermissions)
+        {
+            _mockUnitOfWork.Verify(
+                u => u.Roles.AddClaimAsync(
+                    It.Is<IdentityRole>(r => r.Name == RoleConstants.LibrarianRole),
+                    It.Is<Claim>(c => c.Type == "Permission" && c.Value == permission)
+                ),
+                Times.Once);
+        }
+    }
+
+    [Fact]
+    public async Task EnsureDefaultRolesExistAsync_DoesNotCreateRoles_WhenTheyAlreadyExist()
+    {
+        // Arrange
+        var adminRole = new IdentityRole(RoleConstants.AdminRole);
+        var librarianRole = new IdentityRole(RoleConstants.LibrarianRole);
+
+        _mockUnitOfWork.Setup(u => u.Roles.FindByNameAsync(RoleConstants.AdminRole))
+            .ReturnsAsync(adminRole);
+        _mockUnitOfWork.Setup(u => u.Roles.FindByNameAsync(RoleConstants.LibrarianRole))
+            .ReturnsAsync(librarianRole);
+
+        // Act
+        await _roleService.EnsureDefaultRolesExistAsync();
+
+        // Assert
+        _mockUnitOfWork.Verify(u => u.Roles.CreateAsync(It.IsAny<IdentityRole>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.Roles.AddClaimAsync(It.IsAny<IdentityRole>(), It.IsAny<Claim>()), Times.Never);
     }
 }

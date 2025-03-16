@@ -2,6 +2,7 @@ using LibroManager.Models;
 using LibroManager.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Components.Authorization;
+using LibroManager.Constants;
 
 namespace LibroManager.Services;
 
@@ -48,6 +49,12 @@ public class AuthService : IAuthService
 
     public async Task<(bool Success, string[] Errors)> RegisterAsync(string email, string password, string nombreCompleto, string role)
     {
+        // Validar que el rol sea uno de los dos permitidos
+        if (role != RoleConstants.AdminRole && role != RoleConstants.LibrarianRole)
+        {
+            return (false, new[] { "Rol no válido. Solo se permiten los roles: Admin y Librarian." });
+        }
+
         var user = new ApplicationUser
         {
             UserName = email,
@@ -91,6 +98,11 @@ public class AuthService : IAuthService
 
     public async Task<bool> IsInRoleAsync(ApplicationUser user, string role)
     {
+        // Validar que el rol sea uno de los dos permitidos
+        if (role != RoleConstants.AdminRole && role != RoleConstants.LibrarianRole)
+        {
+            return false;
+        }
         return await _userManager.IsInRoleAsync(user, role);
     }
 

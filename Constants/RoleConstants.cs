@@ -5,6 +5,24 @@ public static class RoleConstants
     public const string AdminRole = "Admin";
     public const string LibrarianRole = "Librarian";
 
+    public static class DefaultPermissions
+    {
+        public static readonly string[] AdminPermissions = {
+            Permissions.Libros.Create, Permissions.Libros.Read, Permissions.Libros.Update, Permissions.Libros.Delete, Permissions.Libros.Manage,
+            Permissions.Autores.Create, Permissions.Autores.Read, Permissions.Autores.Update, Permissions.Autores.Delete,
+            Permissions.Prestamos.Create, Permissions.Prestamos.Read, Permissions.Prestamos.Update, Permissions.Prestamos.Delete, Permissions.Prestamos.Manage,
+            Permissions.Estudiantes.Create, Permissions.Estudiantes.Read, Permissions.Estudiantes.Update, Permissions.Estudiantes.Delete,
+            Permissions.Users.ManageUsers
+        };
+
+        public static readonly string[] LibrarianPermissions = {
+            Permissions.Libros.Read, Permissions.Libros.Update,
+            Permissions.Autores.Read,
+            Permissions.Prestamos.Create, Permissions.Prestamos.Read, Permissions.Prestamos.Update,
+            Permissions.Estudiantes.Read
+        };
+    }
+
     public static class Permissions
     {
         public static class Libros
