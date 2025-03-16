@@ -1,9 +1,12 @@
 @page "/ubicaciones"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.DTOs
 @using LibroManager.Services.Interfaces
 @using Microsoft.AspNetCore.Components.Web
+@using LibroManager.Constants
 @inject IUbicacionService UbicacionService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = RoleConstants.AdminRole)]
 @rendermode InteractiveServer
 
 <PageTitle>Ubicaciones - LibroManager</PageTitle>

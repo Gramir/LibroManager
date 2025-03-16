@@ -1,9 +1,12 @@
 @page "/ubicaciones/{UbicacionId:int}"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.DTOs
 @using LibroManager.Services.Interfaces
+@using LibroManager.Constants
 @inject IUbicacionService UbicacionService
 @inject ILibroService LibroService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = RoleConstants.AdminRole)]
 @rendermode InteractiveServer
 
 <PageTitle>Detalle de Ubicación</PageTitle>

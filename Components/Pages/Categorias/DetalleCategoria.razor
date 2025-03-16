@@ -1,9 +1,12 @@
 @page "/categorias/{CategoriaId:int}"
+@using Microsoft.AspNetCore.Authorization
 @using LibroManager.DTOs
 @using LibroManager.Services.Interfaces
+@using LibroManager.Constants
 @inject ICategoriaService CategoriaService
 @inject ILibroService LibroService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = RoleConstants.AdminRole)]
 @rendermode InteractiveServer
 
 <PageTitle>Detalle de Categoría</PageTitle>
