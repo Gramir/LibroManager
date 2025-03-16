@@ -2,8 +2,10 @@ using LibroManager.Models;
 using LibroManager.DTOs;
 using LibroManager.Services;
 using LibroManager.Repositories.Interfaces;
+using LibroManager.Constants;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 using Moq;
 using Xunit;
 using AutoMapper;
@@ -107,11 +109,14 @@ public class UserServiceTests
             NombreCompleto = "Test User"
         };
         var password = "TestPassword123!";
-        var roles = new List<string> { "User" };
+        var roles = new List<string> { RoleConstants.LibrarianRole };
 
         _mockUnitOfWork.Setup(u => u.Users.CreateAsync(user, password))
             .ReturnsAsync(IdentityResult.Success);
         _mockUnitOfWork.Setup(u => u.Users.AddToRolesAsync(user, roles))
+            .ReturnsAsync(IdentityResult.Success);
+        _mockUnitOfWork.Setup(u => u.Users.AddClaimAsync(user, It.Is<Claim>(c => 
+            c.Type == "NombreCompleto" && c.Value == user.NombreCompleto)))
             .ReturnsAsync(IdentityResult.Success);
 
         // Act
@@ -122,6 +127,9 @@ public class UserServiceTests
         Assert.NotNull(createdUser);
         _mockUnitOfWork.Verify(u => u.Users.CreateAsync(user, password), Times.Once);
         _mockUnitOfWork.Verify(u => u.Users.AddToRolesAsync(user, roles), Times.Once);
+        _mockUnitOfWork.Verify(u => u.Users.AddClaimAsync(user, 
+            It.Is<Claim>(c => c.Type == "NombreCompleto" && c.Value == user.NombreCompleto)), 
+            Times.Once);
     }
 
     [Fact]
@@ -154,18 +162,30 @@ public class UserServiceTests
             Email = "test@test.com",
             NombreCompleto = "Updated User"
         };
-        var roles = new List<string> { "User" };
-        var currentRoles = new List<string> { "Admin" };
+        var roles = new List<string> { RoleConstants.LibrarianRole };
+        var currentRoles = new List<string> { RoleConstants.AdminRole };
+        var existingClaims = new List<Claim>
+        {
+            new Claim("NombreCompleto", "Original User")
+        };
 
         _mockUnitOfWork.Setup(u => u.Users.FindByIdAsync(user.Id))
             .ReturnsAsync(user);
         _mockUnitOfWork.Setup(u => u.Users.GetRolesAsync(user))
             .ReturnsAsync(currentRoles);
+        _mockUnitOfWork.Setup(u => u.Users.GetClaimsAsync(user))
+            .ReturnsAsync(existingClaims);
         _mockUnitOfWork.Setup(u => u.Users.UpdateAsync(user))
             .ReturnsAsync(IdentityResult.Success);
         _mockUnitOfWork.Setup(u => u.Users.RemoveFromRolesAsync(user, currentRoles))
             .ReturnsAsync(IdentityResult.Success);
         _mockUnitOfWork.Setup(u => u.Users.AddToRolesAsync(user, roles))
+            .ReturnsAsync(IdentityResult.Success);
+        _mockUnitOfWork.Setup(u => u.Users.RemoveClaimAsync(user, It.Is<Claim>(c => 
+            c.Type == "NombreCompleto" && c.Value == "Original User")))
+            .ReturnsAsync(IdentityResult.Success);
+        _mockUnitOfWork.Setup(u => u.Users.AddClaimAsync(user, It.Is<Claim>(c => 
+            c.Type == "NombreCompleto" && c.Value == user.NombreCompleto)))
             .ReturnsAsync(IdentityResult.Success);
 
         // Act
@@ -176,6 +196,12 @@ public class UserServiceTests
         _mockUnitOfWork.Verify(u => u.Users.UpdateAsync(user), Times.Once);
         _mockUnitOfWork.Verify(u => u.Users.RemoveFromRolesAsync(user, currentRoles), Times.Once);
         _mockUnitOfWork.Verify(u => u.Users.AddToRolesAsync(user, roles), Times.Once);
+        _mockUnitOfWork.Verify(u => u.Users.RemoveClaimAsync(user, 
+            It.Is<Claim>(c => c.Type == "NombreCompleto" && c.Value == "Original User")), 
+            Times.Once);
+        _mockUnitOfWork.Verify(u => u.Users.AddClaimAsync(user, 
+            It.Is<Claim>(c => c.Type == "NombreCompleto" && c.Value == user.NombreCompleto)), 
+            Times.Once);
     }
 
     [Fact]

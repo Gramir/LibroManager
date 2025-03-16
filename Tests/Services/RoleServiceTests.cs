@@ -160,16 +160,115 @@ public class RoleServiceTests
         var adminRole = new IdentityRole(RoleConstants.AdminRole);
         var librarianRole = new IdentityRole(RoleConstants.LibrarianRole);
 
+        var existingAdminClaims = new List<Claim>();
+        var existingLibrarianClaims = new List<Claim>();
+
         _mockUnitOfWork.Setup(u => u.Roles.FindByNameAsync(RoleConstants.AdminRole))
             .ReturnsAsync(adminRole);
         _mockUnitOfWork.Setup(u => u.Roles.FindByNameAsync(RoleConstants.LibrarianRole))
             .ReturnsAsync(librarianRole);
+        _mockUnitOfWork.Setup(u => u.Roles.GetClaimsAsync(It.Is<IdentityRole>(r => r.Name == RoleConstants.AdminRole)))
+            .ReturnsAsync(existingAdminClaims);
+        _mockUnitOfWork.Setup(u => u.Roles.GetClaimsAsync(It.Is<IdentityRole>(r => r.Name == RoleConstants.LibrarianRole)))
+            .ReturnsAsync(existingLibrarianClaims);
 
         // Act
         await _roleService.EnsureDefaultRolesExistAsync();
 
         // Assert
         _mockUnitOfWork.Verify(u => u.Roles.CreateAsync(It.IsAny<IdentityRole>()), Times.Never);
-        _mockUnitOfWork.Verify(u => u.Roles.AddClaimAsync(It.IsAny<IdentityRole>(), It.IsAny<Claim>()), Times.Never);
+        
+        // Verificar que se agreguen los permisos faltantes para Admin
+        foreach (var permission in RoleConstants.DefaultPermissions.AdminPermissions)
+        {
+            _mockUnitOfWork.Verify(
+                u => u.Roles.AddClaimAsync(
+                    It.Is<IdentityRole>(r => r.Name == RoleConstants.AdminRole),
+                    It.Is<Claim>(c => c.Type == "Permission" && c.Value == permission)
+                ),
+                Times.Once);
+        }
+
+        // Verificar que se agreguen los permisos faltantes para Librarian
+        foreach (var permission in RoleConstants.DefaultPermissions.LibrarianPermissions)
+        {
+            _mockUnitOfWork.Verify(
+                u => u.Roles.AddClaimAsync(
+                    It.Is<IdentityRole>(r => r.Name == RoleConstants.LibrarianRole),
+                    It.Is<Claim>(c => c.Type == "Permission" && c.Value == permission)
+                ),
+                Times.Once);
+        }
+    }
+
+    [Fact]
+    public async Task EnsureDefaultRolesExistAsync_OnlyAddsPermissions_WhenMissing()
+    {
+        // Arrange
+        var adminRole = new IdentityRole(RoleConstants.AdminRole);
+        var librarianRole = new IdentityRole(RoleConstants.LibrarianRole);
+
+        // Configurar algunos permisos existentes
+        var existingAdminClaims = new List<Claim>
+        {
+            new Claim("Permission", RoleConstants.DefaultPermissions.AdminPermissions[0])
+        };
+        var existingLibrarianClaims = new List<Claim>
+        {
+            new Claim("Permission", RoleConstants.DefaultPermissions.LibrarianPermissions[0])
+        };
+
+        _mockUnitOfWork.Setup(u => u.Roles.FindByNameAsync(RoleConstants.AdminRole))
+            .ReturnsAsync(adminRole);
+        _mockUnitOfWork.Setup(u => u.Roles.FindByNameAsync(RoleConstants.LibrarianRole))
+            .ReturnsAsync(librarianRole);
+        _mockUnitOfWork.Setup(u => u.Roles.GetClaimsAsync(It.Is<IdentityRole>(r => r.Name == RoleConstants.AdminRole)))
+            .ReturnsAsync(existingAdminClaims);
+        _mockUnitOfWork.Setup(u => u.Roles.GetClaimsAsync(It.Is<IdentityRole>(r => r.Name == RoleConstants.LibrarianRole)))
+            .ReturnsAsync(existingLibrarianClaims);
+
+        // Act
+        await _roleService.EnsureDefaultRolesExistAsync();
+
+        // Assert
+        _mockUnitOfWork.Verify(u => u.Roles.CreateAsync(It.IsAny<IdentityRole>()), Times.Never);
+        
+        // Verificar que solo se agreguen los permisos faltantes para Admin
+        foreach (var permission in RoleConstants.DefaultPermissions.AdminPermissions.Skip(1))
+        {
+            _mockUnitOfWork.Verify(
+                u => u.Roles.AddClaimAsync(
+                    It.Is<IdentityRole>(r => r.Name == RoleConstants.AdminRole),
+                    It.Is<Claim>(c => c.Type == "Permission" && c.Value == permission)
+                ),
+                Times.Once);
+        }
+        
+        // Verificar que no se agregue el permiso que ya existe para Admin
+        _mockUnitOfWork.Verify(
+            u => u.Roles.AddClaimAsync(
+                It.Is<IdentityRole>(r => r.Name == RoleConstants.AdminRole),
+                It.Is<Claim>(c => c.Type == "Permission" && c.Value == RoleConstants.DefaultPermissions.AdminPermissions[0])
+            ),
+            Times.Never);
+
+        // Verificar que solo se agreguen los permisos faltantes para Librarian
+        foreach (var permission in RoleConstants.DefaultPermissions.LibrarianPermissions.Skip(1))
+        {
+            _mockUnitOfWork.Verify(
+                u => u.Roles.AddClaimAsync(
+                    It.Is<IdentityRole>(r => r.Name == RoleConstants.LibrarianRole),
+                    It.Is<Claim>(c => c.Type == "Permission" && c.Value == permission)
+                ),
+                Times.Once);
+        }
+
+        // Verificar que no se agregue el permiso que ya existe para Librarian
+        _mockUnitOfWork.Verify(
+            u => u.Roles.AddClaimAsync(
+                It.Is<IdentityRole>(r => r.Name == RoleConstants.LibrarianRole),
+                It.Is<Claim>(c => c.Type == "Permission" && c.Value == RoleConstants.DefaultPermissions.LibrarianPermissions[0])
+            ),
+            Times.Never);
     }
 }

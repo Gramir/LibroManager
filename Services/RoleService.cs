@@ -50,11 +50,11 @@ public class RoleService : IRoleService
             adminRole = new IdentityRole(RoleConstants.AdminRole);
             await _unitOfWork.Roles.CreateAsync(adminRole);
         }
-        
-        // Actualizar permisos del rol Admin
-        var adminClaims = await _unitOfWork.Roles.GetClaimsAsync(adminRole);
+
+        // Verificar y actualizar permisos del Admin
+        var adminClaims = (await _unitOfWork.Roles.GetClaimsAsync(adminRole))?.Select(c => c.Value).ToList() ?? new List<string>();
         var adminPermissionsToAdd = RoleConstants.DefaultPermissions.AdminPermissions
-            .Except(adminClaims.Select(c => c.Value));
+            .Except(adminClaims);
 
         foreach (var permission in adminPermissionsToAdd)
         {
@@ -69,10 +69,10 @@ public class RoleService : IRoleService
             await _unitOfWork.Roles.CreateAsync(librarianRole);
         }
 
-        // Actualizar permisos del rol Librarian
-        var librarianClaims = await _unitOfWork.Roles.GetClaimsAsync(librarianRole);
+        // Verificar y actualizar permisos del Librarian
+        var librarianClaims = (await _unitOfWork.Roles.GetClaimsAsync(librarianRole))?.Select(c => c.Value).ToList() ?? new List<string>();
         var librarianPermissionsToAdd = RoleConstants.DefaultPermissions.LibrarianPermissions
-            .Except(librarianClaims.Select(c => c.Value));
+            .Except(librarianClaims);
 
         foreach (var permission in librarianPermissionsToAdd)
         {
