@@ -50,8 +50,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
     options.ExpireTimeSpan = TimeSpan.FromDays(1);
-    options.LoginPath = "/Identity/Account/Login";
-    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
     options.SlidingExpiration = true;
 });
 
@@ -109,6 +109,26 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Update));
     options.AddPolicy(RoleConstants.Permissions.Estudiantes.Delete, policy =>
         policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Delete));
+
+    // Ubicaciones policies
+    options.AddPolicy(RoleConstants.Permissions.Ubicaciones.Create, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Ubicaciones.Create));
+    options.AddPolicy(RoleConstants.Permissions.Ubicaciones.Read, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Ubicaciones.Read));
+    options.AddPolicy(RoleConstants.Permissions.Ubicaciones.Update, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Ubicaciones.Update));
+    options.AddPolicy(RoleConstants.Permissions.Ubicaciones.Delete, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Ubicaciones.Delete));
+
+    // Categorias policies
+    options.AddPolicy(RoleConstants.Permissions.Categorias.Create, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Categorias.Create));
+    options.AddPolicy(RoleConstants.Permissions.Categorias.Read, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Categorias.Read));
+    options.AddPolicy(RoleConstants.Permissions.Categorias.Update, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Categorias.Update));
+    options.AddPolicy(RoleConstants.Permissions.Categorias.Delete, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Categorias.Delete));
 
     // Users policies
     options.AddPolicy(RoleConstants.Permissions.Users.ManageRoles, policy =>

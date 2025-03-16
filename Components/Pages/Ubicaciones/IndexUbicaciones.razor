@@ -6,18 +6,22 @@
 @using LibroManager.Constants
 @inject IUbicacionService UbicacionService
 @inject NavigationManager NavigationManager
-@attribute [Authorize(Roles = RoleConstants.AdminRole)]
+@attribute [Authorize(Policy = RoleConstants.Permissions.Ubicaciones.Read)]
 @rendermode InteractiveServer
 
 <PageTitle>Ubicaciones - LibroManager</PageTitle>
 
 <h1>Ubicaciones</h1>
 
-<div class="mb-3">
-    <a href="/ubicaciones/crear" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Nueva Ubicación
-    </a>
-</div>
+<AuthorizeView Roles="@RoleConstants.AdminRole">
+    <Authorized>
+        <div class="mb-3">
+            <a href="/ubicaciones/crear" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nueva Ubicación
+            </a>
+        </div>
+    </Authorized>
+</AuthorizeView>
 
 @if (_ubicaciones == null)
 {
@@ -61,12 +65,16 @@ else
                             </span>
                         </td>
                         <td>
-                            <a href="/ubicaciones/@ubicacion.UbicacionId" class="btn btn-primary btn-sm me-2">
+                            <a href="/ubicaciones/@ubicacion.UbicacionId" class="btn btn-primary btn-sm">
                                 <i class="bi bi-eye"></i> Detalles
                             </a>
-                            <a href="/ubicaciones/editar/@ubicacion.UbicacionId" class="btn btn-warning btn-sm">
-                                <i class="bi bi-pencil"></i> Editar
-                            </a>
+                            <AuthorizeView Roles="@RoleConstants.AdminRole">
+                                <Authorized>
+                                    <a href="/ubicaciones/editar/@ubicacion.UbicacionId" class="btn btn-warning btn-sm ms-2">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </a>
+                                </Authorized>
+                            </AuthorizeView>
                         </td>
                     </tr>
                 }

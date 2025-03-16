@@ -43,28 +43,40 @@ public class RoleService : IRoleService
 
     public async Task EnsureDefaultRolesExistAsync()
     {
-        // Crear rol Admin si no existe
+        // Asegurar rol Admin
         var adminRole = await _unitOfWork.Roles.FindByNameAsync(RoleConstants.AdminRole);
         if (adminRole == null)
         {
             adminRole = new IdentityRole(RoleConstants.AdminRole);
             await _unitOfWork.Roles.CreateAsync(adminRole);
-            foreach (var permission in RoleConstants.DefaultPermissions.AdminPermissions)
-            {
-                await _unitOfWork.Roles.AddClaimAsync(adminRole, new Claim("Permission", permission));
-            }
+        }
+        
+        // Actualizar permisos del rol Admin
+        var adminClaims = await _unitOfWork.Roles.GetClaimsAsync(adminRole);
+        var adminPermissionsToAdd = RoleConstants.DefaultPermissions.AdminPermissions
+            .Except(adminClaims.Select(c => c.Value));
+
+        foreach (var permission in adminPermissionsToAdd)
+        {
+            await _unitOfWork.Roles.AddClaimAsync(adminRole, new Claim("Permission", permission));
         }
 
-        // Crear rol Librarian si no existe
+        // Asegurar rol Librarian
         var librarianRole = await _unitOfWork.Roles.FindByNameAsync(RoleConstants.LibrarianRole);
         if (librarianRole == null)
         {
             librarianRole = new IdentityRole(RoleConstants.LibrarianRole);
             await _unitOfWork.Roles.CreateAsync(librarianRole);
-            foreach (var permission in RoleConstants.DefaultPermissions.LibrarianPermissions)
-            {
-                await _unitOfWork.Roles.AddClaimAsync(librarianRole, new Claim("Permission", permission));
-            }
+        }
+
+        // Actualizar permisos del rol Librarian
+        var librarianClaims = await _unitOfWork.Roles.GetClaimsAsync(librarianRole);
+        var librarianPermissionsToAdd = RoleConstants.DefaultPermissions.LibrarianPermissions
+            .Except(librarianClaims.Select(c => c.Value));
+
+        foreach (var permission in librarianPermissionsToAdd)
+        {
+            await _unitOfWork.Roles.AddClaimAsync(librarianRole, new Claim("Permission", permission));
         }
     }
 }
