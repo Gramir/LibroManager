@@ -222,9 +222,6 @@ public class PrestamoService : IPrestamoService
     {
         try
         {
-            // Mapear el DTO a un objeto de entidad (esto es lo que espera el test)
-            var prestamo = _mapper.Map<Prestamo>(prestamoUpdateDto);
-            
             var prestamoExistente = await _unitOfWork.Prestamos.GetByIdAsync(prestamoUpdateDto.PrestamoId);
             if (prestamoExistente == null)
             {
@@ -239,41 +236,35 @@ public class PrestamoService : IPrestamoService
                 return false;
             }
 
-            // Actualizar las propiedades del préstamo usando el objeto mapeado
-            prestamoExistente.FechaPrestamo = prestamo.FechaPrestamo;
-            prestamoExistente.FechaVencimiento = prestamo.FechaVencimiento;
-            prestamoExistente.FechaDevolucion = prestamo.FechaDevolucion;
-            prestamo.Estado = prestamoExistente.Estado; // Mantener sincronizados los estados
+            // Actualizar las propiedades del préstamo existente
+            prestamoExistente.FechaVencimiento = prestamoUpdateDto.FechaVencimiento;
+            prestamoExistente.FechaDevolucion = prestamoUpdateDto.FechaDevolucion;
             
             // Determinar el estado del préstamo y libro
-            if (prestamo.FechaDevolucion.HasValue)
+            if (prestamoExistente.FechaDevolucion.HasValue)
             {
                 // Si hay fecha de devolución, el préstamo está concluido
-                prestamo.Estado = EstadoPrestamo.Concluido;
                 prestamoExistente.Estado = EstadoPrestamo.Concluido;
                 libro.Estado = EstadoLibro.Disponible;
             }
-            else if (prestamo.FechaVencimiento < DateTime.Now)
+            else if (prestamoExistente.FechaVencimiento < DateTime.Now)
             {
                 // Si no hay devolución y está vencido, el préstamo está expirado
-                prestamo.Estado = EstadoPrestamo.Expirado;
                 prestamoExistente.Estado = EstadoPrestamo.Expirado;
                 libro.Estado = EstadoLibro.Perdido;
             }
             else
             {
                 // En cualquier otro caso, el préstamo está activo
-                prestamo.Estado = EstadoPrestamo.Activo;
                 prestamoExistente.Estado = EstadoPrestamo.Activo;
                 libro.Estado = EstadoLibro.Prestado;
             }
 
-            // Actualizar usando el objeto prestamo (el test espera esto)
+            // Actualizar usando solo el préstamo existente
             _unitOfWork.Libros.Update(libro);
-            _unitOfWork.Prestamos.Update(prestamo);
             await _unitOfWork.SaveChangesAsync();
 
-            _logger.LogInformation("Préstamo actualizado: {PrestamoId}", prestamo.PrestamoId);
+            _logger.LogInformation("Préstamo actualizado: {PrestamoId}", prestamoExistente.PrestamoId);
             return true;
         }
         catch (Exception ex)
