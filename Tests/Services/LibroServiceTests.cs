@@ -695,4 +695,81 @@ public class LibroServiceTests
         _mockLibroRepository.Verify(r => r.Update(It.IsAny<Libro>()), Times.Never);
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
+
+    [Fact]
+    public async Task UpdateEjemplarAsync_WithValidData_ReturnsTrue()
+    {
+        // Arrange
+        var libroId = 1;
+        var ubicacionNueva = "A-1-1";
+        var libro = new Libro 
+        { 
+            LibroId = libroId, 
+            UbicacionId = 2 
+        };
+        var ubicaciones = new List<Ubicacion>
+        {
+            new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 }
+        };
+
+        _mockLibroRepository.Setup(r => r.GetByIdAsync(libroId))
+            .ReturnsAsync(libro);
+        _mockUbicacionRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(ubicaciones);
+        _mockUnitOfWork.Setup(u => u.SaveChangesAsync())
+            .ReturnsAsync(1);
+
+        // Act
+        var result = await _libroService.UpdateEjemplarAsync(libroId, ubicacionNueva);
+
+        // Assert
+        Assert.True(result);
+        _mockLibroRepository.Verify(r => r.Update(It.IsAny<Libro>()), Times.Once);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateEjemplarAsync_WithInvalidUbicacion_ReturnsFalse()
+    {
+        // Arrange
+        var libroId = 1;
+        var ubicacionInvalida = "X-99-99";
+        var libro = new Libro { LibroId = libroId };
+        var ubicaciones = new List<Ubicacion>
+        {
+            new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 }
+        };
+
+        _mockLibroRepository.Setup(r => r.GetByIdAsync(libroId))
+            .ReturnsAsync(libro);
+        _mockUbicacionRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(ubicaciones);
+
+        // Act
+        var result = await _libroService.UpdateEjemplarAsync(libroId, ubicacionInvalida);
+
+        // Assert
+        Assert.False(result);
+        _mockLibroRepository.Verify(r => r.Update(It.IsAny<Libro>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateEjemplarAsync_WithNonExistentLibro_ReturnsFalse()
+    {
+        // Arrange
+        var libroId = 999;
+        var ubicacion = "A-1-1";
+
+        _mockLibroRepository.Setup(r => r.GetByIdAsync(libroId))
+            .ReturnsAsync((Libro?)null);
+
+        // Act
+        var result = await _libroService.UpdateEjemplarAsync(libroId, ubicacion);
+
+        // Assert
+        Assert.False(result);
+        _mockLibroRepository.Verify(r => r.Update(It.IsAny<Libro>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
 }

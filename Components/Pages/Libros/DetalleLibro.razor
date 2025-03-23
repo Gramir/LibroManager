@@ -163,6 +163,14 @@
                                                         </Authorized>
                                                     </AuthorizeView>
                                                 }
+                                                <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Update">
+                                                    <Authorized>
+                                                        <button class="btn btn-warning btn-sm me-2" @onclick="() => MostrarFormularioEditarEjemplar(ejemplar)"
+                                                                disabled="@ejemplar.EstaPrestado">
+                                                            <i class="bi bi-pencil"></i> Editar
+                                                        </button>
+                                                    </Authorized>
+                                                </AuthorizeView>
                                                 <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Delete">
                                                     <Authorized>
                                                         <button class="btn btn-danger btn-sm" @onclick="() => MostrarConfirmacionEjemplar(ejemplar)"
@@ -282,6 +290,76 @@
     <div class="modal-backdrop fade show"></div>
 }
 
+@if (_mostrarFormularioEditarEjemplar)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Ejemplar</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarFormularioEditarEjemplar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Título del Libro</label>
+                        <input type="text" class="form-control" value="@_libro?.Titulo" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ISBN</label>
+                        <input type="text" class="form-control" value="@_libro?.ISBN" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Serial</label>
+                        <input type="text" class="form-control" value="@(_ejemplarEditar?.Serial)" readonly />
+                    </div>
+                    <div class="mb-3 dropdown-container" @onclick:stopPropagation>
+                        <label for="ubicacionEdit" class="form-label">Ubicación</label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="ubicacionEdit" 
+                                   value="@_nuevaUbicacion"
+                                   @oninput="@(e => OnUbicacionInput(e))"
+                                   @onfocus="ShowDropdown"
+                                   @onblur="async () => await OnBlur()"
+                                   placeholder="Escriba para filtrar ubicaciones..." />
+                        </div>
+                        <div class="dropdown-menu @(_showDropdown ? "show" : "")">
+                            @if (_ubicacionesFiltradas != null && _ubicacionesFiltradas.Any())
+                            {
+                                @foreach (var ubicacion in _ubicacionesFiltradas)
+                                {
+                                    <div class="dropdown-item" 
+                                         @onmousedown="@(() => SelectUbicacion(ubicacion.UbicacionFormateada))">
+                                        @ubicacion.UbicacionFormateada
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="dropdown-item">No se encontraron ubicaciones</div>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(_errorMessageUbicacion))
+                        {
+                            <div class="alert alert-danger mt-2">
+                                @_errorMessageUbicacion
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarFormularioEditarEjemplar">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="GuardarEjemplar" disabled="@string.IsNullOrWhiteSpace(_nuevaUbicacion)">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
 @if (_mostrarConfirmacion)
 {
     <div class="modal fade show" style="display: block;" tabindex="-1">
@@ -321,6 +399,8 @@
     private bool _mostrarConfirmacion;
     private LibroDTO? _ejemplarAEliminar;
     private bool _mostrarFormularioEjemplar;
+    private bool _mostrarFormularioEditarEjemplar;
+    private LibroDTO? _ejemplarEditar;
     private string _nuevaUbicacion = string.Empty;
     private bool _showDropdown;
     private IEnumerable<UbicacionDTO>? _ubicaciones;
@@ -343,7 +423,11 @@
 
     private async Task LoadUbicaciones()
     {
-        if (_ubicaciones == null)
+        if (_ejemplarEditar != null)
+        {
+            _ubicaciones = await UbicacionService.GetAvailableUbicacionesWithCurrentAsync(_ejemplarEditar.LibroId);
+        }
+        else
         {
             _ubicaciones = await UbicacionService.GetAvailableUbicacionesAsync();
         }
@@ -453,6 +537,20 @@
         _nuevaUbicacion = string.Empty;
     }
 
+    private void MostrarFormularioEditarEjemplar(LibroDTO ejemplar)
+    {
+        _ejemplarEditar = ejemplar;
+        _mostrarFormularioEditarEjemplar = true;
+        _nuevaUbicacion = ejemplar.UbicacionFormateada;
+        _showDropdown = false;
+    }
+
+    private void CerrarFormularioEditarEjemplar()
+    {
+        _mostrarFormularioEditarEjemplar = false;
+        _nuevaUbicacion = string.Empty;
+    }
+
     private void OnUbicacionInput(ChangeEventArgs e)
     {
         _nuevaUbicacion = e.Value?.ToString() ?? string.Empty;
@@ -535,6 +633,41 @@
         catch (Exception ex)
         {
             _errorMessage = $"Error al crear el ejemplar: {ex.Message}";
+        }
+    }
+
+    private async Task GuardarEjemplar()
+    {
+        if (string.IsNullOrWhiteSpace(_nuevaUbicacion) || _libro == null || _ejemplarEditar == null)
+            return;
+
+        // Verificar si la ubicación seleccionada está en la lista de ubicaciones disponibles
+        // o si es la ubicación actual del ejemplar
+        if (_ubicaciones == null || 
+            (!_ubicaciones.Any(u => u.UbicacionFormateada == _nuevaUbicacion) && 
+             _nuevaUbicacion != _ejemplarEditar.UbicacionFormateada))
+        {
+            _errorMessageUbicacion = "Debe seleccionar una ubicación válida del listado desplegable.";
+            return;
+        }
+
+        try
+        {
+            var result = await LibroService.UpdateEjemplarAsync(_ejemplarEditar.LibroId, _nuevaUbicacion);
+            if (result)
+            {
+                _ejemplares = await LibroService.GetEjemplaresPorIsbnAsync(_libro.ISBN);
+                await LoadUbicaciones();
+                CerrarFormularioEditarEjemplar();
+            }
+            else
+            {
+                _errorMessage = "No se pudo guardar el ejemplar. Por favor, intente nuevamente.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al guardar el ejemplar: {ex.Message}";
         }
     }
 

@@ -487,4 +487,40 @@ public class LibroService : ILibroService
             return false;
         }
     }
+
+    public async Task<bool> UpdateEjemplarAsync(int libroId, string ubicacionNueva)
+    {
+        try
+        {
+            var ejemplar = await _unitOfWork.Libros.GetByIdAsync(libroId);
+            if (ejemplar == null)
+            {
+                _logger.LogWarning("Ejemplar no encontrado para actualización: {LibroId}", libroId);
+                return false;
+            }
+
+            // Buscar la ubicación en la base de datos
+            var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
+            var ubicacionEncontrada = ubicaciones.FirstOrDefault(u => u.ObtenerUbicacionFormateada() == ubicacionNueva);
+
+            if (ubicacionEncontrada == null)
+            {
+                _logger.LogWarning("Ubicación no encontrada: {Ubicacion}", ubicacionNueva);
+                return false;
+            }
+
+            ejemplar.UbicacionId = ubicacionEncontrada.UbicacionId;
+            _unitOfWork.Libros.Update(ejemplar);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Ejemplar actualizado: LibroId: {LibroId}, Nueva Ubicacion: {Ubicacion}", 
+                libroId, ubicacionNueva);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al actualizar ejemplar {LibroId}", libroId);
+            return false;
+        }
+    }
 }
