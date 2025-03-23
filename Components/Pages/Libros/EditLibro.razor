@@ -236,7 +236,7 @@
     {
         if (_ubicaciones == null)
         {
-            _ubicaciones = await UbicacionService.GetAvailableUbicacionesAsync();
+            _ubicaciones = await UbicacionService.GetAvailableUbicacionesWithCurrentAsync(LibroId);
         }
     }
 
@@ -303,9 +303,12 @@
                 return;
             }
 
-            var result = await LibroService.UpdateLibroAsync(LibroDto);
-            if (result)
+            // Actualizar el libro actual y todos los ejemplares (autor y categoría)
+            var updateResult = await LibroService.UpdateLibroAsync(LibroDto);
+            if (updateResult)
             {
+                // Si la actualización fue exitosa, actualizar los campos compartidos de todos los ejemplares
+                await LibroService.UpdateEjemplaresCompartidosAsync(LibroDto.ISBN, LibroDto.AutorId, LibroDto.CategoriaId);
                 NavigationManager.NavigateTo("/libros");
             }
             else

@@ -760,4 +760,48 @@ public class LibroServiceTests
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()!),
             Times.Once);
     }
+
+    [Fact]
+    public async Task UpdateEjemplaresCompartidosAsync_ActualizaCorrectamente()
+    {
+        // Arrange
+        var isbn = "1234567890";
+        var libros = new List<Libro>
+        {
+            new() { LibroId = 1, ISBN = isbn, AutorId = 1, CategoriaId = 1 },
+            new() { LibroId = 2, ISBN = isbn, AutorId = 1, CategoriaId = 1 }
+        };
+
+        _mockLibroRepository.Setup(r => r.GetLibrosWithAutorAndCategoriaAsync())
+            .ReturnsAsync(libros);
+        _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _libroService.UpdateEjemplaresCompartidosAsync(isbn, 2, 3);
+
+        // Assert
+        Assert.True(result);
+        _mockLibroRepository.Verify(r => r.Update(It.IsAny<Libro>()), Times.Exactly(2));
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateEjemplaresCompartidosAsync_SinEjemplares_RetornaFalso()
+    {
+        // Arrange
+        var isbn = "1234567890";
+        var libros = new List<Libro>();
+
+        _mockLibroRepository.Setup(r => r.GetLibrosWithAutorAndCategoriaAsync())
+            .ReturnsAsync(libros);
+
+        // Act
+        var result = await _libroService.UpdateEjemplaresCompartidosAsync(isbn, 2, 3);
+
+        // Assert
+        Assert.False(result);
+        _mockLibroRepository.Verify(r => r.Update(It.IsAny<Libro>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
 }

@@ -13,4 +13,5 @@ public interface IUbicacionService
     Task<bool> UpdateUbicacionAsync(int id, UbicacionUpdateDTO ubicacion);
     Task<bool> DeleteUbicacionAsync(int id);
     Task<bool> UbicacionExistsAsync(int id);
+    Task<IEnumerable<UbicacionDTO>> GetAvailableUbicacionesWithCurrentAsync(int libroId);
 }

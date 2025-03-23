@@ -13,6 +13,7 @@ public class UbicacionServiceTests
 {
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<IUbicacionRepository> _mockUbicacionRepository;
+    private readonly Mock<ILibroRepository> _mockLibroRepository;
     private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<ILogger<UbicacionService>> _mockLogger;
     private readonly UbicacionService _ubicacionService;
@@ -21,10 +22,13 @@ public class UbicacionServiceTests
     {
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockUbicacionRepository = new Mock<IUbicacionRepository>();
+        _mockLibroRepository = new Mock<ILibroRepository>();
         _mockMapper = new Mock<IMapper>();
         _mockLogger = new Mock<ILogger<UbicacionService>>();
 
         _mockUnitOfWork.Setup(u => u.Ubicaciones).Returns(_mockUbicacionRepository.Object);
+        _mockUnitOfWork.Setup(u => u.Libros).Returns(_mockLibroRepository.Object);
+        
         _ubicacionService = new UbicacionService(_mockUnitOfWork.Object, _mockMapper.Object, _mockLogger.Object);
     }
 
@@ -576,5 +580,45 @@ public class UbicacionServiceTests
 
         // Assert
         Assert.False(result);
+    }
+
+    [Fact]
+    public async Task GetAvailableUbicacionesWithCurrentAsync_IncludesCurrent()
+    {
+        // Arrange
+        var ubicaciones = new List<Ubicacion>
+        {
+            new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 },
+            new() { UbicacionId = 2, Estante = "A", Nivel = 1, Posicion = 2 },
+            new() { UbicacionId = 3, Estante = "A", Nivel = 1, Posicion = 3 }
+        };
+
+        var libros = new List<Libro>
+        {
+            new() { LibroId = 1, UbicacionId = 1 },
+            new() { LibroId = 2, UbicacionId = 2 }
+        };
+
+        var ubicacionesDto = new List<UbicacionDTO>
+        {
+            new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 },
+            new() { UbicacionId = 3, Estante = "A", Nivel = 1, Posicion = 3 }
+        };
+
+        _mockUbicacionRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(ubicaciones);
+        _mockLibroRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(libros);
+        _mockMapper.Setup(m => m.Map<List<UbicacionDTO>>(It.IsAny<List<Ubicacion>>()))
+            .Returns(ubicacionesDto);
+
+        // Act
+        var result = await _ubicacionService.GetAvailableUbicacionesWithCurrentAsync(1);
+
+        // Assert
+        Assert.Equal(2, result.Count()); 
+        Assert.Contains(result, u => u.UbicacionId == 1); 
+        Assert.Contains(result, u => u.UbicacionId == 3); 
+        Assert.DoesNotContain(result, u => u.UbicacionId == 2); 
     }
 }

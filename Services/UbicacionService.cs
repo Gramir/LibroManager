@@ -217,4 +217,46 @@ public class UbicacionService : IUbicacionService
             return false;
         }
     }
+
+    public async Task<IEnumerable<UbicacionDTO>> GetAvailableUbicacionesWithCurrentAsync(int libroId)
+    {
+        try
+        {
+            var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
+            var libros = await _unitOfWork.Libros.GetAllAsync();
+
+            var libroActual = libros.FirstOrDefault(l => l.LibroId == libroId);
+            if (libroActual == null)
+            {
+                _logger.LogWarning("No se encontró el libro con ID {LibroId}", libroId);
+                return Enumerable.Empty<UbicacionDTO>();
+            }
+
+            var ubicacionesOcupadas = libros
+                .Where(l => l.LibroId != libroId)
+                .Select(l => l.UbicacionId)
+                .ToHashSet();
+
+            var ubicacionesDisponibles = ubicaciones
+                .Where(u => !ubicacionesOcupadas.Contains(u.UbicacionId) || u.UbicacionId == libroActual.UbicacionId)
+                .ToList();
+
+            var ubicacionesDto = _mapper.Map<List<UbicacionDTO>>(ubicacionesDisponibles);
+            
+            // Marcar ubicación actual como no disponible y el resto como disponibles
+            foreach (var ubicacionDto in ubicacionesDto)
+            {
+                ubicacionDto.EstaDisponible = ubicacionDto.UbicacionId != libroActual.UbicacionId;
+            }
+
+            _logger.LogInformation("Se encontraron {Count} ubicaciones disponibles para el libro {LibroId}", 
+                ubicacionesDisponibles.Count, libroId);
+            return ubicacionesDto;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener ubicaciones disponibles para el libro {LibroId}", libroId);
+            return Enumerable.Empty<UbicacionDTO>();
+        }
+    }
 }

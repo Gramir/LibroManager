@@ -19,4 +19,5 @@ public interface ILibroService
     Task<bool> CreateEjemplarAsync(string isbn, string ubicacion);
     Task<IEnumerable<LibroDTO>> GetLibrosPorUbicacionAsync(int ubicacionId);
     Task<IEnumerable<LibroDTO>> GetLibrosPorCategoriaAsync(int categoriaId);
+    Task<bool> UpdateEjemplaresCompartidosAsync(string isbn, int autorId, int categoriaId);
 }

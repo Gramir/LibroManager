@@ -469,4 +469,43 @@ public class LibroService : ILibroService
             return Enumerable.Empty<LibroDTO>();
         }
     }
+
+    public async Task<bool> UpdateEjemplaresCompartidosAsync(string isbn, int autorId, int categoriaId)
+    {
+        try
+        {
+            var ejemplares = await _unitOfWork.Libros.GetLibrosWithAutorAndCategoriaAsync();
+            var ejemplaresDelMismoLibro = ejemplares.Where(l => l.ISBN == isbn).ToList();
+
+            if (!ejemplaresDelMismoLibro.Any())
+            {
+                _logger.LogWarning("No se encontraron ejemplares con el ISBN {ISBN}", isbn);
+                return false;
+            }
+
+            foreach (var ejemplar in ejemplaresDelMismoLibro)
+            {
+                ejemplar.AutorId = autorId;
+                ejemplar.CategoriaId = categoriaId;
+
+                if (!await _validationService.LibroEsValido(ejemplar))
+                {
+                    _logger.LogWarning("Datos de libro no válidos durante la actualización masiva: {LibroId}", ejemplar.LibroId);
+                    return false;
+                }
+
+                _unitOfWork.Libros.Update(ejemplar);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+            _logger.LogInformation("Actualización masiva completada para ISBN {ISBN}. Ejemplares actualizados: {Count}", 
+                isbn, ejemplaresDelMismoLibro.Count);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al actualizar ejemplares compartidos para ISBN {ISBN}", isbn);
+            return false;
+        }
+    }
 }
