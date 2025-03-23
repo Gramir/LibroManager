@@ -47,9 +47,7 @@ public class LibroUpdateDTO
     [StringLength(100, ErrorMessage = "El título no puede exceder los 100 caracteres")]
     public string Titulo { get; set; } = string.Empty;
 
-    // Estos campos son solo para mostrar en el formulario de edición, no se pueden modificar
     public string ISBN { get; set; } = string.Empty;
-    public string Serial { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Debe seleccionar un autor")]
     [Range(1, int.MaxValue, ErrorMessage = "Por favor, seleccione un autor de la lista")]
@@ -58,7 +56,4 @@ public class LibroUpdateDTO
     [Required(ErrorMessage = "Debe seleccionar una categoría")]
     [Range(1, int.MaxValue, ErrorMessage = "Por favor, seleccione una categoría de la lista")]
     public int CategoriaId { get; set; }
-
-    [Required(ErrorMessage = "Debe seleccionar una ubicación")]
-    public string UbicacionString { get; set; } = string.Empty;
 }

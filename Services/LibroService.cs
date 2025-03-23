@@ -171,12 +171,6 @@ public class LibroService : ILibroService
     {
         try
         {
-            if (!await ValidarUbicacionSeleccionada(libroDto.UbicacionString))
-            {
-                _logger.LogWarning("Ubicación no válida o no seleccionada del listado: {Ubicacion}", libroDto.UbicacionString);
-                return false;
-            }
-
             var existingLibro = await _unitOfWork.Libros.GetByIdAsync(libroDto.LibroId);
             if (existingLibro == null)
             {
@@ -184,25 +178,10 @@ public class LibroService : ILibroService
                 return false;
             }
 
-            // No permitimos cambiar el ISBN ni el Serial
-            libroDto.ISBN = existingLibro.ISBN;
-            libroDto.Serial = existingLibro.Serial;
-
-            // Buscar la ubicación en la base de datos
-            var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
-            var ubicacion = ubicaciones.FirstOrDefault(u => u.ObtenerUbicacionFormateada() == libroDto.UbicacionString);
-
-            if (ubicacion == null)
-            {
-                _logger.LogWarning("Ubicación no encontrada: {Ubicacion}", libroDto.UbicacionString);
-                return false;
-            }
-
             // Actualizar solo los valores permitidos del libro existente
             existingLibro.Titulo = libroDto.Titulo;
             existingLibro.AutorId = libroDto.AutorId;
             existingLibro.CategoriaId = libroDto.CategoriaId;
-            existingLibro.UbicacionId = ubicacion.UbicacionId;
 
             if (!await _validationService.LibroEsValido(existingLibro))
             {

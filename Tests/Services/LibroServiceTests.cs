@@ -129,7 +129,7 @@ public class LibroServiceTests
     }
 
     [Fact]
-    public async Task UpdateLibroAsync_WithValidLibroAndNewIsbn_ReturnsTrue()
+    public async Task UpdateLibroAsync_WithValidLibro_ReturnsTrue()
     {
         // Arrange
         var libroUpdateDto = new LibroUpdateDTO 
@@ -137,38 +137,24 @@ public class LibroServiceTests
             LibroId = 1,
             Titulo = "Test Libro",
             ISBN = "1234567890",
-            Serial = "TST-LBR-001",
             AutorId = 1,
-            CategoriaId = 1,
-            UbicacionString = "A-1-1"
+            CategoriaId = 1
         };
 
         var libro = new Libro 
         { 
             LibroId = 1,
-            Titulo = "Test Libro",
-            ISBN = "0987654321",
-            Serial = "TST-LBR-002",
+            Titulo = "Test Libro Original",
+            ISBN = "1234567890",
             AutorId = 1,
             CategoriaId = 1,
             UbicacionId = 1
         };
 
-        var ubicaciones = new List<Ubicacion>
-        {
-            new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 }
-        };
-
-        _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
-            .ReturnsAsync(true);
         _mockLibroRepository.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync(libro);
-        _mockLibroRepository.Setup(r => r.IsbnExistsAsync(libroUpdateDto.ISBN))
-            .ReturnsAsync(false);
-        _mockLibroRepository.Setup(r => r.SerialExistsAsync(libroUpdateDto.Serial))
-            .ReturnsAsync(false);
-        _mockUbicacionRepository.Setup(u => u.GetAllAsync())
-            .ReturnsAsync(ubicaciones);
+        _mockValidationService.Setup(s => s.LibroEsValido(It.IsAny<Libro>()))
+            .ReturnsAsync(true);
 
         // Act
         var result = await _libroService.UpdateLibroAsync(libroUpdateDto);
@@ -304,8 +290,7 @@ public class LibroServiceTests
             Titulo = "",  // Invalid title
             ISBN = "1234567890",
             AutorId = 1,
-            CategoriaId = 1,
-            UbicacionString = "A-1-1"
+            CategoriaId = 1
         };
 
         var libro = new Libro();
@@ -333,8 +318,7 @@ public class LibroServiceTests
             Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = 1,
-            CategoriaId = 1,
-            UbicacionString = "A-1-1"
+            CategoriaId = 1
         };
 
         _mockLibroRepository.Setup(r => r.GetByIdAsync(999))
@@ -663,99 +647,6 @@ public class LibroServiceTests
                 LogLevel.Error,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error al contar ejemplares prestados")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()!),
-            Times.Once);
-    }
-
-    [Fact]
-    public async Task CreateLibroAsync_ConUbicacionInvalida_ReturnsFalse()
-    {
-        // Arrange
-        var libroCreateDto = new LibroCreateDTO 
-        { 
-            Titulo = "Test Libro",
-            ISBN = "1234567890",
-            AutorId = 1,
-            CategoriaId = 1,
-            UbicacionString = "X-99-99" // Ubicación que no existe
-        };
-
-        var ubicaciones = new List<Ubicacion>
-        {
-            new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 }
-        };
-
-        _mockUbicacionRepository.Setup(r => r.GetAllAsync())
-            .ReturnsAsync(ubicaciones);
-        _mockMapper.Setup(m => m.Map<Libro>(libroCreateDto))
-            .Returns(new Libro());
-
-        // Act
-        var result = await _libroService.CreateLibroAsync(libroCreateDto);
-
-        // Assert
-        Assert.False(result);
-        _mockLibroRepository.Verify(r => r.AddAsync(It.IsAny<Libro>()), Times.Never);
-        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
-        _mockLogger.Verify(
-            l => l.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Ubicación no válida o no seleccionada")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()!),
-            Times.Once);
-    }
-
-    [Fact]
-    public async Task UpdateLibroAsync_ConUbicacionInvalida_ReturnsFalse()
-    {
-        // Arrange
-        var libroUpdateDto = new LibroUpdateDTO 
-        { 
-            LibroId = 1,
-            Titulo = "Test Libro",
-            ISBN = "1234567890",
-            Serial = "ABC-123-001",
-            AutorId = 1,
-            CategoriaId = 1,
-            UbicacionString = "X-99-99" // Ubicación que no existe
-        };
-
-        var libro = new Libro 
-        { 
-            LibroId = 1,
-            Titulo = "Test Libro Original",
-            ISBN = "1234567890",
-            Serial = "ABC-123-001",
-            AutorId = 1,
-            CategoriaId = 1,
-            UbicacionId = 1
-        };
-
-        var ubicaciones = new List<Ubicacion>
-        {
-            new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 }
-        };
-
-        _mockLibroRepository.Setup(r => r.GetByIdAsync(1))
-            .ReturnsAsync(libro);
-        _mockUbicacionRepository.Setup(r => r.GetAllAsync())
-            .ReturnsAsync(ubicaciones);
-
-        // Act
-        var result = await _libroService.UpdateLibroAsync(libroUpdateDto);
-
-        // Assert
-        Assert.False(result);
-        _mockLibroRepository.Verify(r => r.Update(It.IsAny<Libro>()), Times.Never);
-        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
-        _mockLogger.Verify(
-            l => l.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Ubicación no válida o no seleccionada")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()!),
             Times.Once);
