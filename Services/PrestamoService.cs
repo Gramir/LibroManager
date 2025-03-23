@@ -260,7 +260,8 @@ public class PrestamoService : IPrestamoService
                 libro.Estado = EstadoLibro.Prestado;
             }
 
-            // Actualizar usando solo el préstamo existente
+            // Actualizar usando el préstamo existente
+            _unitOfWork.Prestamos.Update(prestamoExistente);
             _unitOfWork.Libros.Update(libro);
             await _unitOfWork.SaveChangesAsync();
 
