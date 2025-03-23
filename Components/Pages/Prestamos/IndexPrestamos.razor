@@ -14,11 +14,15 @@
 
 <h1>Préstamos</h1>
 
-<div class="mb-3">
-    <a href="/prestamos/crear" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Nuevo Préstamo
-    </a>
-</div>
+<AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Create">
+    <Authorized>
+        <div class="mb-3">
+            <a href="/prestamos/crear" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nuevo Préstamo
+            </a>
+        </div>
+    </Authorized>
+</AuthorizeView>
 
 @if (_prestamos == null)
 {
@@ -86,19 +90,27 @@ else
                             <span class="badge @badgeClass">@estadoTexto</span>
                         </td>
                         <td>
-                            <a href="/prestamos/@prestamo.PrestamoId" class="btn btn-primary btn-sm me-2">
-                                <i class="bi bi-eye"></i> Detalles
-                            </a>
-                            <a href="/prestamos/editar/@prestamo.PrestamoId" class="btn btn-warning btn-sm">
-                                <i class="bi bi-pencil"></i> Editar
-                            </a>
+                            <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Read">
+                                <Authorized>
+                                    <a href="/prestamos/@prestamo.PrestamoId" class="btn btn-primary btn-sm me-2">
+                                        <i class="bi bi-eye"></i> Detalles
+                                    </a>
+                                </Authorized>
+                            </AuthorizeView>
+                            <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Update">
+                                <Authorized>
+                                    <a href="/prestamos/editar/@prestamo.PrestamoId" class="btn btn-warning btn-sm">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </a>
+                                </Authorized>
+                            </AuthorizeView>
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
-    }
+}
 
 @code {
     private IEnumerable<PrestamoDTO>? _prestamos;

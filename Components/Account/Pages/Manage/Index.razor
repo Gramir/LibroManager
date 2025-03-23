@@ -10,6 +10,7 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
+@inject NavigationManager NavigationManager
 
 <PageTitle>Profile</PageTitle>
 
@@ -53,6 +54,11 @@
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
 
         Input.PhoneNumber ??= phoneNumber;
+    }
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.NavigateTo("/Account/Manage/ChangePassword");
     }
 
     private async Task OnValidSubmitAsync()

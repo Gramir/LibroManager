@@ -12,11 +12,15 @@
 
 <h1>Catálogo de Libros</h1>
 
-<div class="mb-3">
-    <button class="btn btn-primary" @onclick="CrearLibro">
-        <i class="bi bi-plus-circle"></i> Crear Libro
-    </button>
-</div>
+<AuthorizeView Policy="@RoleConstants.Permissions.Libros.Create">
+    <Authorized>
+        <div class="mb-3">
+            <button class="btn btn-primary" @onclick="CrearLibro">
+                <i class="bi bi-plus-circle"></i> Crear Libro
+            </button>
+        </div>
+    </Authorized>
+</AuthorizeView>
 
 @if (libros == null)
 {
@@ -60,16 +64,28 @@ else
                         <td>@libro.AutorNombre</td>
                         <td>@libro.CategoriaNombre</td>
                         <td>
-                            <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(libro.LibroId)">
-                                <i class="bi bi-eye"></i> Detalles
-                            </button>
-                            <button class="btn btn-warning btn-sm me-1" @onclick="() => EditarLibro(libro.LibroId)">
-                                <i class="bi bi-pencil"></i> Editar
-                            </button>
-                            <button class="btn btn-success btn-sm" @onclick="() => PrestarLibro(libro.LibroId)"
-                                    disabled="@(disponibles <= 0)">
-                                <i class="bi bi-book"></i> Prestar
-                            </button>
+                            <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Read">
+                                <Authorized>
+                                    <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(libro.LibroId)">
+                                        <i class="bi bi-eye"></i> Detalles
+                                    </button>
+                                </Authorized>
+                            </AuthorizeView>
+                            <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Update">
+                                <Authorized>
+                                    <button class="btn btn-warning btn-sm me-1" @onclick="() => EditarLibro(libro.LibroId)">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </button>
+                                </Authorized>
+                            </AuthorizeView>
+                            <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Create">
+                                <Authorized>
+                                    <button class="btn btn-success btn-sm" @onclick="() => PrestarLibro(libro.LibroId)"
+                                            disabled="@(disponibles <= 0)">
+                                        <i class="bi bi-book"></i> Prestar
+                                    </button>
+                                </Authorized>
+                            </AuthorizeView>
                         </td>
                     </tr>
                 }

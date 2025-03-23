@@ -12,11 +12,15 @@
 
 <h1>Catálogo de Autores</h1>
 
-<div class="mb-3">
-    <button class="btn btn-primary" @onclick="CrearAutor">
-        <i class="bi bi-plus-circle"></i> Crear Autor
-    </button>
-</div>
+<AuthorizeView Policy="@RoleConstants.Permissions.Autores.Create">
+    <Authorized>
+        <div class="mb-3">
+            <button class="btn btn-primary" @onclick="CrearAutor">
+                <i class="bi bi-plus-circle"></i> Crear Autor
+            </button>
+        </div>
+    </Authorized>
+</AuthorizeView>
 
 @if (autores == null)
 {
@@ -40,12 +44,20 @@ else
                         <td>@autor.Nombre</td>
                         <td>@autor.CantidadLibros</td>
                         <td>
-                            <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(autor.AutorId)">
-                                <i class="bi bi-eye"></i> Detalles
-                            </button>
-                            <button class="btn btn-warning btn-sm" @onclick="() => EditarAutor(autor.AutorId)">
-                                <i class="bi bi-pencil"></i> Editar
-                            </button>
+                            <AuthorizeView Policy="@RoleConstants.Permissions.Autores.Read">
+                                <Authorized>
+                                    <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(autor.AutorId)">
+                                        <i class="bi bi-eye"></i> Detalles
+                                    </button>
+                                </Authorized>
+                            </AuthorizeView>
+                            <AuthorizeView Policy="@RoleConstants.Permissions.Autores.Update">
+                                <Authorized>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => EditarAutor(autor.AutorId)">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </button>
+                                </Authorized>
+                            </AuthorizeView>
                         </td>
                     </tr>
                 }

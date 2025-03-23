@@ -43,7 +43,7 @@ else
             <thead>
                 <tr>
                     <th>Nombre</th>
-                    <th>Cantidad de Libros</th>
+                    <th>Libros Asociados</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -54,12 +54,16 @@ else
                         <td>@categoria.Nombre</td>
                         <td>@categoria.CantidadLibros</td>
                         <td>
-                            <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(categoria.CategoriaId)">
-                                <i class="bi bi-eye"></i> Detalles
-                            </button>
+                            <AuthorizeView Policy="@RoleConstants.Permissions.Categorias.Read">
+                                <Authorized>
+                                    <button class="btn btn-primary btn-sm me-2" @onclick="() => VerDetalles(categoria.CategoriaId)">
+                                        <i class="bi bi-eye"></i> Detalles
+                                    </button>
+                                </Authorized>
+                            </AuthorizeView>
                             <AuthorizeView Roles="@RoleConstants.AdminRole">
                                 <Authorized>
-                                    <button class="btn btn-warning btn-sm" @onclick="() => EditarCategoria(categoria.CategoriaId)">
+                                    <button class="btn btn-warning btn-sm me-2" @onclick="() => EditarCategoria(categoria.CategoriaId)">
                                         <i class="bi bi-pencil"></i> Editar
                                     </button>
                                 </Authorized>

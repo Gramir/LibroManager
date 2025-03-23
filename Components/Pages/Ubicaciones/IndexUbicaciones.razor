@@ -65,14 +65,18 @@ else
                             </span>
                         </td>
                         <td>
-                            <a href="/ubicaciones/@ubicacion.UbicacionId" class="btn btn-primary btn-sm">
-                                <i class="bi bi-eye"></i> Detalles
-                            </a>
+                            <AuthorizeView Policy="@RoleConstants.Permissions.Ubicaciones.Read">
+                                <Authorized>
+                                    <button class="btn btn-primary btn-sm me-2" @onclick="() => VerDetalles(ubicacion.UbicacionId)">
+                                        <i class="bi bi-eye"></i> Detalles
+                                    </button>
+                                </Authorized>
+                            </AuthorizeView>
                             <AuthorizeView Roles="@RoleConstants.AdminRole">
                                 <Authorized>
-                                    <a href="/ubicaciones/editar/@ubicacion.UbicacionId" class="btn btn-warning btn-sm ms-2">
+                                    <button class="btn btn-warning btn-sm me-2" @onclick="() => EditarUbicacion(ubicacion.UbicacionId)">
                                         <i class="bi bi-pencil"></i> Editar
-                                    </a>
+                                    </button>
                                 </Authorized>
                             </AuthorizeView>
                         </td>
@@ -89,5 +93,15 @@ else
     protected override async Task OnInitializedAsync()
     {
         _ubicaciones = await UbicacionService.GetAllUbicacionesAsync();
+    }
+
+    private void VerDetalles(int ubicacionId)
+    {
+        NavigationManager.NavigateTo($"/ubicaciones/{ubicacionId}");
+    }
+
+    private void EditarUbicacion(int ubicacionId)
+    {
+        NavigationManager.NavigateTo($"/ubicaciones/editar/{ubicacionId}");
     }
 }

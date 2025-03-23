@@ -18,10 +18,10 @@ public static class RoleConstants
         };
 
         public static readonly string[] LibrarianPermissions = {
-            Permissions.Libros.Read, Permissions.Libros.Update,
-            Permissions.Autores.Read,
+            Permissions.Libros.Read, Permissions.Libros.Update, Permissions.Libros.Create,
+            Permissions.Autores.Create, Permissions.Autores.Read, Permissions.Autores.Update,
             Permissions.Prestamos.Create, Permissions.Prestamos.Read, Permissions.Prestamos.Update,
-            Permissions.Estudiantes.Read,
+            Permissions.Estudiantes.Read, Permissions.Estudiantes.Update, Permissions.Estudiantes.Create,
             Permissions.Ubicaciones.Read,
             Permissions.Categorias.Read
         };

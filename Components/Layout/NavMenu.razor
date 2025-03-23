@@ -21,49 +21,72 @@
         </div>
 
         <AuthorizeView>
-            <Authorized>
+            <Authorized Context="authOuter">
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="libros">
-                        <span class="bi bi-book" aria-hidden="true"></span> Libros
-                    </NavLink>
+                    <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Read">
+                        <Authorized Context="authLibros">
+                            <NavLink class="nav-link" href="libros">
+                                <span class="bi bi-book" aria-hidden="true"></span> Libros
+                            </NavLink>
+                        </Authorized>
+                    </AuthorizeView>
                 </div>
 
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="prestamos">
-                        <span class="bi bi-bookmark" aria-hidden="true"></span> Préstamos
-                    </NavLink>
+                    <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Read">
+                        <Authorized Context="authPrestamos">
+                            <NavLink class="nav-link" href="prestamos">
+                                <span class="bi bi-bookmark" aria-hidden="true"></span> Préstamos
+                            </NavLink>
+                        </Authorized>
+                    </AuthorizeView>
                 </div>
 
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="estudiantes">
-                        <span class="bi bi-people" aria-hidden="true"></span> Estudiantes
-                    </NavLink>
+                    <AuthorizeView Policy="@RoleConstants.Permissions.Estudiantes.Read">
+                        <Authorized Context="authEstudiantes">
+                            <NavLink class="nav-link" href="estudiantes">
+                                <span class="bi bi-people" aria-hidden="true"></span> Estudiantes
+                            </NavLink>
+                        </Authorized>
+                    </AuthorizeView>
                 </div>
 
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="autores">
-                        <span class="bi bi-person-badge" aria-hidden="true"></span> Autores
-                    </NavLink>
+                    <AuthorizeView Policy="@RoleConstants.Permissions.Autores.Read">
+                        <Authorized Context="authAutores">
+                            <NavLink class="nav-link" href="autores">
+                                <span class="bi bi-person-badge" aria-hidden="true"></span> Autores
+                            </NavLink>
+                        </Authorized>
+                    </AuthorizeView>
                 </div>
 
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="categorias">
-                        <span class="bi bi-tag" aria-hidden="true"></span> Categorías
-                    </NavLink>
+                    <AuthorizeView Policy="@RoleConstants.Permissions.Categorias.Read">
+                        <Authorized Context="authCategorias">
+                            <NavLink class="nav-link" href="categorias">
+                                <span class="bi bi-tag" aria-hidden="true"></span> Categorías
+                            </NavLink>
+                        </Authorized>
+                    </AuthorizeView>
                 </div>
 
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="ubicaciones">
-                        <span class="bi bi-geo-alt" aria-hidden="true"></span> Ubicaciones
-                    </NavLink>
+                    <AuthorizeView Policy="@RoleConstants.Permissions.Ubicaciones.Read">
+                        <Authorized Context="authUbicaciones">
+                            <NavLink class="nav-link" href="ubicaciones">
+                                <span class="bi bi-geo-alt" aria-hidden="true"></span> Ubicaciones
+                            </NavLink>
+                        </Authorized>
+                    </AuthorizeView>
                 </div>
 
-                <AuthorizeView Roles="@RoleConstants.AdminRole">
-                    <Authorized Context="adminContext">
-                        <hr class="nav-divider" />
+                <AuthorizeView Policy="@RoleConstants.Permissions.Users.ManageUsers">
+                    <Authorized Context="authAdmin">
                         <div class="nav-item px-3">
                             <NavLink class="nav-link" href="admin/usuarios">
-                                <span class="bi bi-people-fill" aria-hidden="true"></span> Usuarios
+                                <span class="bi bi-people-fill" aria-hidden="true"></span> Gestión de Usuarios
                             </NavLink>
                         </div>
                     </Authorized>

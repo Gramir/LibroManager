@@ -12,11 +12,15 @@
 
 <h1>Catálogo de Estudiantes</h1>
 
-<div class="mb-3">
-    <button class="btn btn-primary" @onclick="CrearEstudiante">
-        <i class="bi bi-plus-circle"></i> Crear Estudiante
-    </button>
-</div>
+<AuthorizeView Policy="@RoleConstants.Permissions.Estudiantes.Create">
+    <Authorized>
+        <div class="mb-3">
+            <button class="btn btn-primary" @onclick="CrearEstudiante">
+                <i class="bi bi-plus-circle"></i> Crear Estudiante
+            </button>
+        </div>
+    </Authorized>
+</AuthorizeView>
 
 @if (estudiantes == null)
 {
@@ -44,14 +48,26 @@ else
                         <td>@estudiante.Nombre</td>
                         <td>@estudiante.Email</td>
                         <td>@estudiante.FechaInscripcion.ToShortDateString()</td>
-                        <td>@estudiante.PrestamosActivos</td>
                         <td>
-                            <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(estudiante.EstudianteId)">
-                                <i class="bi bi-eye"></i> Detalles
-                            </button>
-                            <button class="btn btn-warning btn-sm me-1" @onclick="() => EditarEstudiante(estudiante.EstudianteId)">
-                                <i class="bi bi-pencil"></i> Editar
-                            </button>
+                            <span class="badge @(estudiante.PrestamosActivos > 0 ? "bg-warning" : "bg-success")">
+                                @estudiante.PrestamosActivos
+                            </span>
+                        </td>
+                        <td>
+                            <AuthorizeView Policy="@RoleConstants.Permissions.Estudiantes.Read">
+                                <Authorized>
+                                    <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(estudiante.EstudianteId)">
+                                        <i class="bi bi-eye"></i> Detalles
+                                    </button>
+                                </Authorized>
+                            </AuthorizeView>
+                            <AuthorizeView Policy="@RoleConstants.Permissions.Estudiantes.Update">
+                                <Authorized>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => EditarEstudiante(estudiante.EstudianteId)">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </button>
+                                </Authorized>
+                            </AuthorizeView>
                         </td>
                     </tr>
                 }

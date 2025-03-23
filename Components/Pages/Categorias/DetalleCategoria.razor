@@ -32,11 +32,6 @@
                             <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@(_categoria.CantidadLibros > 0)">
                                 Eliminar
                             </button>
-                        </Authorized>
-                    </AuthorizeView>
-                    <button class="btn btn-secondary" @onclick="Volver">Volver</button>
-                    <AuthorizeView Roles="@RoleConstants.AdminRole">
-                        <Authorized>
                             @if (_categoria.CantidadLibros > 0)
                             {
                                 <div class="text-danger mt-2 small">
@@ -45,6 +40,7 @@
                             }
                         </Authorized>
                     </AuthorizeView>
+                    <button class="btn btn-secondary" @onclick="Volver">Volver</button>
                 </div>
             </div>
             <div class="card-body">
@@ -85,9 +81,13 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <button class="btn btn-primary btn-sm" @onclick="() => VerDetalleLibro(libro.LibroId)">
-                                                    <i class="bi bi-eye"></i> Detalles
-                                                </button>
+                                                <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Read">
+                                                    <Authorized>
+                                                        <button class="btn btn-primary btn-sm" @onclick="() => VerDetalleLibro(libro.LibroId)">
+                                                            <i class="bi bi-eye"></i> Detalles
+                                                        </button>
+                                                    </Authorized>
+                                                </AuthorizeView>
                                             </td>
                                         </tr>
                                     }
