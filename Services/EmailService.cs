@@ -51,7 +51,7 @@ public class EmailService : IEmailSender<ApplicationUser>
     public Task SendPasswordResetLinkAsync(ApplicationUser user, string email, string resetLink)
     {
         return SendEmailAsync(email, "Restablecer contraseña",
-            $"Por favor restablece tu contraseña haciendo clic <a href='{resetLink}'>aquí</a>.");
+            $"Por favor restablece tu contraseña haciendo click <a href='{resetLink}'>aquí</a>.");
     }
 
     public Task SendPasswordResetCodeAsync(ApplicationUser user, string email, string resetCode)
