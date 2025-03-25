@@ -188,6 +188,28 @@
         <div class="modal-backdrop fade show"></div>
     }
 
+    @if (_mostrarModalConfirmacion)
+    {
+        <div class="modal fade show" style="display: block;" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar Eliminación</h5>
+                        <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>¿Está seguro que desea eliminar al usuario @_usuarioAEliminar?.Email?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+                        <button type="button" class="btn btn-danger" @onclick="ConfirmarEliminarUsuario">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show"></div>
+    }
+
     @if (!string.IsNullOrEmpty(_mensajeError))
     {
         <div class="alert alert-danger mt-3">
@@ -201,10 +223,12 @@
     private Dictionary<string, List<string>> _usuariosRoles = new();
     private bool _mostrarModalCrear;
     private bool _mostrarModalEditar;
+    private bool _mostrarModalConfirmacion;
     private string? _mensajeError;
     private bool _emailExistente;
     private NuevoUsuarioModel _nuevoUsuario = new();
     private ApplicationUser? _usuarioEditar;
+    private ApplicationUser? _usuarioAEliminar;
     private string _rolEditar = RoleConstants.LibrarianRole;
 
     protected override async Task OnInitializedAsync()
@@ -305,11 +329,19 @@
         }
     }
 
-    private async Task EliminarUsuario(ApplicationUser usuario)
+    private void EliminarUsuario(ApplicationUser usuario)
     {
+        _usuarioAEliminar = usuario;
+        _mostrarModalConfirmacion = true;
+    }
+
+    private async Task ConfirmarEliminarUsuario()
+    {
+        if (_usuarioAEliminar == null) return;
+
         try
         {
-            var result = await UserService.DeleteUserAsync(usuario.Id);
+            var result = await UserService.DeleteUserAsync(_usuarioAEliminar.Id);
             if (result.Succeeded)
             {
                 await CargarDatos();
@@ -323,14 +355,20 @@
         {
             _mensajeError = $"Error al eliminar el usuario: {ex.Message}";
         }
+        finally
+        {
+            CerrarModal();
+        }
     }
 
     private void CerrarModal()
     {
         _mostrarModalCrear = false;
         _mostrarModalEditar = false;
+        _mostrarModalConfirmacion = false;
         _mensajeError = null;
         _emailExistente = false;
+        _usuarioAEliminar = null;
     }
 
     private class NuevoUsuarioModel
