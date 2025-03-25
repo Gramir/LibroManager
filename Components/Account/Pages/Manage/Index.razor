@@ -54,10 +54,7 @@
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
 
         Input.PhoneNumber ??= phoneNumber;
-    }
-
-    protected override void OnInitialized()
-    {
+        
         NavigationManager.NavigateTo("/Account/Manage/ChangePassword");
     }
 
