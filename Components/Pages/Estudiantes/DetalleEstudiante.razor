@@ -96,9 +96,19 @@
                                             <td>
                                                 <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Read">
                                                     <Authorized>
-                                                        <button class="btn btn-primary btn-sm" @onclick="() => VerDetalleLibro(prestamo.PrestamoId)">
+                                                        <button class="btn btn-primary btn-sm me-2" @onclick="() => VerDetalleLibro(prestamo.PrestamoId)">
                                                             <i class="bi bi-eye"></i> Detalles
                                                         </button>
+                                                    </Authorized>
+                                                </AuthorizeView>
+                                                <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Update">
+                                                    <Authorized>
+                                                        @if (prestamo.EstaActivo)
+                                                        {
+                                                            <button class="btn btn-success btn-sm" @onclick="() => DevolverPrestamo(prestamo)">
+                                                                <i class="bi bi-check-circle"></i> Devolver
+                                                            </button>
+                                                        }
                                                     </Authorized>
                                                 </AuthorizeView>
                                             </td>
@@ -143,6 +153,34 @@
     <div class="modal-backdrop fade show"></div>
 }
 
+@if (_mostrarConfirmacionDevolucion)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar devolución</h5>
+                    <button type="button" class="btn-close" @onclick="CancelarDevolucion"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea devolver el siguiente libro?</p>
+                    <dl class="row">
+                        <dt class="col-sm-3">Título:</dt>
+                        <dd class="col-sm-9">@_prestamoADevolver?.LibroTitulo</dd>
+                        <dt class="col-sm-3">Serial:</dt>
+                        <dd class="col-sm-9">@_prestamoADevolver?.LibroSerial</dd>
+                    </dl>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelarDevolucion">Cancelar</button>
+                    <button type="button" class="btn btn-success" @onclick="ConfirmarDevolucion">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
 @code {
     [Parameter]
     public int EstudianteId { get; set; }
@@ -151,8 +189,15 @@
     private IEnumerable<PrestamoDTO> _prestamos = Array.Empty<PrestamoDTO>();
     private string _errorMessage = string.Empty;
     private bool _mostrarConfirmacion;
+    private bool _mostrarConfirmacionDevolucion;
+    private PrestamoDTO? _prestamoADevolver;
 
     protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
     {
         _estudiante = await EstudianteService.GetByIdAsync(EstudianteId);
         if (_estudiante == null)
@@ -161,7 +206,6 @@
             return;
         }
 
-        // Get préstamos by estudiante if there are any
         if (_estudiante.PrestamosActivos > 0)
         {
             var prestamos = await PrestamoService.GetPrestamosByEstudianteAsync(EstudianteId);
@@ -187,6 +231,56 @@
     private void VerDetalleLibro(int prestamoId)
     {
         NavigationManager.NavigateTo($"/prestamos/{prestamoId}");
+    }
+
+    private void DevolverPrestamo(PrestamoDTO prestamo)
+    {
+        _prestamoADevolver = prestamo;
+        _mostrarConfirmacionDevolucion = true;
+    }
+
+    private void CancelarDevolucion()
+    {
+        _mostrarConfirmacionDevolucion = false;
+        _prestamoADevolver = null;
+    }
+
+    private async Task ConfirmarDevolucion()
+    {
+        if (_prestamoADevolver == null) return;
+
+        try
+        {
+            var prestamoUpdateDto = new PrestamoUpdateDTO
+            {
+                PrestamoId = _prestamoADevolver.PrestamoId,
+                LibroId = _prestamoADevolver.LibroId,
+                EstudianteId = _prestamoADevolver.EstudianteId,
+                FechaPrestamo = _prestamoADevolver.FechaPrestamo,
+                FechaVencimiento = _prestamoADevolver.FechaVencimiento,
+                FechaDevolucion = DateTime.Now,
+                Estado = EstadoPrestamo.Concluido
+            };
+
+            var result = await PrestamoService.UpdateAsync(prestamoUpdateDto);
+            if (result)
+            {
+                await CargarDatos();
+            }
+            else
+            {
+                _errorMessage = "No se pudo devolver el préstamo. Por favor, intente nuevamente.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al devolver el préstamo: {ex.Message}";
+        }
+        finally
+        {
+            _mostrarConfirmacionDevolucion = false;
+            _prestamoADevolver = null;
+        }
     }
 
     private void MostrarConfirmacion()

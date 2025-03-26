@@ -99,6 +99,12 @@ else
                             </AuthorizeView>
                             <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Update">
                                 <Authorized>
+                                    @if (prestamo.EstaActivo)
+                                    {
+                                        <button class="btn btn-success btn-sm me-2" @onclick="() => DevolverPrestamo(prestamo)">
+                                            <i class="bi bi-check-circle"></i> Devolver
+                                        </button>
+                                    }
                                     <a href="/prestamos/editar/@prestamo.PrestamoId" class="btn btn-warning btn-sm">
                                         <i class="bi bi-pencil"></i> Editar
                                     </a>
@@ -112,20 +118,106 @@ else
     </div>
 }
 
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger mt-3">
+        @_errorMessage
+    </div>
+}
+
+@if (_mostrarConfirmacionDevolucion)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar devolución</h5>
+                    <button type="button" class="btn-close" @onclick="CancelarDevolucion"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea devolver el siguiente libro?</p>
+                    <dl class="row">
+                        <dt class="col-sm-3">Título:</dt>
+                        <dd class="col-sm-9">@_prestamoADevolver?.LibroTitulo</dd>
+                        <dt class="col-sm-3">Serial:</dt>
+                        <dd class="col-sm-9">@_prestamoADevolver?.LibroSerial</dd>
+                        <dt class="col-sm-3">Estudiante:</dt>
+                        <dd class="col-sm-9">@_prestamoADevolver?.EstudianteNombre</dd>
+                    </dl>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelarDevolucion">Cancelar</button>
+                    <button type="button" class="btn btn-success" @onclick="ConfirmarDevolucion">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
 @code {
     private IEnumerable<PrestamoDTO>? _prestamos;
+    private string _errorMessage = string.Empty;
+    private bool _mostrarConfirmacionDevolucion;
+    private PrestamoDTO? _prestamoADevolver;
 
     protected override async Task OnInitializedAsync()
     {
+        await CargarPrestamos();
+    }
+
+    private async Task CargarPrestamos()
+    {
         _prestamos = await PrestamoService.GetAllAsync();
-        
-        // Código de depuración para comprobar los valores recibidos
-        if (_prestamos != null && _prestamos.Any())
+    }
+
+    private void DevolverPrestamo(PrestamoDTO prestamo)
+    {
+        _prestamoADevolver = prestamo;
+        _mostrarConfirmacionDevolucion = true;
+    }
+
+    private void CancelarDevolucion()
+    {
+        _mostrarConfirmacionDevolucion = false;
+        _prestamoADevolver = null;
+    }
+
+    private async Task ConfirmarDevolucion()
+    {
+        if (_prestamoADevolver == null) return;
+
+        try
         {
-            foreach (var prestamo in _prestamos)
+            var prestamoUpdateDto = new PrestamoUpdateDTO
             {
-                Debug.WriteLine($"Préstamo {prestamo.PrestamoId} - Libro: {prestamo.LibroTitulo}, Serial: {prestamo.LibroSerial}");
+                PrestamoId = _prestamoADevolver.PrestamoId,
+                LibroId = _prestamoADevolver.LibroId,
+                EstudianteId = _prestamoADevolver.EstudianteId,
+                FechaPrestamo = _prestamoADevolver.FechaPrestamo,
+                FechaVencimiento = _prestamoADevolver.FechaVencimiento,
+                FechaDevolucion = DateTime.Now,
+                Estado = EstadoPrestamo.Concluido
+            };
+
+            var result = await PrestamoService.UpdateAsync(prestamoUpdateDto);
+            if (result)
+            {
+                await CargarPrestamos();
             }
+            else
+            {
+                _errorMessage = "No se pudo devolver el préstamo. Por favor, intente nuevamente.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al devolver el préstamo: {ex.Message}";
+        }
+        finally
+        {
+            _mostrarConfirmacionDevolucion = false;
+            _prestamoADevolver = null;
         }
     }
 }
