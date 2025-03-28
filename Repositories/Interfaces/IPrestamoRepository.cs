@@ -7,4 +7,5 @@ public interface IPrestamoRepository : IGenericRepository<Prestamo>
     Task<IEnumerable<Prestamo>> GetPrestamosByEstudianteAsync(int estudianteId);
     Task<IEnumerable<Prestamo>> GetPrestamosByLibroAsync(int libroId);
     Task<IEnumerable<Prestamo>> GetPrestamosActivosAsync();
+    Task<bool> EliminarHistorialPrestamosAsync(int libroId);
 }

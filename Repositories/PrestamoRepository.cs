@@ -52,4 +52,25 @@ public class PrestamoRepository : GenericRepository<Prestamo>, IPrestamoReposito
             .Where(p => p.Estado == EstadoPrestamo.Activo && p.FechaVencimiento >= now)
             .ToListAsync();
     }
+
+    public async Task<bool> EliminarHistorialPrestamosAsync(int libroId)
+    {
+        try
+        {
+            var prestamos = await GetPrestamosByLibroAsync(libroId);
+            var prestamosNoActivos = prestamos.Where(p => p.Estado != EstadoPrestamo.Activo);
+            
+            foreach (var prestamo in prestamosNoActivos)
+            {
+                _context.Prestamos.Remove(prestamo);
+            }
+            
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
 }

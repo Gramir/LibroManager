@@ -1,17 +1,13 @@
 @page "/libros/{LibroId:int}"
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components
-@using Microsoft.AspNetCore.Components.Web
-@using LibroManager.DTOs
 @using LibroManager.Services.Interfaces
-@using LibroManager.Models
+@using LibroManager.DTOs
 @using LibroManager.Constants
-@using System.Linq
 @using LibroManager.Components.Pages.Libros.Components
 @inject ILibroService LibroService
 @inject IPrestamoService PrestamoService
-@inject NavigationManager NavigationManager
 @inject IUbicacionService UbicacionService
+@inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = RoleConstants.Permissions.Libros.Read)]
 @rendermode InteractiveServer
 
@@ -118,6 +114,7 @@
     Visible="_mostrarConfirmacion"
     Libro="_libro"
     EjemplarAEliminar="_ejemplarAEliminar"
+    TienePrestamosHistoricos="_tienePrestamosHistoricos"
     OnCancelarClick="CancelarEliminacion"
     OnConfirmarClick="EliminarLibro" />
 
@@ -138,6 +135,7 @@
     private IEnumerable<UbicacionDTO>? _ubicaciones;
     private IEnumerable<UbicacionDTO>? _ubicacionesFiltradas;
     private string _errorMessageUbicacion = string.Empty;
+    private bool _tienePrestamosHistoricos;
 
     protected override async Task OnInitializedAsync()
     {
@@ -296,21 +294,19 @@
         _mostrarConfirmacion = true;
     }
 
-    private void MostrarConfirmacionEjemplar(LibroDTO ejemplar)
+    private async Task MostrarConfirmacionEjemplar(LibroDTO ejemplar)
     {
-        if (ejemplar.EstaPrestado)
+        var (puedeEliminar, tienePrestamosHistoricos) = await LibroService.PuedeEliminarLibroAsync(ejemplar.LibroId);
+        
+        if (!puedeEliminar && !tienePrestamosHistoricos)
         {
-            _errorMessage = "No se puede eliminar un ejemplar prestado.";
+            _errorMessage = "No se puede eliminar un ejemplar que tiene préstamos activos.";
             return;
         }
-        _ejemplarAEliminar = ejemplar;
-        _mostrarConfirmacion = true;
-    }
 
-    private void CancelarEliminacion()
-    {
-        _mostrarConfirmacion = false;
-        _ejemplarAEliminar = null;
+        _ejemplarAEliminar = ejemplar;
+        _tienePrestamosHistoricos = tienePrestamosHistoricos;
+        _mostrarConfirmacion = true;
     }
 
     private async Task EliminarLibro()
@@ -320,7 +316,7 @@
             bool result;
             if (_ejemplarAEliminar != null)
             {
-                result = await LibroService.DeleteLibroAsync(_ejemplarAEliminar.LibroId);
+                result = await LibroService.DeleteLibroAsync(_ejemplarAEliminar.LibroId, _tienePrestamosHistoricos);
                 if (result)
                 {
                     await CargarDatos();
@@ -349,7 +345,15 @@
         {
             _mostrarConfirmacion = false;
             _ejemplarAEliminar = null;
+            _tienePrestamosHistoricos = false;
         }
+    }
+
+    private void CancelarEliminacion()
+    {
+        _mostrarConfirmacion = false;
+        _ejemplarAEliminar = null;
+        _tienePrestamosHistoricos = false;
     }
 
     private async Task VerPrestamo(int libroId)

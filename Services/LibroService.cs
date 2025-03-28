@@ -202,7 +202,28 @@ public class LibroService : ILibroService
         }
     }
 
-    public async Task<bool> DeleteLibroAsync(int id)
+    public async Task<(bool puedeEliminar, bool tienePrestamosHistoricos)> PuedeEliminarLibroAsync(int id)
+    {
+        try
+        {
+            var libro = await _unitOfWork.Libros.GetByIdAsync(id);
+            if (libro == null)
+                return (false, false);
+
+            var prestamos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(id);
+            var tienePrestamosActivos = prestamos.Any(p => p.Estado == EstadoPrestamo.Activo);
+            var tienePrestamosHistoricos = prestamos.Any(p => p.Estado != EstadoPrestamo.Activo);
+
+            return (!tienePrestamosActivos, tienePrestamosHistoricos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al verificar si se puede eliminar el libro {LibroId}", id);
+            return (false, false);
+        }
+    }
+
+    public async Task<bool> DeleteLibroAsync(int id, bool eliminarHistorial = false)
     {
         try
         {
@@ -213,30 +234,37 @@ public class LibroService : ILibroService
                 return false;
             }
 
-            // Verificar si el ejemplar específico está prestado
-            if (await _unitOfWork.Libros.EstaPrestadoAsync(id))
+            var prestamos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(id);
+            var tienePrestamosActivos = prestamos.Any(p => p.Estado == EstadoPrestamo.Activo);
+
+            if (tienePrestamosActivos)
             {
-                _logger.LogWarning("No se puede eliminar el libro {LibroId} porque está prestado", id);
+                _logger.LogWarning("No se puede eliminar el libro {LibroId} porque tiene préstamos activos", id);
                 return false;
             }
 
-            // Obtener todos los ejemplares con el mismo ISBN
-            var ejemplares = await _unitOfWork.Libros.GetAllAsync();
-            var ejemplaresDelMismoLibro = ejemplares.Where(l => l.ISBN == libro.ISBN).ToList();
-
-            // Si es el último ejemplar, verificar que no haya préstamos activos de ningún ejemplar
-            if (ejemplaresDelMismoLibro.Count == 1)
+            if (eliminarHistorial)
             {
-                var hayPrestamosActivos = ejemplaresDelMismoLibro.Any(l => l.EstaPrestado);
-                if (hayPrestamosActivos)
+                var resultado = await _unitOfWork.Prestamos.EliminarHistorialPrestamosAsync(id);
+                if (!resultado)
                 {
-                    _logger.LogWarning("No se puede eliminar el último ejemplar del libro con ISBN {ISBN} porque hay préstamos activos", libro.ISBN);
+                    _logger.LogError("Error al eliminar el historial de préstamos del libro {LibroId}", id);
+                    return false;
+                }
+            }
+            else
+            {
+                var tienePrestamosHistoricos = prestamos.Any(p => p.Estado != EstadoPrestamo.Activo);
+                if (tienePrestamosHistoricos)
+                {
+                    _logger.LogWarning("No se puede eliminar el libro {LibroId} porque tiene préstamos históricos", id);
                     return false;
                 }
             }
 
             _unitOfWork.Libros.Remove(libro);
             await _unitOfWork.SaveChangesAsync();
+            
             _logger.LogInformation("Libro eliminado: {LibroId}, ISBN: {ISBN}, Serial: {Serial}", 
                 id, libro.ISBN, libro.Serial);
             return true;

@@ -12,7 +12,15 @@
                 <div class="modal-body">
                     @if (EjemplarAEliminar != null)
                     {
-                        <p>¿Está seguro que desea eliminar el ejemplar con serial '@EjemplarAEliminar.Serial'?</p>
+                        @if (TienePrestamosHistoricos)
+                        {
+                            <p>El ejemplar '@EjemplarAEliminar.Serial' tiene préstamos históricos.</p>
+                            <p>¿Desea eliminar el ejemplar y todo su historial de préstamos?</p>
+                        }
+                        else
+                        {
+                            <p>¿Está seguro que desea eliminar el ejemplar con serial '@EjemplarAEliminar.Serial'?</p>
+                        }
                     }
                     else
                     {
@@ -38,6 +46,9 @@
 
     [Parameter]
     public LibroDTO? EjemplarAEliminar { get; set; }
+
+    [Parameter]
+    public bool TienePrestamosHistoricos { get; set; }
 
     [Parameter]
     public EventCallback OnCancelarClick { get; set; }
