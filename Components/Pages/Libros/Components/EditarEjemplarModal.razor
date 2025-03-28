@@ -1,0 +1,124 @@
+@using LibroManager.DTOs
+
+@if (Visible)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Ejemplar</h5>
+                    <button type="button" class="btn-close" @onclick="OnCancelar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Título del Libro</label>
+                        <input type="text" class="form-control" value="@Libro?.Titulo" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ISBN</label>
+                        <input type="text" class="form-control" value="@Libro?.ISBN" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Serial</label>
+                        <input type="text" class="form-control" value="@Ejemplar?.Serial" readonly />
+                    </div>
+                    <div class="mb-3 dropdown-container" @onclick:stopPropagation>
+                        <label for="ubicacionEdit" class="form-label">Ubicación</label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="ubicacionEdit" 
+                                   value="@UbicacionSeleccionada"
+                                   @oninput="OnUbicacionInput"
+                                   @onfocus="() => ShowDropdownChanged.InvokeAsync(true)"
+                                   @onblur="async () => await OnBlur()"
+                                   placeholder="Escriba para filtrar ubicaciones..." />
+                        </div>
+                        <div class="dropdown-menu @(ShowDropdown ? "show" : "")">
+                            @if (UbicacionesFiltradas?.Any() == true)
+                            {
+                                @foreach (var ubicacion in UbicacionesFiltradas)
+                                {
+                                    <div class="dropdown-item" 
+                                         @onmousedown="@(() => SelectUbicacion(ubicacion.UbicacionFormateada))">
+                                        @ubicacion.UbicacionFormateada
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="dropdown-item">No se encontraron ubicaciones</div>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(ErrorMessageUbicacion))
+                        {
+                            <div class="alert alert-danger mt-2">
+                                @ErrorMessageUbicacion
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="OnCancelar">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="OnGuardar" disabled="@string.IsNullOrWhiteSpace(UbicacionSeleccionada)">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public LibroDTO? Libro { get; set; }
+
+    [Parameter]
+    public LibroDTO? Ejemplar { get; set; }
+
+    [Parameter]
+    public string UbicacionSeleccionada { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> UbicacionSeleccionadaChanged { get; set; }
+
+    [Parameter]
+    public IEnumerable<UbicacionDTO>? UbicacionesFiltradas { get; set; }
+
+    [Parameter]
+    public bool ShowDropdown { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> ShowDropdownChanged { get; set; }
+
+    [Parameter]
+    public string ErrorMessageUbicacion { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback OnCancelarClick { get; set; }
+
+    [Parameter]
+    public EventCallback OnGuardarClick { get; set; }
+
+    [Parameter]
+    public EventCallback<ChangeEventArgs> OnUbicacionInputChange { get; set; }
+
+    private Task OnCancelar() => OnCancelarClick.InvokeAsync();
+    private Task OnGuardar() => OnGuardarClick.InvokeAsync();
+    private Task OnUbicacionInput(ChangeEventArgs e) => OnUbicacionInputChange.InvokeAsync(e);
+    private async Task OnBlur()
+    {
+        await Task.Delay(150);
+        await ShowDropdownChanged.InvokeAsync(false);
+    }
+
+    private async Task SelectUbicacion(string ubicacion)
+    {
+        await UbicacionSeleccionadaChanged.InvokeAsync(ubicacion);
+        await ShowDropdownChanged.InvokeAsync(false);
+    }
+}

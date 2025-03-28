@@ -7,57 +7,13 @@
 @using LibroManager.Models
 @using LibroManager.Constants
 @using System.Linq
+@using LibroManager.Components.Pages.Libros.Components
 @inject ILibroService LibroService
 @inject IPrestamoService PrestamoService
 @inject NavigationManager NavigationManager
 @inject IUbicacionService UbicacionService
 @attribute [Authorize(Policy = RoleConstants.Permissions.Libros.Read)]
 @rendermode InteractiveServer
-
-<HeadContent>
-    <title>Detalle del Libro</title>
-</HeadContent>
-
-<style>
-    .dropdown-container {
-        position: relative;
-    }
-    .dropdown-menu {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        z-index: 1000;
-        display: none;
-        max-height: 200px;
-        overflow-y: auto;
-        padding: 0.5rem 0;
-        margin: 0;
-        background-color: #fff;
-        border: 1px solid rgba(0,0,0,.15);
-        border-radius: 0.25rem;
-    }
-    .dropdown-menu.show {
-        display: block;
-    }
-    .dropdown-item {
-        display: block;
-        width: 100%;
-        padding: 0.25rem 1rem;
-        clear: both;
-        font-weight: 400;
-        color: #212529;
-        text-align: inherit;
-        text-decoration: none;
-        white-space: nowrap;
-        background-color: transparent;
-        border: 0;
-    }
-    .dropdown-item:hover {
-        background-color: #f8f9fa;
-        cursor: pointer;
-    }
-</style>
 
 <div class="container mt-4">
     @if (_libro == null)
@@ -90,102 +46,17 @@
                 </div>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <dl class="row">
-                            <dt class="col-sm-4">ISBN:</dt>
-                            <dd class="col-sm-8">@_libro.ISBN</dd>
-
-                            <dt class="col-sm-4">Autor:</dt>
-                            <dd class="col-sm-8">@_libro.AutorNombre</dd>
-
-                            <dt class="col-sm-4">Categoría:</dt>
-                            <dd class="col-sm-8">@_libro.CategoriaNombre</dd>
-
-                            <dt class="col-sm-4">Ejemplares:</dt>
-                            <dd class="col-sm-8">@_ejemplares.Count()</dd>
-                        </dl>
-                    </div>
-                </div>
+                <InfoLibro Libro="_libro" CantidadEjemplares="_ejemplares.Count()" />
 
                 @if (_ejemplares.Any())
                 {
-                    <div class="mt-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h4>Lista de Ejemplares</h4>
-                            <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Create">
-                                <Authorized>
-                                    <button class="btn btn-primary" @onclick="MostrarFormularioEjemplar">
-                                        <i class="bi bi-plus-circle"></i> Crear Ejemplar
-                                    </button>
-                                </Authorized>
-                            </AuthorizeView>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Serial</th>
-                                        <th>Ubicación</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var ejemplar in _ejemplares.OrderBy(e => e.Serial))
-                                    {
-                                        <tr>
-                                            <td>@ejemplar.Serial</td>
-                                            <td>@ejemplar.UbicacionFormateada</td>
-                                            <td>
-                                                <span class="badge @GetEstadoBadgeClass(ejemplar)">
-                                                    @GetEstadoText(ejemplar)
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if (ejemplar.EstaPrestado || ejemplar.EstaPerdido)
-                                                {
-                                                    <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Read">
-                                                        <Authorized>
-                                                            <button class="btn btn-info btn-sm me-2" @onclick="() => VerPrestamo(ejemplar.LibroId)">
-                                                                <i class="bi bi-eye"></i> Ver préstamo
-                                                            </button>
-                                                        </Authorized>
-                                                    </AuthorizeView>
-                                                }
-                                                @if (!ejemplar.EstaPrestado && !ejemplar.EstaPerdido)
-                                                {
-                                                    <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Create">
-                                                        <Authorized>
-                                                            <button class="btn btn-success btn-sm me-2" @onclick="() => PrestarLibro(ejemplar.LibroId)">
-                                                                <i class="bi bi-book"></i> Prestar
-                                                            </button>
-                                                        </Authorized>
-                                                    </AuthorizeView>
-                                                }
-                                                <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Update">
-                                                    <Authorized>
-                                                        <button class="btn btn-warning btn-sm me-2" @onclick="() => MostrarFormularioEditarEjemplar(ejemplar)"
-                                                                disabled="@ejemplar.EstaPrestado">
-                                                            <i class="bi bi-pencil"></i> Editar
-                                                        </button>
-                                                    </Authorized>
-                                                </AuthorizeView>
-                                                <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Delete">
-                                                    <Authorized>
-                                                        <button class="btn btn-danger btn-sm" @onclick="() => MostrarConfirmacionEjemplar(ejemplar)"
-                                                                disabled="@ejemplar.EstaPrestado">
-                                                            <i class="bi bi-trash"></i> Eliminar
-                                                        </button>
-                                                    </Authorized>
-                                                </AuthorizeView>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <ListaEjemplares 
+                        Ejemplares="_ejemplares"
+                        OnCrearEjemplarClick="MostrarFormularioEjemplar"
+                        OnVerPrestamoClick="VerPrestamo"
+                        OnPrestarLibroClick="PrestarLibro"
+                        OnEditarEjemplarClick="MostrarFormularioEditarEjemplar"
+                        OnEliminarEjemplarClick="MostrarConfirmacionEjemplar" />
                 }
                 else
                 {
@@ -214,180 +85,41 @@
     }
 </div>
 
-@if (_mostrarFormularioEjemplar)
-{
-    <div class="modal fade show" style="display: block;" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Crear Nuevo Ejemplar</h5>
-                    <button type="button" class="btn-close" @onclick="CerrarFormularioEjemplar"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Título del Libro</label>
-                        <input type="text" class="form-control" value="@_libro?.Titulo" readonly />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">ISBN</label>
-                        <input type="text" class="form-control" value="@_libro?.ISBN" readonly />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Serial a Asignar</label>
-                        <input type="text" class="form-control" value="@(_libro?.ISBN + "-" + (_ejemplares.Count() + 1))" readonly />
-                    </div>
-                    <div class="mb-3 dropdown-container" @onclick:stopPropagation>
-                        <label for="ubicacion" class="form-label">Ubicación</label>
-                        <div class="input-group">
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="ubicacion" 
-                                   value="@_nuevaUbicacion"
-                                   @oninput="@(e => OnUbicacionInput(e))"
-                                   @onfocus="ShowDropdown"
-                                   @onblur="async () => await OnBlur()"
-                                   placeholder="Escriba para filtrar ubicaciones..." />
-                        </div>
-                        <div class="dropdown-menu @(_showDropdown ? "show" : "")">
-                            @if (_ubicacionesFiltradas != null && _ubicacionesFiltradas.Any())
-                            {
-                                @foreach (var ubicacion in _ubicacionesFiltradas)
-                                {
-                                    <div class="dropdown-item" 
-                                         @onmousedown="@(() => SelectUbicacion(ubicacion.UbicacionFormateada))">
-                                        @ubicacion.UbicacionFormateada
-                                    </div>
-                                }
-                            }
-                            else
-                            {
-                                <div class="dropdown-item">No se encontraron ubicaciones</div>
-                            }
-                        </div>
-                        @if (_ubicaciones != null && !_ubicaciones.Any())
-                        {
-                            <div class="alert alert-warning mt-2">
-                                No hay ubicaciones disponibles. Por favor, libere alguna ubicación antes de agregar un nuevo ejemplar.
-                            </div>
-                        }
-                        @if (!string.IsNullOrEmpty(_errorMessageUbicacion))
-                        {
-                            <div class="alert alert-danger mt-2">
-                                @_errorMessageUbicacion
-                            </div>
-                        }
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CerrarFormularioEjemplar">Cancelar</button>
-                    <button type="button" class="btn btn-primary" @onclick="CrearEjemplar" disabled="@string.IsNullOrWhiteSpace(_nuevaUbicacion)">
-                        Crear
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
-}
+<CrearEjemplarModal 
+    Visible="_mostrarFormularioEjemplar"
+    Libro="_libro"
+    NumeroEjemplar="_ejemplares.Count() + 1"
+    UbicacionSeleccionada="_nuevaUbicacion"
+    UbicacionSeleccionadaChanged="(ubicacion) => _nuevaUbicacion = ubicacion"
+    Ubicaciones="_ubicaciones"
+    UbicacionesFiltradas="_ubicacionesFiltradas"
+    ShowDropdown="_showDropdown"
+    ShowDropdownChanged="(show) => _showDropdown = show"
+    ErrorMessageUbicacion="_errorMessageUbicacion"
+    OnCancelarClick="CerrarFormularioEjemplar"
+    OnGuardarClick="CrearEjemplar"
+    OnUbicacionInputChange="OnUbicacionInput" />
 
-@if (_mostrarFormularioEditarEjemplar)
-{
-    <div class="modal fade show" style="display: block;" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Editar Ejemplar</h5>
-                    <button type="button" class="btn-close" @onclick="CerrarFormularioEditarEjemplar"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Título del Libro</label>
-                        <input type="text" class="form-control" value="@_libro?.Titulo" readonly />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">ISBN</label>
-                        <input type="text" class="form-control" value="@_libro?.ISBN" readonly />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Serial</label>
-                        <input type="text" class="form-control" value="@(_ejemplarEditar?.Serial)" readonly />
-                    </div>
-                    <div class="mb-3 dropdown-container" @onclick:stopPropagation>
-                        <label for="ubicacionEdit" class="form-label">Ubicación</label>
-                        <div class="input-group">
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="ubicacionEdit" 
-                                   value="@_nuevaUbicacion"
-                                   @oninput="@(e => OnUbicacionInput(e))"
-                                   @onfocus="ShowDropdown"
-                                   @onblur="async () => await OnBlur()"
-                                   placeholder="Escriba para filtrar ubicaciones..." />
-                        </div>
-                        <div class="dropdown-menu @(_showDropdown ? "show" : "")">
-                            @if (_ubicacionesFiltradas != null && _ubicacionesFiltradas.Any())
-                            {
-                                @foreach (var ubicacion in _ubicacionesFiltradas)
-                                {
-                                    <div class="dropdown-item" 
-                                         @onmousedown="@(() => SelectUbicacion(ubicacion.UbicacionFormateada))">
-                                        @ubicacion.UbicacionFormateada
-                                    </div>
-                                }
-                            }
-                            else
-                            {
-                                <div class="dropdown-item">No se encontraron ubicaciones</div>
-                            }
-                        </div>
-                        @if (!string.IsNullOrEmpty(_errorMessageUbicacion))
-                        {
-                            <div class="alert alert-danger mt-2">
-                                @_errorMessageUbicacion
-                            </div>
-                        }
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CerrarFormularioEditarEjemplar">Cancelar</button>
-                    <button type="button" class="btn btn-primary" @onclick="GuardarEjemplar" disabled="@string.IsNullOrWhiteSpace(_nuevaUbicacion)">
-                        Guardar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
-}
+<EditarEjemplarModal 
+    Visible="_mostrarFormularioEditarEjemplar"
+    Libro="_libro"
+    Ejemplar="_ejemplarEditar"
+    UbicacionSeleccionada="_nuevaUbicacion"
+    UbicacionSeleccionadaChanged="(ubicacion) => _nuevaUbicacion = ubicacion"
+    UbicacionesFiltradas="_ubicacionesFiltradas"
+    ShowDropdown="_showDropdown"
+    ShowDropdownChanged="(show) => _showDropdown = show"
+    ErrorMessageUbicacion="_errorMessageUbicacion"
+    OnCancelarClick="CerrarFormularioEditarEjemplar"
+    OnGuardarClick="GuardarEjemplar"
+    OnUbicacionInputChange="OnUbicacionInput" />
 
-@if (_mostrarConfirmacion)
-{
-    <div class="modal fade show" style="display: block;" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirmar eliminación</h5>
-                    <button type="button" class="btn-close" @onclick="CancelarEliminacion"></button>
-                </div>
-                <div class="modal-body">
-                    @if (_ejemplarAEliminar != null)
-                    {
-                        <p>¿Está seguro que desea eliminar el ejemplar con serial '@_ejemplarAEliminar.Serial'?</p>
-                    }
-                    else
-                    {
-                        <p>¿Está seguro que desea eliminar el libro '@_libro?.Titulo' y todos sus ejemplares?</p>
-                    }
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CancelarEliminacion">Cancelar</button>
-                    <button type="button" class="btn btn-danger" @onclick="EliminarLibro">Confirmar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
-}
+<ConfirmarEliminacionModal 
+    Visible="_mostrarConfirmacion"
+    Libro="_libro"
+    EjemplarAEliminar="_ejemplarAEliminar"
+    OnCancelarClick="CancelarEliminacion"
+    OnConfirmarClick="EliminarLibro" />
 
 @code {
     [Parameter]
@@ -409,16 +141,28 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _libro = await LibroService.GetLibroByIdAsync(LibroId);
-        if (_libro == null)
-        {
-            NavigationManager.NavigateTo("/libros");
-            return;
-        }
+        await CargarDatos();
+    }
 
-        _ejemplares = await LibroService.GetEjemplaresPorIsbnAsync(_libro.ISBN);
-        await LoadUbicaciones();
-        _ubicacionesFiltradas = _ubicaciones;
+    private async Task CargarDatos()
+    {
+        try
+        {
+            _libro = await LibroService.GetLibroByIdAsync(LibroId);
+            if (_libro == null)
+            {
+                NavigationManager.NavigateTo("/libros");
+                return;
+            }
+
+            _ejemplares = await LibroService.GetEjemplaresPorIsbnAsync(_libro.ISBN);
+            await LoadUbicaciones();
+            _ubicacionesFiltradas = _ubicaciones;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al cargar los datos: {ex.Message}";
+        }
     }
 
     private async Task LoadUbicaciones()
@@ -433,96 +177,9 @@
         }
     }
 
-    private void Volver()
-    {
-        NavigationManager.NavigateTo("/libros");
-    }
-
-    private void EditarLibro()
-    {
-        NavigationManager.NavigateTo($"/libros/editar/{LibroId}");
-    }
-
-    private void MostrarConfirmacion()
-    {
-        if (_ejemplares.Any())
-        {
-            _errorMessage = "No se puede eliminar el libro mientras tenga ejemplares. Elimine los ejemplares primero.";
-            return;
-        }
-        _ejemplarAEliminar = null;
-        _mostrarConfirmacion = true;
-    }
-
-    private void MostrarConfirmacionEjemplar(LibroDTO ejemplar)
-    {
-        if (ejemplar.EstaPrestado)
-        {
-            _errorMessage = "No se puede eliminar un ejemplar que está prestado.";
-            return;
-        }
-        _ejemplarAEliminar = ejemplar;
-        _mostrarConfirmacion = true;
-    }
-
-    private void CancelarEliminacion()
-    {
-        _mostrarConfirmacion = false;
-        _ejemplarAEliminar = null;
-    }
-
-    private async Task EliminarLibro()
-    {
-        _mostrarConfirmacion = false;
-        
-        try
-        {
-            bool result;
-            if (_ejemplarAEliminar != null)
-            {
-                result = await LibroService.DeleteLibroAsync(_ejemplarAEliminar.LibroId);
-                if (result)
-                {
-                    // Actualizar la lista de ejemplares
-                    _ejemplares = await LibroService.GetEjemplaresPorIsbnAsync(_libro!.ISBN);
-                    if (!_ejemplares.Any())
-                    {
-                        // Si era el último ejemplar, volver a la lista
-                        NavigationManager.NavigateTo("/libros");
-                    }
-                }
-                else
-                {
-                    _errorMessage = "No se pudo eliminar el ejemplar. Puede que esté prestado o ya no exista.";
-                }
-            }
-            else
-            {
-                result = await LibroService.DeleteLibroAsync(LibroId);
-                if (result)
-                {
-                    NavigationManager.NavigateTo("/libros");
-                }
-                else
-                {
-                    _errorMessage = "No se pudo eliminar el libro. Puede que ya no exista.";
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _errorMessage = $"Error al eliminar: {ex.Message}";
-        }
-        finally
-        {
-            _ejemplarAEliminar = null;
-        }
-    }
-
-    private bool TieneEjemplaresPrestados()
-    {
-        return _ejemplares.Any(e => e.EstaPrestado);
-    }
+    private void Volver() => NavigationManager.NavigateTo("/libros");
+    private void EditarLibro() => NavigationManager.NavigateTo($"/libros/editar/{LibroId}");
+    private void PrestarLibro(int libroId) => NavigationManager.NavigateTo($"/prestamos/crear/{libroId}");
 
     private void MostrarFormularioEjemplar()
     {
@@ -572,62 +229,31 @@
                 .ToList();
         }
         _showDropdown = true;
-
-        // Validar si el texto actual no coincide con ninguna ubicación disponible
-        if (_ubicaciones != null && !string.IsNullOrWhiteSpace(searchText) && 
-            !_ubicaciones.Any(u => u.UbicacionFormateada.Equals(_nuevaUbicacion, StringComparison.OrdinalIgnoreCase)))
-        {
-            _errorMessageUbicacion = "Por favor, seleccione una ubicación válida del listado desplegable.";
-        }
-        else
-        {
-            _errorMessageUbicacion = string.Empty;
-        }
     }
 
-    private void ShowDropdown()
-    {
-        _showDropdown = true;
-    }
-
-    private void SelectUbicacion(string ubicacion)
-    {
-        _nuevaUbicacion = ubicacion;
-        _showDropdown = false;
-        _errorMessageUbicacion = string.Empty;
-    }
+    private void ShowDropdown() => _showDropdown = true;
 
     private async Task OnBlur()
     {
         await Task.Delay(150);
         _showDropdown = false;
-        StateHasChanged();
     }
 
     private async Task CrearEjemplar()
     {
-        if (string.IsNullOrWhiteSpace(_nuevaUbicacion) || _libro == null)
-            return;
-
-        // Verificar si la ubicación seleccionada está en la lista de ubicaciones disponibles
-        if (_ubicaciones == null || !_ubicaciones.Any(u => u.UbicacionFormateada == _nuevaUbicacion))
-        {
-            _errorMessageUbicacion = "Debe seleccionar una ubicación válida del listado desplegable.";
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(_nuevaUbicacion) || _libro == null) return;
 
         try
         {
             var result = await LibroService.CreateEjemplarAsync(_libro.ISBN, _nuevaUbicacion);
             if (result)
             {
-                _ejemplares = await LibroService.GetEjemplaresPorIsbnAsync(_libro.ISBN);
-                await LoadUbicaciones(); // Recargar ubicaciones disponibles
+                await CargarDatos();
                 CerrarFormularioEjemplar();
             }
             else
             {
-                _errorMessage = "No se pudo crear el ejemplar. Por favor, intente nuevamente.";
+                _errorMessage = "No se pudo crear el ejemplar.";
             }
         }
         catch (Exception ex)
@@ -638,74 +264,109 @@
 
     private async Task GuardarEjemplar()
     {
-        if (string.IsNullOrWhiteSpace(_nuevaUbicacion) || _libro == null || _ejemplarEditar == null)
-            return;
-
-        // Verificar si la ubicación seleccionada está en la lista de ubicaciones disponibles
-        // o si es la ubicación actual del ejemplar
-        if (_ubicaciones == null || 
-            (!_ubicaciones.Any(u => u.UbicacionFormateada == _nuevaUbicacion) && 
-             _nuevaUbicacion != _ejemplarEditar.UbicacionFormateada))
-        {
-            _errorMessageUbicacion = "Debe seleccionar una ubicación válida del listado desplegable.";
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(_nuevaUbicacion) || _ejemplarEditar == null) return;
 
         try
         {
             var result = await LibroService.UpdateEjemplarAsync(_ejemplarEditar.LibroId, _nuevaUbicacion);
             if (result)
             {
-                _ejemplares = await LibroService.GetEjemplaresPorIsbnAsync(_libro.ISBN);
-                await LoadUbicaciones();
+                await CargarDatos();
                 CerrarFormularioEditarEjemplar();
             }
             else
             {
-                _errorMessage = "No se pudo guardar el ejemplar. Por favor, intente nuevamente.";
+                _errorMessage = "No se pudo actualizar el ejemplar.";
             }
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Error al guardar el ejemplar: {ex.Message}";
+            _errorMessage = $"Error al actualizar el ejemplar: {ex.Message}";
         }
     }
 
-    private void PrestarLibro(int libroId)
+    private void MostrarConfirmacion()
     {
-        // Como estamos en la vista de detalles, ya tenemos el ejemplar específico
-        // y el botón solo está habilitado si el ejemplar no está prestado
-        NavigationManager.NavigateTo($"/prestamos/crear/{libroId}");
+        if (_ejemplares.Any())
+        {
+            _errorMessage = "No se puede eliminar el libro mientras tenga ejemplares.";
+            return;
+        }
+        _ejemplarAEliminar = null;
+        _mostrarConfirmacion = true;
+    }
+
+    private void MostrarConfirmacionEjemplar(LibroDTO ejemplar)
+    {
+        if (ejemplar.EstaPrestado)
+        {
+            _errorMessage = "No se puede eliminar un ejemplar prestado.";
+            return;
+        }
+        _ejemplarAEliminar = ejemplar;
+        _mostrarConfirmacion = true;
+    }
+
+    private void CancelarEliminacion()
+    {
+        _mostrarConfirmacion = false;
+        _ejemplarAEliminar = null;
+    }
+
+    private async Task EliminarLibro()
+    {
+        try
+        {
+            bool result;
+            if (_ejemplarAEliminar != null)
+            {
+                result = await LibroService.DeleteLibroAsync(_ejemplarAEliminar.LibroId);
+                if (result)
+                {
+                    await CargarDatos();
+                }
+            }
+            else
+            {
+                result = await LibroService.DeleteLibroAsync(LibroId);
+                if (result)
+                {
+                    NavigationManager.NavigateTo("/libros");
+                    return;
+                }
+            }
+
+            if (!result)
+            {
+                _errorMessage = "No se pudo eliminar el elemento seleccionado.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al eliminar: {ex.Message}";
+        }
+        finally
+        {
+            _mostrarConfirmacion = false;
+            _ejemplarAEliminar = null;
+        }
     }
 
     private async Task VerPrestamo(int libroId)
     {
-        var prestamos = await PrestamoService.GetPrestamosByLibroAsync(libroId);
-        var prestamo = prestamos
-            .OrderByDescending(p => p.FechaVencimiento)
-            .FirstOrDefault();
-                              
-        if (prestamo != null)
+        try
         {
-            NavigationManager.NavigateTo($"/prestamos/{prestamo.PrestamoId}");
+            var prestamos = await PrestamoService.GetPrestamosByLibroAsync(libroId);
+            var prestamo = prestamos?.OrderByDescending(p => p.FechaVencimiento).FirstOrDefault();
+                              
+            if (prestamo != null)
+            {
+                NavigationManager.NavigateTo($"/prestamos/{prestamo.PrestamoId}");
+            }
         }
-    }
-
-    private string GetEstadoBadgeClass(LibroDTO ejemplar)
-    {
-        if (ejemplar.EstaPerdido)
-            return "bg-danger";
-        if (ejemplar.EstaPrestado)
-            return "bg-warning";
-        return "bg-success";
-    }
-
-    private string GetEstadoText(LibroDTO ejemplar)
-    {
-        if (ejemplar.EstaPerdido)
-            return "Perdido";
-        if (ejemplar.EstaPrestado)
-            return "Prestado";
-        return "Disponible";
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error al obtener el préstamo: {ex.Message}";
+        }
     }
 }
