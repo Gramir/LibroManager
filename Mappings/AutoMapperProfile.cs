@@ -29,7 +29,8 @@ public class AutoMapperProfile : Profile
 
         // Mapeos de Categoria
         CreateMap<Categoria, CategoriaDTO>()
-            .ForMember(dest => dest.CantidadLibros, opt => opt.MapFrom(src => src.Libros != null ? src.Libros.Count : 0));
+            .ForMember(dest => dest.CantidadLibros, opt => opt.MapFrom(src => 
+                src.Libros != null ? src.Libros.Select(l => l.ISBN).Distinct().Count() : 0));
         CreateMap<CategoriaCreateDTO, Categoria>();
         CreateMap<CategoriaUpdateDTO, Categoria>();
 

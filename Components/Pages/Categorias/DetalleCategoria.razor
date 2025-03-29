@@ -26,10 +26,11 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="mb-0">@_categoria.Nombre</h3>
                 <div>
+                    <button class="btn btn-secondary me-2" @onclick="Volver">Volver</button>
                     <AuthorizeView Roles="@RoleConstants.AdminRole">
                         <Authorized>
                             <button class="btn btn-warning me-2" @onclick="EditarCategoria">Editar</button>
-                            <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@(_categoria.CantidadLibros > 0)">
+                            <button class="btn btn-danger" @onclick="MostrarConfirmacion" disabled="@(_categoria.CantidadLibros > 0)">
                                 Eliminar
                             </button>
                             @if (_categoria.CantidadLibros > 0)
@@ -40,7 +41,6 @@
                             }
                         </Authorized>
                     </AuthorizeView>
-                    <button class="btn btn-secondary" @onclick="Volver">Volver</button>
                 </div>
             </div>
             <div class="card-body">
@@ -53,7 +53,7 @@
                     </div>
                 </div>
 
-                @if (_libros.Any())
+                @if (_librosConEjemplares.Any())
                 {
                     <div class="mt-4">
                         <h4>Libros en esta Categoría</h4>
@@ -64,21 +64,31 @@
                                         <th>Título</th>
                                         <th>ISBN</th>
                                         <th>Autor</th>
-                                        <th>Estado</th>
+                                        <th>Ejemplares</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var libro in _libros)
+                                    @foreach (var libro in _librosConEjemplares)
                                     {
+                                        var totalEjemplares = ejemplaresPorLibro.TryGetValue(libro.ISBN, out var count) ? count : 0;
+                                        var prestados = ejemplaresPrestadosPorLibro.TryGetValue(libro.ISBN, out var prestadosCount) ? prestadosCount : 0;
+                                        var perdidos = ejemplaresPerdidosPorLibro.TryGetValue(libro.ISBN, out var perdidosCount) ? perdidosCount : 0;
+                                        var disponibles = totalEjemplares - prestados - perdidos;
+                                        var colorClass = disponibles > 0 ? "text-success" : "text-danger";
+
                                         <tr>
                                             <td>@libro.Titulo</td>
                                             <td>@libro.ISBN</td>
                                             <td>@libro.AutorNombre</td>
-                                            <td>
-                                                <span class="badge @(libro.EstaPrestado ? "bg-warning" : "bg-success")">
-                                                    @(libro.EstaPrestado ? "Prestado" : "Disponible")
-                                                </span>
+                                            <td class="@colorClass">
+                                                <strong>@disponibles</strong> disponibles 
+                                                <span class="text-muted">|</span> 
+                                                <span class="@(prestados > 0 ? "text-orange" : "")">@prestados prestados</span>
+                                                <span class="text-muted">|</span> 
+                                                <span class="@(perdidos > 0 ? "text-danger" : "")">@perdidos perdidos</span>
+                                                <span class="text-muted">|</span> 
+                                                @totalEjemplares total
                                             </td>
                                             <td>
                                                 <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Read">
@@ -136,6 +146,10 @@
 
     private CategoriaDTO? _categoria;
     private IEnumerable<LibroDTO> _libros = Array.Empty<LibroDTO>();
+    private IEnumerable<LibroDTO> _librosConEjemplares = Array.Empty<LibroDTO>();
+    private Dictionary<string, int> ejemplaresPorLibro = new();
+    private Dictionary<string, int> ejemplaresPrestadosPorLibro = new();
+    private Dictionary<string, int> ejemplaresPerdidosPorLibro = new();
     private string _errorMessage = string.Empty;
     private bool _mostrarConfirmacion;
 
@@ -148,11 +162,33 @@
             return;
         }
 
-        // Get books in this category
         if (_categoria.CantidadLibros > 0)
         {
             var libros = await LibroService.GetLibrosPorCategoriaAsync(CategoriaId);
             _libros = libros ?? Array.Empty<LibroDTO>();
+            _librosConEjemplares = _libros.GroupBy(l => l.ISBN)
+                                         .Select(g => g.First())
+                                         .ToList();
+            await CargarNumeroEjemplares();
+        }
+    }
+
+    private async Task CargarNumeroEjemplares()
+    {
+        if (_libros == null) return;
+        
+        var isbnsUnicos = _libros.Select(l => l.ISBN).Distinct();
+        
+        foreach (var isbn in isbnsUnicos)
+        {
+            var count = await LibroService.ContarEjemplaresPorIsbnAsync(isbn);
+            ejemplaresPorLibro[isbn] = count;
+            
+            var prestados = await LibroService.ContarEjemplaresPrestadosPorIsbnAsync(isbn);
+            ejemplaresPrestadosPorLibro[isbn] = prestados;
+
+            var perdidos = await LibroService.ContarEjemplaresPerdidosPorIsbnAsync(isbn);
+            ejemplaresPerdidosPorLibro[isbn] = perdidos;
         }
     }
 
