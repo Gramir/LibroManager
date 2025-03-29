@@ -26,6 +26,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="mb-0">@_autor.Nombre</h3>
                 <div>
+                    <button class="btn btn-secondary me-2" @onclick="Volver">Volver</button>
                     <AuthorizeView Policy="@RoleConstants.Permissions.Autores.Update">
                         <Authorized>
                             <button class="btn btn-warning me-2" @onclick="EditarAutor">Editar</button>
@@ -33,7 +34,7 @@
                     </AuthorizeView>
                     <AuthorizeView Policy="@RoleConstants.Permissions.Autores.Delete">
                         <Authorized>
-                            <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@(_autor.CantidadLibros > 0)">
+                            <button class="btn btn-danger" @onclick="MostrarConfirmacion" disabled="@(_autor.CantidadLibros > 0)">
                                 Eliminar
                             </button>
                             @if (_autor.CantidadLibros > 0)
@@ -44,7 +45,6 @@
                             }
                         </Authorized>
                     </AuthorizeView>
-                    <button class="btn btn-secondary" @onclick="Volver">Volver</button>
                 </div>
             </div>
             <div class="card-body">
@@ -52,12 +52,12 @@
                     <div class="col-md-6">
                         <dl class="row">
                             <dt class="col-sm-4">Cantidad de Libros:</dt>
-                            <dd class="col-sm-8">@_autor.CantidadLibros</dd>
+                            <dd class="col-sm-8">@_libros.Count()</dd>
                         </dl>
                     </div>
                 </div>
 
-                @if (_autor.CantidadLibros > 0)
+                @if (_libros.Any())
                 {
                     <div class="mt-4">
                         <h4>Libros del Autor</h4>
@@ -68,21 +68,31 @@
                                         <th>Título</th>
                                         <th>ISBN</th>
                                         <th>Categoría</th>
-                                        <th>Estado</th>
+                                        <th>Ejemplares</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach (var libro in _libros)
                                     {
+                                        var totalEjemplares = ejemplaresPorIsbn.TryGetValue(libro.ISBN, out var count) ? count : 0;
+                                        var prestados = ejemplaresPrestadosPorIsbn.TryGetValue(libro.ISBN, out var prestadosCount) ? prestadosCount : 0;
+                                        var perdidos = ejemplaresPerdidosPorIsbn.TryGetValue(libro.ISBN, out var perdidosCount) ? perdidosCount : 0;
+                                        var disponibles = totalEjemplares - prestados - perdidos;
+                                        var colorClass = disponibles > 0 ? "text-success" : "text-danger";
+
                                         <tr>
                                             <td>@libro.Titulo</td>
                                             <td>@libro.ISBN</td>
                                             <td>@libro.CategoriaNombre</td>
-                                            <td>
-                                                <span class="badge @(libro.EstaPrestado ? "bg-warning" : "bg-success")">
-                                                    @(libro.EstaPrestado ? "Prestado" : "Disponible")
-                                                </span>
+                                            <td class="@colorClass">
+                                                <strong>@disponibles</strong> disponibles 
+                                                <span class="text-muted">|</span> 
+                                                <span class="@(prestados > 0 ? "text-orange" : "")">@prestados prestados</span>
+                                                <span class="text-muted">|</span> 
+                                                <span class="@(perdidos > 0 ? "text-danger" : "")">@perdidos perdidos</span>
+                                                <span class="text-muted">|</span> 
+                                                @totalEjemplares total
                                             </td>
                                             <td>
                                                 <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Read">
@@ -142,6 +152,9 @@
     private IEnumerable<LibroDTO> _libros = Array.Empty<LibroDTO>();
     private string _errorMessage = string.Empty;
     private bool _mostrarConfirmacion;
+    private Dictionary<string, int> ejemplaresPorIsbn = new();
+    private Dictionary<string, int> ejemplaresPrestadosPorIsbn = new();
+    private Dictionary<string, int> ejemplaresPerdidosPorIsbn = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -157,6 +170,26 @@
         {
             var libros = await LibroService.GetLibrosByAutorIdAsync(AutorId);
             _libros = libros ?? Array.Empty<LibroDTO>();
+            await CargarNumeroEjemplares();
+        }
+    }
+
+    private async Task CargarNumeroEjemplares()
+    {
+        if (_libros == null) return;
+        
+        var isbnsUnicos = _libros.Select(l => l.ISBN).Distinct();
+        
+        foreach (var isbn in isbnsUnicos)
+        {
+            var count = await LibroService.ContarEjemplaresPorIsbnAsync(isbn);
+            ejemplaresPorIsbn[isbn] = count;
+            
+            var prestados = await LibroService.ContarEjemplaresPrestadosPorIsbnAsync(isbn);
+            ejemplaresPrestadosPorIsbn[isbn] = prestados;
+
+            var perdidos = await LibroService.ContarEjemplaresPerdidosPorIsbnAsync(isbn);
+            ejemplaresPerdidosPorIsbn[isbn] = perdidos;
         }
     }
 

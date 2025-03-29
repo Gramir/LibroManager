@@ -4,6 +4,7 @@
 @using LibroManager.DTOs
 @using LibroManager.Constants
 @inject IAutorService AutorService
+@inject ILibroService LibroService
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = RoleConstants.Permissions.Autores.Read)]
 @rendermode InteractiveServer
@@ -33,16 +34,41 @@ else
             <thead>
                 <tr>
                     <th>Nombre</th>
-                    <th>Cantidad de Libros</th>
+                    <th>Cantidad de Títulos</th>
+                    <th>Ejemplares</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var autor in autores)
                 {
+                    var totalEjemplares = ejemplaresPorAutor.TryGetValue(autor.AutorId, out var count) ? count : 0;
+                    var prestados = ejemplaresPrestadosPorAutor.TryGetValue(autor.AutorId, out var prestadosCount) ? prestadosCount : 0;
+                    var perdidos = ejemplaresPerdidosPorAutor.TryGetValue(autor.AutorId, out var perdidosCount) ? perdidosCount : 0;
+                    var disponibles = totalEjemplares - prestados - perdidos;
+                    var colorClass = disponibles > 0 ? "text-success" : "text-danger";
+
                     <tr>
                         <td>@autor.Nombre</td>
                         <td>@autor.CantidadLibros</td>
+                        <td class="@(totalEjemplares > 0 ? colorClass : "")">
+                            @if (totalEjemplares > 0)
+                            {
+                                <span>
+                                    <strong>@disponibles</strong> disponibles 
+                                    <span class="text-muted">|</span> 
+                                    <span class="@(prestados > 0 ? "text-orange" : "")">@prestados prestados</span>
+                                    <span class="text-muted">|</span> 
+                                    <span class="@(perdidos > 0 ? "text-danger" : "")">@perdidos perdidos</span>
+                                    <span class="text-muted">|</span> 
+                                    @totalEjemplares total
+                                </span>
+                            }
+                            else
+                            {
+                                <span>Sin ejemplares</span>
+                            }
+                        </td>
                         <td>
                             <AuthorizeView Policy="@RoleConstants.Permissions.Autores.Read">
                                 <Authorized>
@@ -68,17 +94,52 @@ else
 
 @code {
     private IEnumerable<AutorDTO>? autores;
+    private Dictionary<int, int> ejemplaresPorAutor = new();
+    private Dictionary<int, int> ejemplaresPrestadosPorAutor = new();
+    private Dictionary<int, int> ejemplaresPerdidosPorAutor = new();
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             autores = await AutorService.GetAllAsync();
+            if (autores != null)
+            {
+                await CargarNumeroEjemplares();
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error: {ex.Message}");
             throw;
+        }
+    }
+
+    private async Task CargarNumeroEjemplares()
+    {
+        if (autores == null) return;
+        
+        foreach (var autor in autores)
+        {
+            var libros = await LibroService.GetLibrosByAutorIdAsync(autor.AutorId);
+            var totalEjemplares = 0;
+            var totalPrestados = 0;
+            var totalPerdidos = 0;
+
+            foreach (var libro in libros)
+            {
+                var count = await LibroService.ContarEjemplaresPorIsbnAsync(libro.ISBN);
+                var prestados = await LibroService.ContarEjemplaresPrestadosPorIsbnAsync(libro.ISBN);
+                var perdidos = await LibroService.ContarEjemplaresPerdidosPorIsbnAsync(libro.ISBN);
+
+                totalEjemplares += count;
+                totalPrestados += prestados;
+                totalPerdidos += perdidos;
+            }
+
+            ejemplaresPorAutor[autor.AutorId] = totalEjemplares;
+            ejemplaresPrestadosPorAutor[autor.AutorId] = totalPrestados;
+            ejemplaresPerdidosPorAutor[autor.AutorId] = totalPerdidos;
         }
     }
 

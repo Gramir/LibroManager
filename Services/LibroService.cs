@@ -74,9 +74,13 @@ public class LibroService(
                 return [];
             }
 
-            foreach (var libro in autor.Libros)
+            // Agrupar por ISBN y seleccionar el primer ejemplar de cada libro
+            var librosUnicos = autor.Libros.GroupBy(l => l.ISBN)
+                                         .Select(g => g.First())
+                                         .ToList();
+
+            foreach (var libro in librosUnicos)
             {
-                // Load the categoria and ubicacion for each libro
                 if (libro.Categoria == null)
                 {
                     var categoria = await _unitOfWork.Categorias.GetByIdAsync(libro.CategoriaId);
@@ -89,7 +93,7 @@ public class LibroService(
                 }
             }
 
-            return _mapper.Map<IEnumerable<LibroDTO>>(autor.Libros);
+            return _mapper.Map<IEnumerable<LibroDTO>>(librosUnicos);
         }
         catch (Exception ex)
         {

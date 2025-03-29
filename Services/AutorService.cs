@@ -17,7 +17,19 @@ public class AutorService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<AutorS
         try
         {
             var autores = await _unitOfWork.Autores.GetAllAsync();
-            return _mapper.Map<IEnumerable<AutorDTO>>(autores);
+            var autoresDto = _mapper.Map<IEnumerable<AutorDTO>>(autores);
+
+            // Actualizar la cantidad de libros para contar solo los únicos por ISBN
+            foreach (var autorDto in autoresDto)
+            {
+                var autor = autores.First(a => a.AutorId == autorDto.AutorId);
+                if (autor.Libros != null)
+                {
+                    autorDto.CantidadLibros = autor.Libros.GroupBy(l => l.ISBN).Count();
+                }
+            }
+
+            return autoresDto;
         }
         catch (Exception ex)
         {
@@ -31,7 +43,15 @@ public class AutorService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<AutorS
         try
         {
             var autor = await _unitOfWork.Autores.GetAutorWithLibrosAsync(id);
-            return _mapper.Map<AutorDTO>(autor);
+            if (autor == null) return null;
+
+            var autorDto = _mapper.Map<AutorDTO>(autor);
+            if (autor.Libros != null)
+            {
+                autorDto.CantidadLibros = autor.Libros.GroupBy(l => l.ISBN).Count();
+            }
+
+            return autorDto;
         }
         catch (Exception ex)
         {
