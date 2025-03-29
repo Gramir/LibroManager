@@ -305,36 +305,18 @@ public class PrestamoService : IPrestamoService
         }
     }
 
-    public async Task<bool> DeleteHistorialPrestamosLibroAsync(int libroId)
+    private async Task ActualizarEstadoLibroAsync(Libro libro)
     {
-        try
+        // Verificar si hay préstamos activos para este libro
+        var prestamosActivos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(libro.LibroId);
+        var tieneActivosCount = prestamosActivos.Any(p => p.Estado == EstadoPrestamo.Activo);
+        
+        if (!tieneActivosCount)
         {
-            var prestamos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(libroId);
-            
-            // Verificar si hay préstamos activos
-            if (prestamos.Any(p => p.Estado == EstadoPrestamo.Activo))
-            {
-                _logger.LogWarning("No se puede eliminar el historial mientras haya préstamos activos: {LibroId}", libroId);
-                return false;
-            }
-
-            // Eliminar solo los préstamos concluidos o expirados
-            var prestamosAEliminar = prestamos.Where(p => p.Estado != EstadoPrestamo.Activo).ToList();
-            foreach (var prestamo in prestamosAEliminar)
-            {
-                _unitOfWork.Prestamos.Remove(prestamo);
-            }
-
-            await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Historial de préstamos eliminado para el libro: {LibroId}", libroId);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error al eliminar historial de préstamos del libro {LibroId}", libroId);
-            return false;
+            libro.Estado = EstadoLibro.Disponible;
+            // Actualizar explícitamente el estado del libro en la base de datos
+            _unitOfWork.Libros.Update(libro);
+            _logger.LogInformation("Estado del libro actualizado a Disponible: {LibroId}", libro.LibroId);
         }
     }
-
-
 }
