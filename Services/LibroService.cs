@@ -35,7 +35,7 @@ public class LibroService(
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener todos los libros");
-            return Enumerable.Empty<LibroDTO>();
+            return [];
         }
     }
 
