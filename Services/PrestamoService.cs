@@ -106,12 +106,8 @@ public class PrestamoService(
             var prestamos = await _unitOfWork.Prestamos.GetPrestamosByEstudianteAsync(estudianteId);
             var prestamosDto = _mapper.Map<IEnumerable<PrestamoDTO>>(prestamos);
 
-            // Solo después del mapeo verificamos si la colección está vacía
-            if (!prestamosDto.Any())
-            {
-                _logger.LogInformation("No se encontraron préstamos para el estudiante {EstudianteId}", estudianteId);
-            }
-            return prestamosDto;
+            // Ordenar los préstamos por fecha de préstamo descendente
+            return prestamosDto.OrderByDescending(p => p.FechaPrestamo);
         }
         catch (Exception ex)
         {

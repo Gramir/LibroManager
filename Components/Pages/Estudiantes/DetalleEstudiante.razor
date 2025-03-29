@@ -75,8 +75,10 @@
                                 <thead>
                                     <tr>
                                         <th>Libro</th>
+                                        <th>Serial</th>
                                         <th>Fecha de préstamo</th>
                                         <th>Fecha de vencimiento</th>
+                                        <th>Fecha de devolución</th>
                                         <th>Estado</th>
                                         <th>Acciones</th>
                                     </tr>
@@ -86,11 +88,15 @@
                                     {
                                         <tr>
                                             <td>@prestamo.LibroTitulo</td>
+                                            <td>@prestamo.LibroSerial</td>
                                             <td>@prestamo.FechaPrestamo.ToShortDateString()</td>
                                             <td>@prestamo.FechaVencimiento.ToShortDateString()</td>
                                             <td>
-                                                <span class="badge @GetEstadoBadgeClass(prestamo.EstaActivo)">
-                                                    @(prestamo.EstaActivo ? "Activo" : "Concluido")
+                                                @(prestamo.FechaDevolucion.HasValue ? prestamo.FechaDevolucion.Value.ToShortDateString() : "-")
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetEstadoBadgeClass(prestamo)">
+                                                    @GetEstadoText(prestamo)
                                                 </span>
                                             </td>
                                             <td>
@@ -206,16 +212,26 @@
             return;
         }
 
-        if (_estudiante.PrestamosActivos > 0)
-        {
-            var prestamos = await PrestamoService.GetPrestamosByEstudianteAsync(EstudianteId);
-            _prestamos = prestamos ?? Array.Empty<PrestamoDTO>();
-        }
+        var prestamos = await PrestamoService.GetPrestamosByEstudianteAsync(EstudianteId);
+        _prestamos = prestamos ?? Array.Empty<PrestamoDTO>();
     }
 
-    private string GetEstadoBadgeClass(bool estaActivo)
+    private string GetEstadoBadgeClass(PrestamoDTO prestamo)
     {
-        return estaActivo ? "bg-warning" : "bg-success";
+        if (prestamo.EstaActivo)
+            return "bg-warning";
+        if (prestamo.FechaDevolucion.HasValue)
+            return "bg-success";
+        return "bg-danger text-white";
+    }
+
+    private string GetEstadoText(PrestamoDTO prestamo)
+    {
+        if (prestamo.EstaActivo)
+            return "Activo";
+        if (prestamo.FechaDevolucion.HasValue)
+            return "Devuelto";
+        return "Vencido";
     }
 
     private void Volver()
@@ -315,3 +331,10 @@
         }
     }
 }
+
+<style>
+    .estado-vencido {
+        color: red;
+        font-weight: bold;
+    }
+</style>
