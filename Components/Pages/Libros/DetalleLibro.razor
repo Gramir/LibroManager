@@ -73,13 +73,6 @@
                             <button class="btn btn-warning me-2" @onclick="EditarLibro">Editar</button>
                         </Authorized>
                     </AuthorizeView>
-                    <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Delete">
-                        <Authorized>
-                            <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@_ejemplares.Any()">
-                                Eliminar
-                            </button>
-                        </Authorized>
-                    </AuthorizeView>
                     <button class="btn btn-secondary" @onclick="Volver">Volver</button>
                 </div>
             </div>
@@ -372,6 +365,13 @@
                             <div class="alert alert-warning">
                                 <i class="bi bi-exclamation-triangle"></i>
                                 Este ejemplar tiene historial de préstamos. Al eliminarlo, se eliminarán también todos los préstamos históricos asociados.
+                            </div>
+                        }
+                        @if (_ejemplares.Count() == 1)
+                        {
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                Este es el último ejemplar del libro. Al eliminarlo, se eliminará también toda la información del libro.
                             </div>
                         }
                     }
