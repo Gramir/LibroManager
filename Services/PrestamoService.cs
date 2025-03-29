@@ -305,6 +305,31 @@ public class PrestamoService : IPrestamoService
         }
     }
 
+    public async Task<bool> DeletePrestamosByLibroIdAsync(int libroId)
+    {
+        try
+        {
+            var prestamos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(libroId);
+            var prestamosNoActivos = prestamos.Where(p => p.Estado != EstadoPrestamo.Activo).ToList();
+            
+            if (!prestamosNoActivos.Any())
+                return true;
+
+            foreach (var prestamo in prestamosNoActivos)
+            {
+                _unitOfWork.Prestamos.Remove(prestamo);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al eliminar los préstamos del libro {LibroId}", libroId);
+            return false;
+        }
+    }
+
     private async Task ActualizarEstadoLibroAsync(Libro libro)
     {
         // Verificar si hay préstamos activos para este libro

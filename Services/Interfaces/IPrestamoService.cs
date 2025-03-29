@@ -13,4 +13,5 @@ public interface IPrestamoService
     Task<bool> CreateAsync(PrestamoCreateDTO prestamo);
     Task<bool> UpdateAsync(PrestamoUpdateDTO prestamo);
     Task<bool> DeleteAsync(int id);
+    Task<bool> DeletePrestamosByLibroIdAsync(int libroId);
 }

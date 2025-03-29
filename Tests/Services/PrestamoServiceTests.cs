@@ -1201,6 +1201,8 @@ public class PrestamoServiceTests
         // Mock libro existe y está disponible
         _mockUnitOfWork.Setup(u => u.Libros.GetByIdAsync(prestamo.LibroId))
             .ReturnsAsync(new Libro { LibroId = prestamo.LibroId, Estado = EstadoLibro.Disponible });
+        _mockUnitOfWork.Setup(u => u.Libros.GetByIdAsync(prestamo.LibroId))
+            .ReturnsAsync(new Libro { LibroId = prestamo.LibroId, Estado = EstadoLibro.Disponible });
         _mockUnitOfWork.Setup(u => u.Prestamos.GetPrestamosByLibroAsync(prestamo.LibroId))
             .ReturnsAsync(new List<Prestamo>());
 
@@ -1256,5 +1258,70 @@ public class PrestamoServiceTests
         Assert.False(result);
         _mockUnitOfWork.Verify(u => u.Prestamos.AddAsync(prestamo), Times.Never);
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeletePrestamosByLibroIdAsync_NoActivos_DebeEliminarSoloPrestamosNoActivos()
+    {
+        // Arrange
+        var libroId = 1;
+        var prestamos = new List<Prestamo>
+        {
+            new() { PrestamoId = 1, LibroId = libroId, Estado = EstadoPrestamo.Concluido },
+            new() { PrestamoId = 2, LibroId = libroId, Estado = EstadoPrestamo.Expirado },
+            new() { PrestamoId = 3, LibroId = libroId, Estado = EstadoPrestamo.Activo }
+        };
+
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(libroId))
+            .ReturnsAsync(prestamos);
+
+        _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
+            .ReturnsAsync(1);
+
+        // Act
+        var result = await _service.DeletePrestamosByLibroIdAsync(libroId);
+
+        // Assert
+        Assert.True(result);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.Remove(It.Is<Prestamo>(p => p.PrestamoId == 1)), Times.Once);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.Remove(It.Is<Prestamo>(p => p.PrestamoId == 2)), Times.Once);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.Remove(It.Is<Prestamo>(p => p.PrestamoId == 3)), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeletePrestamosByLibroIdAsync_SinPrestamos_DebeRetornarTrue()
+    {
+        // Arrange
+        var libroId = 1;
+        var prestamos = new List<Prestamo>();
+
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(libroId))
+            .ReturnsAsync(prestamos);
+
+        // Act
+        var result = await _service.DeletePrestamosByLibroIdAsync(libroId);
+
+        // Assert
+        Assert.True(result);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.Remove(It.IsAny<Prestamo>()), Times.Never);
+        _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeletePrestamosByLibroIdAsync_Error_DebeRetornarFalse()
+    {
+        // Arrange
+        var libroId = 1;
+        
+        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(libroId))
+            .ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _service.DeletePrestamosByLibroIdAsync(libroId);
+
+        // Assert
+        Assert.False(result);
+        _mockUnitOfWork.Verify(uow => uow.Prestamos.Remove(It.IsAny<Prestamo>()), Times.Never);
+        _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Never);
     }
 }
