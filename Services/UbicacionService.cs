@@ -3,7 +3,6 @@ using LibroManager.DTOs;
 using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace LibroManager.Services;
 
@@ -26,15 +25,15 @@ public class UbicacionService : IUbicacionService
         {
             var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
             var ubicacionesDto = _mapper.Map<IEnumerable<UbicacionDTO>>(ubicaciones);
-            
+
             foreach (var ubicacion in ubicacionesDto)
             {
-                ubicacion.EstaDisponible = !ubicaciones.Any(u => 
-                    u.UbicacionId == ubicacion.UbicacionId && 
-                    u.Libros != null && 
+                ubicacion.EstaDisponible = !ubicaciones.Any(u =>
+                    u.UbicacionId == ubicacion.UbicacionId &&
+                    u.Libros != null &&
                     u.Libros.Any());
             }
-            
+
             return ubicacionesDto;
         }
         catch (Exception ex)
@@ -90,8 +89,8 @@ public class UbicacionService : IUbicacionService
         try
         {
             var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
-            var ubicacionesFiltradas = ubicaciones.Where(u => 
-                u.Estante.Equals(estante, StringComparison.OrdinalIgnoreCase) && 
+            var ubicacionesFiltradas = ubicaciones.Where(u =>
+                u.Estante.Equals(estante, StringComparison.OrdinalIgnoreCase) &&
                 u.Nivel == nivel);
             var ubicacionesDto = _mapper.Map<IEnumerable<UbicacionDTO>>(ubicacionesFiltradas);
 
@@ -139,7 +138,7 @@ public class UbicacionService : IUbicacionService
             var ubicacion = _mapper.Map<Ubicacion>(ubicacionDto);
             await _unitOfWork.Ubicaciones.AddAsync(ubicacion);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Ubicación creada: Estante {Estante}, Nivel {Nivel}, Posición {Posicion}", 
+            _logger.LogInformation("Ubicación creada: Estante {Estante}, Nivel {Nivel}, Posición {Posicion}",
                 ubicacion.Estante, ubicacion.Nivel, ubicacion.Posicion);
             return true;
         }
@@ -164,7 +163,7 @@ public class UbicacionService : IUbicacionService
             _mapper.Map(ubicacionDto, ubicacionExistente);
             _unitOfWork.Ubicaciones.Update(ubicacionExistente);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Ubicación actualizada: ID {UbicacionId}, Estante {Estante}, Nivel {Nivel}, Posición {Posicion}", 
+            _logger.LogInformation("Ubicación actualizada: ID {UbicacionId}, Estante {Estante}, Nivel {Nivel}, Posición {Posicion}",
                 id, ubicacionExistente.Estante, ubicacionExistente.Nivel, ubicacionExistente.Posicion);
             return true;
         }
@@ -242,14 +241,14 @@ public class UbicacionService : IUbicacionService
                 .ToList();
 
             var ubicacionesDto = _mapper.Map<List<UbicacionDTO>>(ubicacionesDisponibles);
-            
+
             // Marcar ubicación actual como no disponible y el resto como disponibles
             foreach (var ubicacionDto in ubicacionesDto)
             {
                 ubicacionDto.EstaDisponible = ubicacionDto.UbicacionId != libroActual.UbicacionId;
             }
 
-            _logger.LogInformation("Se encontraron {Count} ubicaciones disponibles para el libro {LibroId}", 
+            _logger.LogInformation("Se encontraron {Count} ubicaciones disponibles para el libro {LibroId}",
                 ubicacionesDisponibles.Count, libroId);
             return ubicacionesDto;
         }

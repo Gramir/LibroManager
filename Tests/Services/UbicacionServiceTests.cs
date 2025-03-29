@@ -1,9 +1,8 @@
-using LibroManager.Models;
+using AutoMapper;
 using LibroManager.DTOs;
+using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
-using AutoMapper;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -28,7 +27,7 @@ public class UbicacionServiceTests
 
         _mockUnitOfWork.Setup(u => u.Ubicaciones).Returns(_mockUbicacionRepository.Object);
         _mockUnitOfWork.Setup(u => u.Libros).Returns(_mockLibroRepository.Object);
-        
+
         _ubicacionService = new UbicacionService(_mockUnitOfWork.Object, _mockMapper.Object, _mockLogger.Object);
     }
 
@@ -188,10 +187,10 @@ public class UbicacionServiceTests
             new() { UbicacionId = 4, Estante = "B", Nivel = 1, Posicion = 1, Libros = null }
         };
 
-        var ubicacionesFiltradas = ubicaciones.Where(u => 
-            u.Estante.Equals(estante, StringComparison.OrdinalIgnoreCase) && 
+        var ubicacionesFiltradas = ubicaciones.Where(u =>
+            u.Estante.Equals(estante, StringComparison.OrdinalIgnoreCase) &&
             u.Nivel == nivel);
-            
+
         var ubicacionesDto = new List<UbicacionDTO>
         {
             new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 },
@@ -462,7 +461,7 @@ public class UbicacionServiceTests
     {
         // Arrange
         var ubicacionId = 99;
-        
+
         _mockUnitOfWork.Setup(uow => uow.Ubicaciones.GetByIdAsync(ubicacionId))
             .ReturnsAsync((Ubicacion?)null);
 
@@ -555,7 +554,7 @@ public class UbicacionServiceTests
     {
         // Arrange
         var ubicacionId = 99;
-        
+
         _mockUnitOfWork.Setup(uow => uow.Ubicaciones.GetByIdAsync(ubicacionId))
             .ReturnsAsync((Ubicacion?)null);
 
@@ -571,7 +570,7 @@ public class UbicacionServiceTests
     {
         // Arrange
         var ubicacionId = 1;
-        
+
         _mockUnitOfWork.Setup(uow => uow.Ubicaciones.GetByIdAsync(ubicacionId))
             .ThrowsAsync(new Exception("Test exception"));
 
@@ -616,9 +615,9 @@ public class UbicacionServiceTests
         var result = await _ubicacionService.GetAvailableUbicacionesWithCurrentAsync(1);
 
         // Assert
-        Assert.Equal(2, result.Count()); 
-        Assert.Contains(result, u => u.UbicacionId == 1); 
-        Assert.Contains(result, u => u.UbicacionId == 3); 
-        Assert.DoesNotContain(result, u => u.UbicacionId == 2); 
+        Assert.Equal(2, result.Count());
+        Assert.Contains(result, u => u.UbicacionId == 1);
+        Assert.Contains(result, u => u.UbicacionId == 3);
+        Assert.DoesNotContain(result, u => u.UbicacionId == 2);
     }
 }

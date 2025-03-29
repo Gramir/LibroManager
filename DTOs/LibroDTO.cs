@@ -42,7 +42,7 @@ public class LibroCreateDTO
 public class LibroUpdateDTO
 {
     public int LibroId { get; set; }
-    
+
     [Required(ErrorMessage = "El título es requerido")]
     [StringLength(100, ErrorMessage = "El título no puede exceder los 100 caracteres")]
     public string Titulo { get; set; } = string.Empty;

@@ -1,9 +1,8 @@
-using LibroManager.Models;
+using AutoMapper;
 using LibroManager.DTOs;
+using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
-using AutoMapper;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -83,12 +82,12 @@ public class CategoriaServiceTests
         // Arrange
         var categorias = new List<Categoria>
         {
-            new() 
-            { 
-                CategoriaId = 1, 
+            new()
+            {
+                CategoriaId = 1,
                 Nombre = "Categoria 1",
-                Libros = new List<Libro> 
-                { 
+                Libros = new List<Libro>
+                {
                     new() { LibroId = 1, Titulo = "Libro 1" },
                     new() { LibroId = 2, Titulo = "Libro 2" }
                 }
@@ -97,9 +96,9 @@ public class CategoriaServiceTests
 
         var categoriasDto = new List<CategoriaDTO>
         {
-            new() 
-            { 
-                CategoriaId = 1, 
+            new()
+            {
+                CategoriaId = 1,
                 Nombre = "Categoria 1",
                 CantidadLibros = 2
             }
@@ -189,10 +188,10 @@ public class CategoriaServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenCategoriaNoExiste()
     {
         // Arrange
-        var categoriaUpdateDto = new CategoriaUpdateDTO 
-        { 
-            CategoriaId = 999, 
-            Nombre = "Categoria Inexistente" 
+        var categoriaUpdateDto = new CategoriaUpdateDTO
+        {
+            CategoriaId = 999,
+            Nombre = "Categoria Inexistente"
         };
 
         _mockUnitOfWork.Setup(uow => uow.Categorias.GetByIdAsync(categoriaUpdateDto.CategoriaId))
@@ -266,8 +265,8 @@ public class CategoriaServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenNombreExceedsMaxLength()
     {
         // Arrange
-        var categoriaCreateDto = new CategoriaCreateDTO 
-        { 
+        var categoriaCreateDto = new CategoriaCreateDTO
+        {
             Nombre = new string('A', 51) // Excede el límite de 50 caracteres
         };
 
@@ -388,8 +387,8 @@ public class CategoriaServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenNombreIsInvalid()
     {
         // Arrange
-        var categoriaDto = new CategoriaUpdateDTO 
-        { 
+        var categoriaDto = new CategoriaUpdateDTO
+        {
             CategoriaId = 1,
             Nombre = new string('A', 51)
         };
@@ -406,8 +405,8 @@ public class CategoriaServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenCategoriaNotFound()
     {
         // Arrange
-        var categoriaDto = new CategoriaUpdateDTO 
-        { 
+        var categoriaDto = new CategoriaUpdateDTO
+        {
             CategoriaId = 1,
             Nombre = "Test"
         };
@@ -427,8 +426,8 @@ public class CategoriaServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenExceptionOccurs()
     {
         // Arrange
-        var categoriaDto = new CategoriaUpdateDTO 
-        { 
+        var categoriaDto = new CategoriaUpdateDTO
+        {
             CategoriaId = 1,
             Nombre = "Test"
         };

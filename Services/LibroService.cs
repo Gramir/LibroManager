@@ -3,7 +3,6 @@ using LibroManager.DTOs;
 using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace LibroManager.Services;
 
@@ -15,8 +14,8 @@ public class LibroService : ILibroService
     private readonly ILogger<LibroService> _logger;
 
     public LibroService(
-        IUnitOfWork unitOfWork, 
-        ILibroValidationService validationService, 
+        IUnitOfWork unitOfWork,
+        ILibroValidationService validationService,
         IMapper mapper,
         ILogger<LibroService> logger)
     {
@@ -83,7 +82,7 @@ public class LibroService : ILibroService
                 _logger.LogWarning("No se encontraron libros para el autor con ID {AutorId}", autorId);
                 return Array.Empty<LibroDTO>();
             }
-                
+
             foreach (var libro in autor.Libros)
             {
                 // Load the categoria and ubicacion for each libro
@@ -130,10 +129,10 @@ public class LibroService : ILibroService
 
             var libro = _mapper.Map<Libro>(libroDto);
             libro.UbicacionId = ubicacion.UbicacionId;
-            
+
             if (!await _validationService.LibroEsValido(libro))
             {
-                _logger.LogWarning("Datos de libro no válidos durante la creación: {LibroData}", 
+                _logger.LogWarning("Datos de libro no válidos durante la creación: {LibroData}",
                     new { libro.AutorId, libro.CategoriaId });
                 return false;
             }
@@ -149,7 +148,7 @@ public class LibroService : ILibroService
 
             await _unitOfWork.Libros.AddAsync(libro);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Libro creado: {LibroId}, Título: {Titulo}, ISBN: {ISBN}, Serial: {Serial}", 
+            _logger.LogInformation("Libro creado: {LibroId}, Título: {Titulo}, ISBN: {ISBN}, Serial: {Serial}",
                 libro.LibroId, libro.Titulo, libro.ISBN, libro.Serial);
             return true;
         }
@@ -191,7 +190,7 @@ public class LibroService : ILibroService
 
             _unitOfWork.Libros.Update(existingLibro);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Libro actualizado: {LibroId}, Título: {Titulo}", 
+            _logger.LogInformation("Libro actualizado: {LibroId}, Título: {Titulo}",
                 existingLibro.LibroId, existingLibro.Titulo);
             return true;
         }
@@ -264,8 +263,8 @@ public class LibroService : ILibroService
 
             _unitOfWork.Libros.Remove(libro);
             await _unitOfWork.SaveChangesAsync();
-            
-            _logger.LogInformation("Libro eliminado: {LibroId}, ISBN: {ISBN}, Serial: {Serial}", 
+
+            _logger.LogInformation("Libro eliminado: {LibroId}, ISBN: {ISBN}, Serial: {Serial}",
                 id, libro.ISBN, libro.Serial);
             return true;
         }
@@ -301,7 +300,7 @@ public class LibroService : ILibroService
             return false;
         }
     }
-    
+
     public async Task<int> ContarEjemplaresPorIsbnAsync(string isbn)
     {
         try
@@ -350,7 +349,7 @@ public class LibroService : ILibroService
         {
             var libros = await _unitOfWork.Libros.GetAllAsync();
             var ejemplares = libros.Where(l => l.ISBN == isbn).ToList();
-            
+
             // Cargar las ubicaciones para cada ejemplar
             foreach (var ejemplar in ejemplares)
             {
@@ -359,7 +358,7 @@ public class LibroService : ILibroService
                     ejemplar.Ubicacion = await _unitOfWork.Ubicaciones.GetByIdAsync(ejemplar.UbicacionId);
                 }
             }
-            
+
             return _mapper.Map<IEnumerable<LibroDTO>>(ejemplares);
         }
         catch (Exception ex)
@@ -410,8 +409,8 @@ public class LibroService : ILibroService
 
             await _unitOfWork.Libros.AddAsync(nuevoEjemplar);
             await _unitOfWork.SaveChangesAsync();
-            
-            _logger.LogInformation("Nuevo ejemplar creado: ISBN: {ISBN}, Serial: {Serial}, Ubicacion: {Ubicacion}", 
+
+            _logger.LogInformation("Nuevo ejemplar creado: ISBN: {ISBN}, Serial: {Serial}, Ubicacion: {Ubicacion}",
                 isbn, serial, ubicacion);
             return true;
         }
@@ -505,7 +504,7 @@ public class LibroService : ILibroService
             }
 
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Actualización masiva completada para ISBN {ISBN}. Ejemplares actualizados: {Count}", 
+            _logger.LogInformation("Actualización masiva completada para ISBN {ISBN}. Ejemplares actualizados: {Count}",
                 isbn, ejemplaresDelMismoLibro.Count);
             return true;
         }
@@ -541,7 +540,7 @@ public class LibroService : ILibroService
             _unitOfWork.Libros.Update(ejemplar);
             await _unitOfWork.SaveChangesAsync();
 
-            _logger.LogInformation("Ejemplar actualizado: LibroId: {LibroId}, Nueva Ubicacion: {Ubicacion}", 
+            _logger.LogInformation("Ejemplar actualizado: LibroId: {LibroId}, Nueva Ubicacion: {Ubicacion}",
                 libroId, ubicacionNueva);
             return true;
         }

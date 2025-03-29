@@ -1,11 +1,9 @@
+using AutoMapper;
+using LibroManager.Constants;
 using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using AutoMapper;
-using Microsoft.Extensions.Logging;
-using LibroManager.Constants;
-using System.Linq;
 
 namespace LibroManager.Services;
 
@@ -110,7 +108,7 @@ public class UserService : IUserService
             await _unitOfWork.Users.AddClaimAsync(existingUser, new System.Security.Claims.Claim("NombreCompleto", user.NombreCompleto));
 
             var currentRoles = await _unitOfWork.Users.GetRolesAsync(existingUser);
-            
+
             // Remover roles actuales
             if (currentRoles.Any())
             {

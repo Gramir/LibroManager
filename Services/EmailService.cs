@@ -2,7 +2,6 @@ using LibroManager.Models;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using MimeKit;
 using MimeKit.Text;
 

@@ -1,8 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using LibroManager.Models;
-using System;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibroManager.Data.Context
 {
@@ -92,7 +90,7 @@ namespace LibroManager.Data.Context
                     "CK_Libro_ISBN",
                     "LEN([ISBN]) >= 10 AND LEN([ISBN]) <= 13"
                 ));
-            
+
             // Datos de prueba
             SeedData(modelBuilder);
         }
@@ -100,7 +98,7 @@ namespace LibroManager.Data.Context
         private void SeedData(ModelBuilder modelBuilder)
         {
             var fechaPredeterminada = new DateTime(2023, 1, 1);
-            
+
             // Seed Autores
             modelBuilder.Entity<Autor>().HasData(
                 new Autor { AutorId = 1, Nombre = "Gabriel García Márquez", FechaCreacion = fechaPredeterminada },
@@ -181,224 +179,243 @@ namespace LibroManager.Data.Context
             // Seed Libros
             modelBuilder.Entity<Libro>().HasData(
                 // Libros originales
-                new Libro { 
-                    LibroId = 1, 
-                    Titulo = "Cien años de soledad", 
-                    ISBN = "9780307474728", 
+                new Libro
+                {
+                    LibroId = 1,
+                    Titulo = "Cien años de soledad",
+                    ISBN = "9780307474728",
                     Serial = "9780307474728-1",
-                    AutorId = 1, 
-                    CategoriaId = 1, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 1,
+                    CategoriaId = 1,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 1
                 },
-                new Libro { 
-                    LibroId = 2, 
-                    Titulo = "Harry Potter y la piedra filosofal", 
-                    ISBN = "9788478884452", 
+                new Libro
+                {
+                    LibroId = 2,
+                    Titulo = "Harry Potter y la piedra filosofal",
+                    ISBN = "9788478884452",
                     Serial = "9788478884452-1",
-                    AutorId = 2, 
-                    CategoriaId = 2, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 2,
+                    CategoriaId = 2,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 5
                 },
-                new Libro { 
-                    LibroId = 3, 
-                    Titulo = "El resplandor", 
-                    ISBN = "9788497593793", 
+                new Libro
+                {
+                    LibroId = 3,
+                    Titulo = "El resplandor",
+                    ISBN = "9788497593793",
                     Serial = "9788497593793-1",
-                    AutorId = 3, 
-                    CategoriaId = 3, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 3,
+                    CategoriaId = 3,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 8
                 },
-                new Libro { 
-                    LibroId = 4, 
-                    Titulo = "La casa de los espíritus", 
-                    ISBN = "9780525433477", 
+                new Libro
+                {
+                    LibroId = 4,
+                    Titulo = "La casa de los espíritus",
+                    ISBN = "9780525433477",
                     Serial = "9780525433477-1",
-                    AutorId = 4, 
-                    CategoriaId = 1, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 4,
+                    CategoriaId = 1,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 2
                 },
-                new Libro { 
-                    LibroId = 5, 
-                    Titulo = "Tokio blues", 
-                    ISBN = "9788483835043", 
+                new Libro
+                {
+                    LibroId = 5,
+                    Titulo = "Tokio blues",
+                    ISBN = "9788483835043",
                     Serial = "9788483835043-1",
-                    AutorId = 5, 
-                    CategoriaId = 1, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 5,
+                    CategoriaId = 1,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 3
                 },
-                new Libro { 
-                    LibroId = 6, 
-                    Titulo = "El amor en los tiempos del cólera", 
-                    ISBN = "9780307387264", 
+                new Libro
+                {
+                    LibroId = 6,
+                    Titulo = "El amor en los tiempos del cólera",
+                    ISBN = "9780307387264",
                     Serial = "9780307387264-1",
-                    AutorId = 1, 
-                    CategoriaId = 1, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 1,
+                    CategoriaId = 1,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 4
                 },
-                new Libro { 
-                    LibroId = 7, 
-                    Titulo = "Harry Potter y la cámara secreta", 
-                    ISBN = "9788478884957", 
+                new Libro
+                {
+                    LibroId = 7,
+                    Titulo = "Harry Potter y la cámara secreta",
+                    ISBN = "9788478884957",
                     Serial = "9788478884957-1",
-                    AutorId = 2, 
-                    CategoriaId = 2, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 2,
+                    CategoriaId = 2,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 6
                 },
-                new Libro { 
-                    LibroId = 8, 
-                    Titulo = "It", 
-                    ISBN = "9781501142970", 
+                new Libro
+                {
+                    LibroId = 8,
+                    Titulo = "It",
+                    ISBN = "9781501142970",
                     Serial = "9781501142970-1",
-                    AutorId = 3, 
-                    CategoriaId = 3, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 3,
+                    CategoriaId = 3,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 9
                 },
-                
+
                 // Ejemplares adicionales de "Cien años de soledad"
-                new Libro { 
-                    LibroId = 9, 
-                    Titulo = "Cien años de soledad", 
-                    ISBN = "9780307474728", 
+                new Libro
+                {
+                    LibroId = 9,
+                    Titulo = "Cien años de soledad",
+                    ISBN = "9780307474728",
                     Serial = "9780307474728-2",
-                    AutorId = 1, 
-                    CategoriaId = 1, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 1,
+                    CategoriaId = 1,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 10
                 },
-                new Libro { 
-                    LibroId = 10, 
-                    Titulo = "Cien años de soledad", 
-                    ISBN = "9780307474728", 
+                new Libro
+                {
+                    LibroId = 10,
+                    Titulo = "Cien años de soledad",
+                    ISBN = "9780307474728",
                     Serial = "9780307474728-3",
-                    AutorId = 1, 
-                    CategoriaId = 1, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 1,
+                    CategoriaId = 1,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 11
                 },
-                
+
                 // Ejemplares adicionales de "Harry Potter y la piedra filosofal"
-                new Libro { 
-                    LibroId = 11, 
-                    Titulo = "Harry Potter y la piedra filosofal", 
-                    ISBN = "9788478884452", 
+                new Libro
+                {
+                    LibroId = 11,
+                    Titulo = "Harry Potter y la piedra filosofal",
+                    ISBN = "9788478884452",
                     Serial = "9788478884452-2",
-                    AutorId = 2, 
-                    CategoriaId = 2, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 2,
+                    CategoriaId = 2,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 12
                 },
-                new Libro { 
-                    LibroId = 12, 
-                    Titulo = "Harry Potter y la piedra filosofal", 
-                    ISBN = "9788478884452", 
+                new Libro
+                {
+                    LibroId = 12,
+                    Titulo = "Harry Potter y la piedra filosofal",
+                    ISBN = "9788478884452",
                     Serial = "9788478884452-3",
-                    AutorId = 2, 
-                    CategoriaId = 2, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 2,
+                    CategoriaId = 2,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 13
                 },
-                new Libro { 
-                    LibroId = 13, 
-                    Titulo = "Harry Potter y la piedra filosofal", 
-                    ISBN = "9788478884452", 
+                new Libro
+                {
+                    LibroId = 13,
+                    Titulo = "Harry Potter y la piedra filosofal",
+                    ISBN = "9788478884452",
                     Serial = "9788478884452-4",
-                    AutorId = 2, 
-                    CategoriaId = 2, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 2,
+                    CategoriaId = 2,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 5
                 },
-                
+
                 // Ejemplares adicionales de "El resplandor"
-                new Libro { 
-                    LibroId = 14, 
-                    Titulo = "El resplandor", 
-                    ISBN = "9788497593793", 
+                new Libro
+                {
+                    LibroId = 14,
+                    Titulo = "El resplandor",
+                    ISBN = "9788497593793",
                     Serial = "9788497593793-2",
-                    AutorId = 3, 
-                    CategoriaId = 3, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 3,
+                    CategoriaId = 3,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 14
                 },
-                
+
                 // Ejemplares adicionales de "La casa de los espíritus"
-                new Libro { 
-                    LibroId = 15, 
-                    Titulo = "La casa de los espíritus", 
-                    ISBN = "9780525433477", 
+                new Libro
+                {
+                    LibroId = 15,
+                    Titulo = "La casa de los espíritus",
+                    ISBN = "9780525433477",
                     Serial = "9780525433477-2",
-                    AutorId = 4, 
-                    CategoriaId = 1, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 4,
+                    CategoriaId = 1,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 15
                 },
-                new Libro { 
-                    LibroId = 16, 
-                    Titulo = "La casa de los espíritus", 
-                    ISBN = "9780525433477", 
+                new Libro
+                {
+                    LibroId = 16,
+                    Titulo = "La casa de los espíritus",
+                    ISBN = "9780525433477",
                     Serial = "9780525433477-3",
-                    AutorId = 4, 
-                    CategoriaId = 1, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 4,
+                    CategoriaId = 1,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 2
                 },
-                
+
                 // Ejemplares adicionales de "Harry Potter y la cámara secreta"
-                new Libro { 
-                    LibroId = 17, 
-                    Titulo = "Harry Potter y la cámara secreta", 
-                    ISBN = "9788478884957", 
+                new Libro
+                {
+                    LibroId = 17,
+                    Titulo = "Harry Potter y la cámara secreta",
+                    ISBN = "9788478884957",
                     Serial = "9788478884957-2",
-                    AutorId = 2, 
-                    CategoriaId = 2, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 2,
+                    CategoriaId = 2,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 6
                 },
-                new Libro { 
-                    LibroId = 18, 
-                    Titulo = "Harry Potter y la cámara secreta", 
-                    ISBN = "9788478884957", 
+                new Libro
+                {
+                    LibroId = 18,
+                    Titulo = "Harry Potter y la cámara secreta",
+                    ISBN = "9788478884957",
                     Serial = "9788478884957-3",
-                    AutorId = 2, 
-                    CategoriaId = 2, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 2,
+                    CategoriaId = 2,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 7
                 },
-                
+
                 // Ejemplares adicionales de "It"
-                new Libro { 
-                    LibroId = 19, 
-                    Titulo = "It", 
-                    ISBN = "9781501142970", 
+                new Libro
+                {
+                    LibroId = 19,
+                    Titulo = "It",
+                    ISBN = "9781501142970",
                     Serial = "9781501142970-2",
-                    AutorId = 3, 
-                    CategoriaId = 3, 
-                    Estado = EstadoLibro.Disponible, 
+                    AutorId = 3,
+                    CategoriaId = 3,
+                    Estado = EstadoLibro.Disponible,
                     FechaCreacion = fechaPredeterminada,
                     UbicacionId = 9
                 }
@@ -408,14 +425,14 @@ namespace LibroManager.Data.Context
             var fechaPrestamo1 = new DateTime(2023, 1, 1);
             var fechaVencimiento1 = new DateTime(2023, 1, 15);
             var fechaDevolucion1 = new DateTime(2023, 1, 10);
-            
+
             var fechaPrestamo2 = new DateTime(2023, 1, 5);
             var fechaVencimiento2 = new DateTime(2023, 1, 20);
-            
+
             var fechaPrestamo3 = new DateTime(2023, 1, 10);
             var fechaVencimiento3 = new DateTime(2023, 1, 25);
             var fechaDevolucion3 = new DateTime(2023, 1, 23);
-            
+
             var fechaPrestamo4 = new DateTime(2023, 1, 15);
             var fechaVencimiento4 = new DateTime(2023, 2, 5);
 

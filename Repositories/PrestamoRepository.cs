@@ -59,12 +59,12 @@ public class PrestamoRepository : GenericRepository<Prestamo>, IPrestamoReposito
         {
             var prestamos = await GetPrestamosByLibroAsync(libroId);
             var prestamosNoActivos = prestamos.Where(p => p.Estado != EstadoPrestamo.Activo);
-            
+
             foreach (var prestamo in prestamosNoActivos)
             {
                 _context.Prestamos.Remove(prestamo);
             }
-            
+
             await _context.SaveChangesAsync();
             return true;
         }

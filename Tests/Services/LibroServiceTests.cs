@@ -1,10 +1,9 @@
-using LibroManager.Models;
+using AutoMapper;
 using LibroManager.DTOs;
+using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
 using LibroManager.Services.Interfaces;
-using AutoMapper;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -37,7 +36,7 @@ public class LibroServiceTests
         _mockUnitOfWork.Setup(u => u.Autores).Returns(_mockAutorRepository.Object);
         _mockUnitOfWork.Setup(u => u.Categorias).Returns(_mockCategoriaRepository.Object);
         _mockUnitOfWork.Setup(u => u.Ubicaciones).Returns(_mockUbicacionRepository.Object);
-        
+
         _libroService = new LibroService(_mockUnitOfWork.Object, _mockValidationService.Object, _mockMapper.Object, _mockLogger.Object);
     }
 
@@ -45,8 +44,8 @@ public class LibroServiceTests
     public async Task CreateLibroAsync_WithValidLibro_ReturnsTrue()
     {
         // Arrange
-        var libroCreateDto = new LibroCreateDTO 
-        { 
+        var libroCreateDto = new LibroCreateDTO
+        {
             Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = 1,
@@ -54,8 +53,8 @@ public class LibroServiceTests
             UbicacionString = "A-1-1" // Este campo es correcto para LibroCreateDTO
         };
 
-        var libro = new Libro 
-        { 
+        var libro = new Libro
+        {
             Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = 1,
@@ -92,8 +91,8 @@ public class LibroServiceTests
     public async Task GetLibroByIdAsync_ReturnsLibroDTO()
     {
         // Arrange
-        var libro = new Libro 
-        { 
+        var libro = new Libro
+        {
             LibroId = 1,
             Titulo = "Test Libro",
             ISBN = "1234567890",
@@ -132,8 +131,8 @@ public class LibroServiceTests
     public async Task UpdateLibroAsync_WithValidLibro_ReturnsTrue()
     {
         // Arrange
-        var libroUpdateDto = new LibroUpdateDTO 
-        { 
+        var libroUpdateDto = new LibroUpdateDTO
+        {
             LibroId = 1,
             Titulo = "Test Libro",
             ISBN = "1234567890",
@@ -141,8 +140,8 @@ public class LibroServiceTests
             CategoriaId = 1
         };
 
-        var libro = new Libro 
-        { 
+        var libro = new Libro
+        {
             LibroId = 1,
             Titulo = "Test Libro Original",
             ISBN = "1234567890",
@@ -192,9 +191,9 @@ public class LibroServiceTests
         // Arrange
         var libros = new List<Libro>
         {
-            new() 
-            { 
-                LibroId = 1, 
+            new()
+            {
+                LibroId = 1,
                 Titulo = "Libro 1",
                 Autor = new Autor { Nombre = "Autor 1" },
                 Categoria = new Categoria { Nombre = "Categoria 1" },
@@ -205,9 +204,9 @@ public class LibroServiceTests
 
         var librosDto = new List<LibroDTO>
         {
-            new() 
-            { 
-                LibroId = 1, 
+            new()
+            {
+                LibroId = 1,
                 Titulo = "Libro 1",
                 AutorNombre = "Autor 1",
                 CategoriaNombre = "Categoria 1",
@@ -235,8 +234,8 @@ public class LibroServiceTests
     public async Task CreateLibroAsync_WithInvalidLibro_ReturnsFalse()
     {
         // Arrange
-        var libroCreateDto = new LibroCreateDTO 
-        { 
+        var libroCreateDto = new LibroCreateDTO
+        {
             Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = 1,
@@ -244,8 +243,8 @@ public class LibroServiceTests
             UbicacionString = "A-1-1"
         };
 
-        var libro = new Libro 
-        { 
+        var libro = new Libro
+        {
             Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = 1,
@@ -284,8 +283,8 @@ public class LibroServiceTests
     public async Task UpdateLibroAsync_WithInvalidLibro_ReturnsFalse()
     {
         // Arrange
-        var libroUpdateDto = new LibroUpdateDTO 
-        { 
+        var libroUpdateDto = new LibroUpdateDTO
+        {
             LibroId = 1,
             Titulo = "",  // Invalid title
             ISBN = "1234567890",
@@ -312,8 +311,8 @@ public class LibroServiceTests
     public async Task UpdateLibroAsync_WithNonExistentLibro_ReturnsFalse()
     {
         // Arrange
-        var libroUpdateDto = new LibroUpdateDTO 
-        { 
+        var libroUpdateDto = new LibroUpdateDTO
+        {
             LibroId = 999,
             Titulo = "Test Libro",
             ISBN = "1234567890",
@@ -383,14 +382,14 @@ public class LibroServiceTests
     public async Task GetLibrosByAutorIdAsync_WithValidAutorAndLibros_ReturnsLibrosDTO()
     {
         // Arrange
-        var autor = new Autor 
-        { 
-            AutorId = 1, 
+        var autor = new Autor
+        {
+            AutorId = 1,
             Nombre = "Test Autor",
             Libros = new List<Libro>
             {
-                new() 
-                { 
+                new()
+                {
                     LibroId = 1,
                     Titulo = "Libro 1",
                     ISBN = "1234567890",
@@ -398,8 +397,8 @@ public class LibroServiceTests
                     UbicacionId = 1,
                     Ubicacion = new Ubicacion { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 }
                 },
-                new() 
-                { 
+                new()
+                {
                     LibroId = 2,
                     Titulo = "Libro 2",
                     ISBN = "0987654321",
@@ -412,16 +411,16 @@ public class LibroServiceTests
 
         var librosDto = new List<LibroDTO>
         {
-            new() 
-            { 
+            new()
+            {
                 LibroId = 1,
                 Titulo = "Libro 1",
                 ISBN = "1234567890",
                 CategoriaNombre = "Categoría 1",
                 UbicacionFormateada = "A-1-1"
             },
-            new() 
-            { 
+            new()
+            {
                 LibroId = 2,
                 Titulo = "Libro 2",
                 ISBN = "0987654321",
@@ -451,9 +450,9 @@ public class LibroServiceTests
     public async Task GetLibrosByAutorIdAsync_WithAutorWithoutLibros_ReturnsEmptyList()
     {
         // Arrange
-        var autor = new Autor 
-        { 
-            AutorId = 1, 
+        var autor = new Autor
+        {
+            AutorId = 1,
             Nombre = "Test Autor",
             Libros = new List<Libro>()
         };
@@ -495,22 +494,22 @@ public class LibroServiceTests
         var ubicacion1 = new Ubicacion { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 };
         var ubicacion2 = new Ubicacion { UbicacionId = 2, Estante = "B", Nivel = 2, Posicion = 2 };
 
-        var autor = new Autor 
-        { 
-            AutorId = 1, 
+        var autor = new Autor
+        {
+            AutorId = 1,
             Nombre = "Test Autor",
             Libros = new List<Libro>
             {
-                new() 
-                { 
+                new()
+                {
                     LibroId = 1,
                     Titulo = "Libro 1",
                     ISBN = "1234567890",
                     CategoriaId = 1,
                     UbicacionId = 1
                 },
-                new() 
-                { 
+                new()
+                {
                     LibroId = 2,
                     Titulo = "Libro 2",
                     ISBN = "0987654321",
@@ -522,16 +521,16 @@ public class LibroServiceTests
 
         var librosDto = new List<LibroDTO>
         {
-            new() 
-            { 
+            new()
+            {
                 LibroId = 1,
                 Titulo = "Libro 1",
                 ISBN = "1234567890",
                 CategoriaNombre = "Categoría 1",
                 UbicacionFormateada = "A-1-1"
             },
-            new() 
-            { 
+            new()
+            {
                 LibroId = 2,
                 Titulo = "Libro 2",
                 ISBN = "0987654321",
@@ -702,10 +701,10 @@ public class LibroServiceTests
         // Arrange
         var libroId = 1;
         var ubicacionNueva = "A-1-1";
-        var libro = new Libro 
-        { 
-            LibroId = libroId, 
-            UbicacionId = 2 
+        var libro = new Libro
+        {
+            LibroId = libroId,
+            UbicacionId = 2
         };
         var ubicaciones = new List<Ubicacion>
         {

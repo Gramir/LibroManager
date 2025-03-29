@@ -1,10 +1,9 @@
-using LibroManager.Models;
+using AutoMapper;
 using LibroManager.DTOs;
+using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
 using LibroManager.Services.Interfaces;
-using AutoMapper;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -33,9 +32,9 @@ public class PrestamoServiceTests
         // Arrange
         var prestamos = new List<Prestamo>
         {
-            new() { 
-                PrestamoId = 1, 
-                LibroId = 1, 
+            new() {
+                PrestamoId = 1,
+                LibroId = 1,
                 EstudianteId = 1,
                 Libro = new Libro { LibroId = 1, Titulo = "Libro 1" },
                 Estudiante = new Estudiante { Nombre = "Estudiante 1" },
@@ -47,7 +46,7 @@ public class PrestamoServiceTests
 
         var prestamosDto = new List<PrestamoDTO>
         {
-            new() { 
+            new() {
                 PrestamoId = 1,
                 LibroTitulo = "Libro 1",
                 EstudianteNombre = "Estudiante 1"
@@ -81,9 +80,9 @@ public class PrestamoServiceTests
         var estudianteId = 1;
         var prestamos = new List<Prestamo>
         {
-            new() { 
-                PrestamoId = 1, 
-                LibroId = 1, 
+            new() {
+                PrestamoId = 1,
+                LibroId = 1,
                 EstudianteId = estudianteId,
                 Libro = new Libro { Titulo = "Libro 1" },
                 Estudiante = new Estudiante { Nombre = "Estudiante 1" }
@@ -92,7 +91,7 @@ public class PrestamoServiceTests
 
         var prestamosDto = new List<PrestamoDTO>
         {
-            new() { 
+            new() {
                 PrestamoId = 1,
                 LibroTitulo = "Libro 1",
                 EstudianteNombre = "Estudiante 1"
@@ -119,9 +118,9 @@ public class PrestamoServiceTests
         var libroId = 1;
         var prestamos = new List<Prestamo>
         {
-            new() { 
-                PrestamoId = 1, 
-                LibroId = libroId, 
+            new() {
+                PrestamoId = 1,
+                LibroId = libroId,
                 EstudianteId = 1,
                 Libro = new Libro { Titulo = "Libro 1" },
                 Estudiante = new Estudiante { Nombre = "Estudiante 1" }
@@ -130,7 +129,7 @@ public class PrestamoServiceTests
 
         var prestamosDto = new List<PrestamoDTO>
         {
-            new() { 
+            new() {
                 PrestamoId = 1,
                 LibroTitulo = "Libro 1",
                 EstudianteNombre = "Estudiante 1"
@@ -154,9 +153,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsTrue_WhenSuccessful()
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
@@ -171,10 +170,10 @@ public class PrestamoServiceTests
 
         // Configure LibroValidationService mock
         _mockLibroValidationService.Setup(s => s.FechasPrestamoSonValidas(
-            It.IsAny<DateTime>(), 
+            It.IsAny<DateTime>(),
             It.IsAny<DateTime>()))
             .Returns(true);
-            
+
         _mockLibroValidationService.Setup(s => s.PrestamoEsValido(It.IsAny<Prestamo>()))
             .ReturnsAsync(true);
 
@@ -211,9 +210,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenException()
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
@@ -243,13 +242,14 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_ReturnsTrue_WhenSuccessful()
     {
         // Arrange
-        var prestamoUpdateDto = new PrestamoUpdateDTO 
-        { 
+        var prestamoUpdateDto = new PrestamoUpdateDTO
+        {
             PrestamoId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
 
-        var prestamoExistente = new Prestamo { 
+        var prestamoExistente = new Prestamo
+        {
             PrestamoId = 1,
             LibroId = 1,
             EstudianteId = 1,
@@ -319,9 +319,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenLibroDoesNotExist()
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
@@ -354,9 +354,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenLibroYaEstaPrestado()
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
@@ -375,12 +375,12 @@ public class PrestamoServiceTests
 
         // Mock libro ya está prestado
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(prestamo.LibroId))
-            .ReturnsAsync(new List<Prestamo> 
-            { 
-                new() { 
-                    LibroId = prestamo.LibroId, 
-                    FechaVencimiento = DateTime.Now.AddDays(5) 
-                } 
+            .ReturnsAsync(new List<Prestamo>
+            {
+                new() {
+                    LibroId = prestamo.LibroId,
+                    FechaVencimiento = DateTime.Now.AddDays(5)
+                }
             });
 
         _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
@@ -399,9 +399,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenEstudianteDoesNotExist()
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
@@ -440,9 +440,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenEstudianteTienePrestamosVencidos()
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
@@ -467,13 +467,13 @@ public class PrestamoServiceTests
 
         // Mock estudiante tiene préstamos vencidos
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByEstudianteAsync(prestamo.EstudianteId))
-            .ReturnsAsync(new List<Prestamo> 
-            { 
-                new() { 
-                    EstudianteId = prestamo.EstudianteId, 
+            .ReturnsAsync(new List<Prestamo>
+            {
+                new() {
+                    EstudianteId = prestamo.EstudianteId,
                     FechaVencimiento = DateTime.Now.AddDays(-1),
                     Estado = EstadoPrestamo.Expirado
-                } 
+                }
             });
 
         _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
@@ -492,8 +492,8 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenPrestamoNoExiste()
     {
         // Arrange
-        var prestamoUpdateDto = new PrestamoUpdateDTO 
-        { 
+        var prestamoUpdateDto = new PrestamoUpdateDTO
+        {
             PrestamoId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
@@ -515,15 +515,16 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenNuevoLibroYaEstaPrestado()
     {
         // Arrange
-        var prestamoUpdateDto = new PrestamoUpdateDTO 
-        { 
+        var prestamoUpdateDto = new PrestamoUpdateDTO
+        {
             PrestamoId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
 
         // Mock préstamo existente con libro original
-        var prestamoExistente = new Prestamo { 
-            PrestamoId = 1, 
+        var prestamoExistente = new Prestamo
+        {
+            PrestamoId = 1,
             LibroId = 1,  // Libro original
             EstudianteId = 1,
             FechaPrestamo = DateTime.Now
@@ -578,9 +579,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenFechaPrestamoPosteriorAVencimiento()
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(-1)
         };
@@ -609,9 +610,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenFechaPrestamoEsFutura()
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
@@ -640,9 +641,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenFechaVencimientoEsPasada()
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(-1)
         };
@@ -671,14 +672,14 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenFechasInvalidas()
     {
         // Arrange
-        var prestamoUpdateDto = new PrestamoUpdateDTO 
-        { 
+        var prestamoUpdateDto = new PrestamoUpdateDTO
+        {
             PrestamoId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
 
-        var prestamo = new Prestamo 
-        { 
+        var prestamo = new Prestamo
+        {
             PrestamoId = 1,
             LibroId = 1,
             EstudianteId = 1,
@@ -705,14 +706,14 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenException()
     {
         // Arrange
-        var prestamoUpdateDto = new PrestamoUpdateDTO 
-        { 
+        var prestamoUpdateDto = new PrestamoUpdateDTO
+        {
             PrestamoId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
 
-        var prestamo = new Prestamo 
-        { 
+        var prestamo = new Prestamo
+        {
             PrestamoId = 1,
             LibroId = 1,
             EstudianteId = 1,
@@ -739,9 +740,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenFechaVencimientoMasDe30Dias()
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(31)
         };
@@ -770,14 +771,14 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenFechaVencimientoMasDe30Dias()
     {
         // Arrange
-        var prestamoUpdateDto = new PrestamoUpdateDTO 
-        { 
+        var prestamoUpdateDto = new PrestamoUpdateDTO
+        {
             PrestamoId = 1,
             FechaVencimiento = DateTime.Now.AddDays(31)
         };
 
-        var prestamo = new Prestamo 
-        { 
+        var prestamo = new Prestamo
+        {
             PrestamoId = 1,
             LibroId = 1,
             EstudianteId = 1,
@@ -786,7 +787,8 @@ public class PrestamoServiceTests
         };
 
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamo.PrestamoId))
-            .ReturnsAsync(new Prestamo { 
+            .ReturnsAsync(new Prestamo
+            {
                 PrestamoId = prestamo.PrestamoId,
                 LibroId = 1,
                 EstudianteId = 1,
@@ -813,9 +815,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsTrue_WhenFechaVencimientoValida(int dias)
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(dias)
         };
@@ -830,10 +832,10 @@ public class PrestamoServiceTests
 
         // Configure LibroValidationService mock
         _mockLibroValidationService.Setup(s => s.FechasPrestamoSonValidas(
-            It.IsAny<DateTime>(), 
+            It.IsAny<DateTime>(),
             It.IsAny<DateTime>()))
             .Returns(true);
-            
+
         _mockLibroValidationService.Setup(s => s.PrestamoEsValido(It.IsAny<Prestamo>()))
             .ReturnsAsync(true);
 
@@ -870,13 +872,14 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_MarcarLibroPerdido_CuandoPrestamoExpira()
     {
         // Arrange
-        var prestamoUpdateDto = new PrestamoUpdateDTO 
-        { 
+        var prestamoUpdateDto = new PrestamoUpdateDTO
+        {
             PrestamoId = 1,
             FechaVencimiento = DateTime.Now.AddDays(-1)  // Fecha vencida
         };
 
-        var prestamoExistente = new Prestamo { 
+        var prestamoExistente = new Prestamo
+        {
             PrestamoId = 1,
             LibroId = 1,
             EstudianteId = 1,
@@ -890,16 +893,16 @@ public class PrestamoServiceTests
 
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamoExistente.LibroId))
             .ReturnsAsync(libro);
-        
+
         // Configurar préstamos activos para este libro
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(prestamoExistente.LibroId))
-            .ReturnsAsync(new List<Prestamo> { 
-                new() { 
+            .ReturnsAsync(new List<Prestamo> {
+                new() {
                     PrestamoId = 1,
-                    LibroId = 1, 
+                    LibroId = 1,
                     Estado = EstadoPrestamo.Activo,
                     FechaVencimiento = DateTime.Now.AddDays(-1)
-                } 
+                }
             });
 
         // Act
@@ -917,15 +920,15 @@ public class PrestamoServiceTests
     public async Task UpdateAsync_MarcarLibroDisponible_CuandoPrestamoDevuelto()
     {
         // Arrange
-        var prestamoUpdateDto = new PrestamoUpdateDTO 
-        { 
+        var prestamoUpdateDto = new PrestamoUpdateDTO
+        {
             PrestamoId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7),
             FechaDevolucion = DateTime.Now.AddDays(3)
         };
 
-        var prestamo = new Prestamo 
-        { 
+        var prestamo = new Prestamo
+        {
             PrestamoId = 1,
             LibroId = 1,
             EstudianteId = 1,
@@ -938,7 +941,8 @@ public class PrestamoServiceTests
         var libro = new Libro { LibroId = 1, Estado = EstadoLibro.Prestado };
 
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetByIdAsync(prestamo.PrestamoId))
-            .ReturnsAsync(new Prestamo { 
+            .ReturnsAsync(new Prestamo
+            {
                 PrestamoId = prestamo.PrestamoId,
                 LibroId = 1,
                 EstudianteId = 1,
@@ -967,9 +971,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ActualizaEstadoLibro_CuandoPrestamoCreado()
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
@@ -982,17 +986,18 @@ public class PrestamoServiceTests
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
 
-        var libro = new Libro { 
-            LibroId = 1, 
+        var libro = new Libro
+        {
+            LibroId = 1,
             Estado = EstadoLibro.Disponible
         };
 
         // Configure LibroValidationService mock
         _mockLibroValidationService.Setup(s => s.FechasPrestamoSonValidas(
-            It.IsAny<DateTime>(), 
+            It.IsAny<DateTime>(),
             It.IsAny<DateTime>()))
             .Returns(true);
-            
+
         _mockLibroValidationService.Setup(s => s.PrestamoEsValido(It.IsAny<Prestamo>()))
             .ReturnsAsync(true);
 
@@ -1087,14 +1092,15 @@ public class PrestamoServiceTests
     {
         // Arrange
         var fechaPrestamo = DateTime.Now;
-        var prestamoUpdateDto = new PrestamoUpdateDTO 
-        { 
+        var prestamoUpdateDto = new PrestamoUpdateDTO
+        {
             PrestamoId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7),
             FechaDevolucion = DateTime.Now.AddDays(3)  // Fecha de devolución posterior al préstamo
         };
 
-        var prestamoExistente = new Prestamo { 
+        var prestamoExistente = new Prestamo
+        {
             PrestamoId = 1,
             LibroId = 1,
             EstudianteId = 1,
@@ -1126,13 +1132,14 @@ public class PrestamoServiceTests
         // Arrange
         var fechaPrestamo = DateTime.Now.AddDays(-14);
         var fechaVencimiento = DateTime.Now.AddDays(-7);
-        var prestamoUpdateDto = new PrestamoUpdateDTO 
-        { 
+        var prestamoUpdateDto = new PrestamoUpdateDTO
+        {
             PrestamoId = 1,
             FechaVencimiento = fechaVencimiento
         };
 
-        var prestamoExistente = new Prestamo { 
+        var prestamoExistente = new Prestamo
+        {
             PrestamoId = 1,
             LibroId = 1,
             EstudianteId = 1,
@@ -1147,16 +1154,16 @@ public class PrestamoServiceTests
 
         _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamoExistente.LibroId))
             .ReturnsAsync(libro);
-        
+
         // Configurar préstamos activos para este libro
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(prestamoExistente.LibroId))
-            .ReturnsAsync(new List<Prestamo> { 
-                new() { 
+            .ReturnsAsync(new List<Prestamo> {
+                new() {
                     PrestamoId = 1,
-                    LibroId = 1, 
+                    LibroId = 1,
                     Estado = EstadoPrestamo.Activo,
                     FechaVencimiento = fechaVencimiento
-                } 
+                }
             });
 
         // Act
@@ -1191,10 +1198,10 @@ public class PrestamoServiceTests
 
         // Configure LibroValidationService mock
         _mockLibroValidationService.Setup(s => s.FechasPrestamoSonValidas(
-            It.IsAny<DateTime>(), 
+            It.IsAny<DateTime>(),
             It.IsAny<DateTime>()))
             .Returns(true);
-            
+
         _mockLibroValidationService.Setup(s => s.PrestamoEsValido(It.IsAny<Prestamo>()))
             .ReturnsAsync(true);
 
@@ -1230,9 +1237,9 @@ public class PrestamoServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenLibroEstaPrestado()
     {
         // Arrange
-        var prestamoCreateDto = new PrestamoCreateDTO 
-        { 
-            LibroId = 1, 
+        var prestamoCreateDto = new PrestamoCreateDTO
+        {
+            LibroId = 1,
             EstudianteId = 1,
             FechaVencimiento = DateTime.Now.AddDays(7)
         };
@@ -1312,7 +1319,7 @@ public class PrestamoServiceTests
     {
         // Arrange
         var libroId = 1;
-        
+
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(libroId))
             .ThrowsAsync(new Exception());
 

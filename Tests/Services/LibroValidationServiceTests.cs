@@ -2,8 +2,6 @@ using LibroManager.Data.Context;
 using LibroManager.Models;
 using LibroManager.Services;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace LibroManager.Tests.Services;

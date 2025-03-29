@@ -1,9 +1,8 @@
 using AutoMapper;
-using LibroManager.Models;
 using LibroManager.DTOs;
+using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace LibroManager.Services;
 
@@ -61,7 +60,7 @@ public class AutorService : IAutorService
             var autor = _mapper.Map<Autor>(autorDto);
             await _unitOfWork.Autores.AddAsync(autor);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Autor creado: {AutorId}, Nombre: {Nombre}", 
+            _logger.LogInformation("Autor creado: {AutorId}, Nombre: {Nombre}",
                 autor.AutorId, autor.Nombre);
             return true;
         }
@@ -92,7 +91,7 @@ public class AutorService : IAutorService
             existingAutor.Nombre = autorDto.Nombre;
             _unitOfWork.Autores.Update(existingAutor);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Autor actualizado: {AutorId}, Nombre: {Nombre}", 
+            _logger.LogInformation("Autor actualizado: {AutorId}, Nombre: {Nombre}",
                 existingAutor.AutorId, existingAutor.Nombre);
             return true;
         }
@@ -122,7 +121,7 @@ public class AutorService : IAutorService
 
             _unitOfWork.Autores.Remove(autor);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Autor eliminado: {AutorId}, Nombre: {Nombre}", 
+            _logger.LogInformation("Autor eliminado: {AutorId}, Nombre: {Nombre}",
                 autor.AutorId, autor.Nombre);
             return true;
         }

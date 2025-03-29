@@ -1,10 +1,9 @@
-using LibroManager.Models;
-using LibroManager.Services;
-using LibroManager.Repositories.Interfaces;
-using Microsoft.AspNetCore.Identity;
-using System.Security.Claims;
 using LibroManager.Constants;
+using LibroManager.Repositories.Interfaces;
+using LibroManager.Services;
+using Microsoft.AspNetCore.Identity;
 using Moq;
+using System.Security.Claims;
 using Xunit;
 
 namespace LibroManager.Tests.Services;
@@ -115,7 +114,7 @@ public class RoleServiceTests
 
         // Assert
         _mockUnitOfWork.Verify(
-            u => u.Roles.CreateAsync(It.Is<IdentityRole>(r => r.Name == RoleConstants.AdminRole)), 
+            u => u.Roles.CreateAsync(It.Is<IdentityRole>(r => r.Name == RoleConstants.AdminRole)),
             Times.Once);
         foreach (var permission in RoleConstants.DefaultPermissions.AdminPermissions)
         {
@@ -140,7 +139,7 @@ public class RoleServiceTests
 
         // Assert
         _mockUnitOfWork.Verify(
-            u => u.Roles.CreateAsync(It.Is<IdentityRole>(r => r.Name == RoleConstants.LibrarianRole)), 
+            u => u.Roles.CreateAsync(It.Is<IdentityRole>(r => r.Name == RoleConstants.LibrarianRole)),
             Times.Once);
         foreach (var permission in RoleConstants.DefaultPermissions.LibrarianPermissions)
         {
@@ -177,7 +176,7 @@ public class RoleServiceTests
 
         // Assert
         _mockUnitOfWork.Verify(u => u.Roles.CreateAsync(It.IsAny<IdentityRole>()), Times.Never);
-        
+
         // Verificar que se agreguen los permisos faltantes para Admin
         foreach (var permission in RoleConstants.DefaultPermissions.AdminPermissions)
         {
@@ -232,7 +231,7 @@ public class RoleServiceTests
 
         // Assert
         _mockUnitOfWork.Verify(u => u.Roles.CreateAsync(It.IsAny<IdentityRole>()), Times.Never);
-        
+
         // Verificar que solo se agreguen los permisos faltantes para Admin
         foreach (var permission in RoleConstants.DefaultPermissions.AdminPermissions.Skip(1))
         {
@@ -243,7 +242,7 @@ public class RoleServiceTests
                 ),
                 Times.Once);
         }
-        
+
         // Verificar que no se agregue el permiso que ya existe para Admin
         _mockUnitOfWork.Verify(
             u => u.Roles.AddClaimAsync(

@@ -1,9 +1,8 @@
-using LibroManager.Models;
+using AutoMapper;
 using LibroManager.DTOs;
+using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
-using AutoMapper;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -30,23 +29,23 @@ public class EstudianteServiceTests
         // Arrange
         var estudiantes = new List<Estudiante>
         {
-            new() 
-            { 
-                EstudianteId = 1, 
+            new()
+            {
+                EstudianteId = 1,
                 Nombre = "Estudiante 1",
                 Email = "estudiante1@test.com",
-                FechaInscripcion = DateTime.Now 
+                FechaInscripcion = DateTime.Now
             }
         };
 
         var estudiantesDto = new List<EstudianteDTO>
         {
-            new() 
-            { 
-                EstudianteId = 1, 
+            new()
+            {
+                EstudianteId = 1,
                 Nombre = "Estudiante 1",
                 Email = "estudiante1@test.com",
-                FechaInscripcion = DateTime.Now 
+                FechaInscripcion = DateTime.Now
             }
         };
 
@@ -68,11 +67,11 @@ public class EstudianteServiceTests
     {
         // Arrange
         var email = "test@test.com";
-        var estudiante = new Estudiante 
-        { 
-            EstudianteId = 1, 
+        var estudiante = new Estudiante
+        {
+            EstudianteId = 1,
             Nombre = "Test Estudiante",
-            Email = email 
+            Email = email
         };
 
         var estudianteDto = new EstudianteDTO
@@ -101,9 +100,9 @@ public class EstudianteServiceTests
         // Arrange
         var estudiantes = new List<Estudiante>
         {
-            new() 
-            { 
-                EstudianteId = 1, 
+            new()
+            {
+                EstudianteId = 1,
                 Nombre = "Estudiante 1",
                 Prestamos = new List<Prestamo>
                 {
@@ -139,8 +138,8 @@ public class EstudianteServiceTests
     public async Task CreateAsync_ReturnsTrue_WhenEmailDoesNotExist()
     {
         // Arrange
-        var estudianteCreateDto = new EstudianteCreateDTO 
-        { 
+        var estudianteCreateDto = new EstudianteCreateDTO
+        {
             Nombre = "Nuevo Estudiante",
             Email = "nuevo@test.com"
         };
@@ -171,8 +170,8 @@ public class EstudianteServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenEmailExists()
     {
         // Arrange
-        var estudianteCreateDto = new EstudianteCreateDTO 
-        { 
+        var estudianteCreateDto = new EstudianteCreateDTO
+        {
             Nombre = "Estudiante Existente",
             Email = "existente@test.com"
         };
@@ -201,8 +200,8 @@ public class EstudianteServiceTests
     public async Task UpdateAsync_ReturnsTrue_WhenEmailDoesNotExist()
     {
         // Arrange
-        var estudianteUpdateDto = new EstudianteUpdateDTO 
-        { 
+        var estudianteUpdateDto = new EstudianteUpdateDTO
+        {
             EstudianteId = 1,
             Nombre = "Estudiante Actualizado",
             Email = "actualizado@test.com"
@@ -244,8 +243,8 @@ public class EstudianteServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenEmailExistsForDifferentEstudiante()
     {
         // Arrange
-        var estudianteUpdateDto = new EstudianteUpdateDTO 
-        { 
+        var estudianteUpdateDto = new EstudianteUpdateDTO
+        {
             EstudianteId = 1,
             Nombre = "Estudiante Actualizado",
             Email = "existente@test.com"
@@ -315,8 +314,8 @@ public class EstudianteServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenEmailIsInvalid()
     {
         // Arrange
-        var estudianteCreateDto = new EstudianteCreateDTO 
-        { 
+        var estudianteCreateDto = new EstudianteCreateDTO
+        {
             Nombre = "Test Estudiante",
             Email = "emailinvalido"
         };
@@ -334,8 +333,8 @@ public class EstudianteServiceTests
     public async Task CreateAsync_ReturnsFalse_WhenExceptionOccurs()
     {
         // Arrange
-        var estudianteCreateDto = new EstudianteCreateDTO 
-        { 
+        var estudianteCreateDto = new EstudianteCreateDTO
+        {
             Nombre = "Test Estudiante",
             Email = "test@test.com"
         };
@@ -364,8 +363,8 @@ public class EstudianteServiceTests
     public async Task UpdateAsync_ReturnsFalse_WhenEmailFormatIsInvalid()
     {
         // Arrange
-        var estudianteUpdateDto = new EstudianteUpdateDTO 
-        { 
+        var estudianteUpdateDto = new EstudianteUpdateDTO
+        {
             EstudianteId = 1,
             Nombre = "Test Estudiante",
             Email = "emailinvalido"
@@ -385,10 +384,11 @@ public class EstudianteServiceTests
     {
         // Arrange
         var estudianteId = 1;
-        var estudiante = new Estudiante { 
+        var estudiante = new Estudiante
+        {
             EstudianteId = estudianteId,
             Prestamos = new List<Prestamo> {
-                new() { 
+                new() {
                     PrestamoId = 1,
                     FechaVencimiento = DateTime.Now.AddDays(5)
                 }

@@ -23,7 +23,7 @@ public class LibroRepositoryTests
 
         _context = new ApplicationDbContext(_options);
         _repository = new LibroRepository(_context);
-        
+
         // Limpiar la base de datos antes de cada test
         _context.Libros.RemoveRange(_context.Libros);
         _context.Prestamos.RemoveRange(_context.Prestamos);
@@ -169,9 +169,9 @@ public class LibroRepositoryTests
         await _context.Categorias.AddAsync(categoria);
         await _context.SaveChangesAsync();
 
-        var libro = new Libro 
-        { 
-            Titulo = "Test Libro", 
+        var libro = new Libro
+        {
+            Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = autor.AutorId,
             CategoriaId = categoria.CategoriaId
@@ -200,9 +200,9 @@ public class LibroRepositoryTests
         await _context.Categorias.AddAsync(categoria);
         await _context.SaveChangesAsync();
 
-        var libro = new Libro 
-        { 
-            Titulo = "Test Libro", 
+        var libro = new Libro
+        {
+            Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = autor.AutorId,
             CategoriaId = categoria.CategoriaId
@@ -210,8 +210,8 @@ public class LibroRepositoryTests
         await _context.Libros.AddAsync(libro);
         await _context.SaveChangesAsync();
 
-        var prestamo = new Prestamo 
-        { 
+        var prestamo = new Prestamo
+        {
             LibroId = libro.LibroId,
             FechaPrestamo = DateTime.Now,
             FechaVencimiento = DateTime.Now.AddDays(7)
@@ -240,8 +240,8 @@ public class LibroRepositoryTests
         await _context.Libros.AddAsync(libro);
         await _context.SaveChangesAsync();
 
-        var prestamo = new Prestamo 
-        { 
+        var prestamo = new Prestamo
+        {
             LibroId = libro.LibroId,
             FechaPrestamo = DateTime.Now,
             FechaVencimiento = DateTime.Now.AddDays(7)
@@ -279,8 +279,8 @@ public class LibroRepositoryTests
         await _context.Libros.AddAsync(libro);
         await _context.SaveChangesAsync();
 
-        var prestamo = new Prestamo 
-        { 
+        var prestamo = new Prestamo
+        {
             LibroId = libro.LibroId,
             FechaPrestamo = DateTime.Now.AddDays(-14),
             FechaVencimiento = DateTime.Now.AddDays(-7)

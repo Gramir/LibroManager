@@ -22,37 +22,37 @@ public class PrestamoRepositoryTests
 
         _context = new ApplicationDbContext(_options);
         _repository = new PrestamoRepository(_context);
-        
+
         // Limpiar la base de datos antes de cada test
         _context.Database.EnsureDeleted();
         _context.Database.EnsureCreated();
-        
+
         // Asegurarse de que no hay datos residuales en las tablas
         if (_context.Prestamos.Any())
         {
             _context.Prestamos.RemoveRange(_context.Prestamos);
         }
-        
+
         if (_context.Libros.Any())
         {
             _context.Libros.RemoveRange(_context.Libros);
         }
-        
+
         if (_context.Estudiantes.Any())
         {
             _context.Estudiantes.RemoveRange(_context.Estudiantes);
         }
-        
+
         if (_context.Autores.Any())
         {
             _context.Autores.RemoveRange(_context.Autores);
         }
-        
+
         if (_context.Categorias.Any())
         {
             _context.Categorias.RemoveRange(_context.Categorias);
         }
-        
+
         _context.SaveChanges();
     }
 
@@ -62,7 +62,7 @@ public class PrestamoRepositoryTests
         // Arrange
         var libro = new Libro { Titulo = "Test Libro", ISBN = "1234567890" };
         var estudiante = new Estudiante { Nombre = "Test Estudiante", Email = "test@test.com", FechaInscripcion = DateTime.Now };
-        
+
         await _context.Libros.AddAsync(libro);
         await _context.Estudiantes.AddAsync(estudiante);
         await _context.SaveChangesAsync();
@@ -89,7 +89,7 @@ public class PrestamoRepositoryTests
         var libro = new Libro { Titulo = "Test Libro", ISBN = "1234567890" };
         var estudiante1 = new Estudiante { Nombre = "Test Estudiante 1", Email = "test1@test.com", FechaInscripcion = DateTime.Now };
         var estudiante2 = new Estudiante { Nombre = "Test Estudiante 2", Email = "test2@test.com", FechaInscripcion = DateTime.Now };
-        
+
         await _context.Libros.AddAsync(libro);
         await _context.Estudiantes.AddRangeAsync(new[] { estudiante1, estudiante2 });
         await _context.SaveChangesAsync();
@@ -117,7 +117,7 @@ public class PrestamoRepositoryTests
         var libro1 = new Libro { Titulo = "Test Libro 1", ISBN = "1234567890" };
         var libro2 = new Libro { Titulo = "Test Libro 2", ISBN = "0987654321" };
         var estudiante = new Estudiante { Nombre = "Test Estudiante", Email = "test@test.com", FechaInscripcion = DateTime.Now };
-        
+
         await _context.Libros.AddRangeAsync(new[] { libro1, libro2 });
         await _context.Estudiantes.AddAsync(estudiante);
         await _context.SaveChangesAsync();
@@ -144,7 +144,7 @@ public class PrestamoRepositoryTests
         // Arrange
         var libro = new Libro { Titulo = "Test Libro", ISBN = "1234567890" };
         var estudiante = new Estudiante { Nombre = "Test Estudiante", Email = "test@test.com", FechaInscripcion = DateTime.Now };
-        
+
         await _context.Libros.AddAsync(libro);
         await _context.Estudiantes.AddAsync(estudiante);
         await _context.SaveChangesAsync();

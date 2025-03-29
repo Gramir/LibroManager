@@ -3,7 +3,6 @@ using LibroManager.DTOs;
 using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace LibroManager.Services;
 
@@ -96,7 +95,7 @@ public class CategoriaService : ICategoriaService
             var categoria = _mapper.Map<Categoria>(categoriaDto);
             await _unitOfWork.Categorias.AddAsync(categoria);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Categoría creada: {CategoriaId}, Nombre: {Nombre}", 
+            _logger.LogInformation("Categoría creada: {CategoriaId}, Nombre: {Nombre}",
                 categoria.CategoriaId, categoria.Nombre);
             return true;
         }
@@ -136,10 +135,10 @@ public class CategoriaService : ICategoriaService
             }
 
             existingCategoria.Nombre = categoriaDto.Nombre;
-            
+
             _unitOfWork.Categorias.Update(existingCategoria);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Categoría actualizada: {CategoriaId}, Nombre: {Nombre}", 
+            _logger.LogInformation("Categoría actualizada: {CategoriaId}, Nombre: {Nombre}",
                 existingCategoria.CategoriaId, existingCategoria.Nombre);
             return true;
         }
@@ -172,7 +171,7 @@ public class CategoriaService : ICategoriaService
 
             _unitOfWork.Categorias.Remove(categoria);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Categoría eliminada: {CategoriaId}, Nombre: {Nombre}", 
+            _logger.LogInformation("Categoría eliminada: {CategoriaId}, Nombre: {Nombre}",
                 categoria.CategoriaId, categoria.Nombre);
             return true;
         }
@@ -190,10 +189,10 @@ public class CategoriaService : ICategoriaService
             _logger.LogWarning("Nombre de categoría vacío");
             return false;
         }
-            
+
         if (categoria.Nombre.Length > MAX_NOMBRE_LENGTH)
         {
-            _logger.LogWarning("Nombre de categoría excede el límite de {MaxLength} caracteres: {Length}", 
+            _logger.LogWarning("Nombre de categoría excede el límite de {MaxLength} caracteres: {Length}",
                 MAX_NOMBRE_LENGTH, categoria.Nombre.Length);
             return false;
         }

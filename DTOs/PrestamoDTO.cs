@@ -1,5 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using LibroManager.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace LibroManager.DTOs;
 
@@ -33,7 +33,7 @@ public class PrestamoCreateDTO
 public class PrestamoUpdateDTO
 {
     public int PrestamoId { get; set; }
-    
+
     [Required(ErrorMessage = "El libro es requerido")]
     public int LibroId { get; set; }
 
@@ -43,12 +43,12 @@ public class PrestamoUpdateDTO
     [Required(ErrorMessage = "La fecha de préstamo es requerida")]
     [DataType(DataType.Date)]
     public DateTime FechaPrestamo { get; set; }
-    
+
     [Required(ErrorMessage = "La fecha de vencimiento es requerida")]
     [DataType(DataType.Date)]
     public DateTime FechaVencimiento { get; set; }
-    
+
     public DateTime? FechaDevolucion { get; set; }
-    
+
     public EstadoPrestamo Estado { get; set; }
 }

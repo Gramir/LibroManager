@@ -22,26 +22,26 @@ public class EstudianteRepositoryTests
 
         _context = new ApplicationDbContext(_options);
         _repository = new EstudianteRepository(_context);
-        
+
         _context.Database.EnsureDeleted();
         _context.Database.EnsureCreated();
-        
+
         // Limpiar cualquier dato existente para asegurarnos de que el test comienza con un estado limpio
         if (_context.Estudiantes.Any())
         {
             _context.Estudiantes.RemoveRange(_context.Estudiantes);
         }
-        
+
         if (_context.Libros.Any())
         {
             _context.Libros.RemoveRange(_context.Libros);
         }
-        
+
         if (_context.Prestamos.Any())
         {
             _context.Prestamos.RemoveRange(_context.Prestamos);
         }
-        
+
         _context.SaveChanges();
     }
 
@@ -49,10 +49,11 @@ public class EstudianteRepositoryTests
     public async Task GetByEmailAsync_ReturnsEstudiante_WhenEmailExists()
     {
         // Arrange
-        var estudiante = new Estudiante { 
-            Nombre = "Test Estudiante", 
+        var estudiante = new Estudiante
+        {
+            Nombre = "Test Estudiante",
             Email = "test@test.com",
-            FechaInscripcion = DateTime.Now 
+            FechaInscripcion = DateTime.Now
         };
         await _context.Estudiantes.AddAsync(estudiante);
         await _context.SaveChangesAsync();
@@ -79,35 +80,37 @@ public class EstudianteRepositoryTests
     public async Task GetEstudiantesWithPrestamosActivosAsync_ReturnsEstudiantesWithActivePrestamos()
     {
         // Arrange
-        var estudiante1 = new Estudiante { 
-            Nombre = "Estudiante 1", 
+        var estudiante1 = new Estudiante
+        {
+            Nombre = "Estudiante 1",
             Email = "estudiante1@test.com",
-            FechaInscripcion = DateTime.Now 
+            FechaInscripcion = DateTime.Now
         };
-        var estudiante2 = new Estudiante { 
-            Nombre = "Estudiante 2", 
+        var estudiante2 = new Estudiante
+        {
+            Nombre = "Estudiante 2",
             Email = "estudiante2@test.com",
-            FechaInscripcion = DateTime.Now 
+            FechaInscripcion = DateTime.Now
         };
         await _context.Estudiantes.AddRangeAsync(new[] { estudiante1, estudiante2 });
-        
+
         var libro = new Libro { Titulo = "Test Libro", ISBN = "1234567890" };
         await _context.Libros.AddAsync(libro);
         await _context.SaveChangesAsync();
 
         var prestamos = new List<Prestamo>
         {
-            new() { 
-                LibroId = libro.LibroId, 
-                EstudianteId = estudiante1.EstudianteId, 
-                FechaPrestamo = DateTime.Now, 
-                FechaVencimiento = DateTime.Now.AddDays(7) 
+            new() {
+                LibroId = libro.LibroId,
+                EstudianteId = estudiante1.EstudianteId,
+                FechaPrestamo = DateTime.Now,
+                FechaVencimiento = DateTime.Now.AddDays(7)
             },
-            new() { 
-                LibroId = libro.LibroId, 
-                EstudianteId = estudiante2.EstudianteId, 
-                FechaPrestamo = DateTime.Now.AddDays(-14), 
-                FechaVencimiento = DateTime.Now.AddDays(-7) 
+            new() {
+                LibroId = libro.LibroId,
+                EstudianteId = estudiante2.EstudianteId,
+                FechaPrestamo = DateTime.Now.AddDays(-14),
+                FechaVencimiento = DateTime.Now.AddDays(-7)
             }
         };
         await _context.Prestamos.AddRangeAsync(prestamos);
@@ -127,15 +130,15 @@ public class EstudianteRepositoryTests
         // Arrange
         var estudiantes = new List<Estudiante>
         {
-            new() { 
-                Nombre = "Estudiante 1", 
+            new() {
+                Nombre = "Estudiante 1",
                 Email = "estudiante1@test.com",
-                FechaInscripcion = DateTime.Now 
+                FechaInscripcion = DateTime.Now
             },
-            new() { 
-                Nombre = "Estudiante 2", 
+            new() {
+                Nombre = "Estudiante 2",
                 Email = "estudiante2@test.com",
-                FechaInscripcion = DateTime.Now 
+                FechaInscripcion = DateTime.Now
             }
         };
         await _context.Estudiantes.AddRangeAsync(estudiantes);

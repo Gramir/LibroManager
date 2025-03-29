@@ -1,5 +1,4 @@
 using LibroManager.Data.Context;
-using Microsoft.EntityFrameworkCore.InMemory;
 using LibroManager.Models;
 using LibroManager.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -23,37 +22,37 @@ public class AutorRepositoryTests
 
         _context = new ApplicationDbContext(_options);
         _repository = new AutorRepository(_context);
-        
+
         // Limpiar la base de datos antes de cada test
         _context.Database.EnsureDeleted();
         _context.Database.EnsureCreated();
-        
+
         // Asegurarse de que no hay datos residuales en las tablas
         if (_context.Prestamos.Any())
         {
             _context.Prestamos.RemoveRange(_context.Prestamos);
         }
-        
+
         if (_context.Libros.Any())
         {
             _context.Libros.RemoveRange(_context.Libros);
         }
-        
+
         if (_context.Estudiantes.Any())
         {
             _context.Estudiantes.RemoveRange(_context.Estudiantes);
         }
-        
+
         if (_context.Autores.Any())
         {
             _context.Autores.RemoveRange(_context.Autores);
         }
-        
+
         if (_context.Categorias.Any())
         {
             _context.Categorias.RemoveRange(_context.Categorias);
         }
-        
+
         _context.SaveChanges();
     }
 
@@ -164,8 +163,8 @@ public class AutorRepositoryTests
         await _context.Autores.AddAsync(autor);
         await _context.SaveChangesAsync();
 
-        var libro = new Libro 
-        { 
+        var libro = new Libro
+        {
             Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = autor.AutorId
@@ -208,12 +207,12 @@ public class AutorRepositoryTests
             new() { Titulo = "Libro 1", ISBN = "1234567890", AutorId = autor.AutorId },
             new() { Titulo = "Libro 2", ISBN = "0987654321", AutorId = autor.AutorId }
         };
-        
+
         foreach (var libro in libros)
         {
             libro.Autor = autor;
         }
-        
+
         await _context.Libros.AddRangeAsync(libros);
         await _context.SaveChangesAsync();
 

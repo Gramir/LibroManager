@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.Components;
-using LibroManager.Services.Interfaces;
 using LibroManager.DTOs;
-using LibroManager.Models;
-using System.Linq;
+using LibroManager.Services.Interfaces;
+using Microsoft.AspNetCore.Components;
 
 namespace LibroManager.Components.Pages.Libros;
 
@@ -108,7 +106,7 @@ public partial class DetalleLibro
     private async Task EliminarLibro()
     {
         _mostrarConfirmacion = false;
-        
+
         try
         {
             bool result;
@@ -119,7 +117,7 @@ public partial class DetalleLibro
                     // Primero eliminar los préstamos históricos
                     await PrestamoService.DeletePrestamosByLibroIdAsync(_ejemplarAEliminar.LibroId);
                 }
-                
+
                 result = await LibroService.DeleteLibroAsync(_ejemplarAEliminar.LibroId);
                 if (result)
                 {
@@ -201,7 +199,7 @@ public partial class DetalleLibro
     private void FilterUbicaciones(ChangeEventArgs e)
     {
         var searchText = e.Value?.ToString()?.ToLower() ?? string.Empty;
-        
+
         if (string.IsNullOrWhiteSpace(searchText))
         {
             _ubicacionesFiltradas = _ubicaciones;
@@ -215,7 +213,7 @@ public partial class DetalleLibro
         _showDropdown = true;
 
         // Validar si el texto actual no coincide con ninguna ubicación disponible
-        if (_ubicaciones != null && !string.IsNullOrWhiteSpace(searchText) && 
+        if (_ubicaciones != null && !string.IsNullOrWhiteSpace(searchText) &&
             !_ubicaciones.Any(u => u.UbicacionFormateada.Equals(_nuevaUbicacion, StringComparison.OrdinalIgnoreCase)))
         {
             _errorMessageUbicacion = "Por favor, seleccione una ubicación válida del listado desplegable.";
@@ -284,8 +282,8 @@ public partial class DetalleLibro
 
         // Verificar si la ubicación seleccionada está en la lista de ubicaciones disponibles
         // o si es la ubicación actual del ejemplar
-        if (_ubicaciones == null || 
-            (!_ubicaciones.Any(u => u.UbicacionFormateada == _nuevaUbicacion) && 
+        if (_ubicaciones == null ||
+            (!_ubicaciones.Any(u => u.UbicacionFormateada == _nuevaUbicacion) &&
              _nuevaUbicacion != _ejemplarEditar.UbicacionFormateada))
         {
             _errorMessageUbicacion = "Debe seleccionar una ubicación válida del listado desplegable.";
@@ -323,7 +321,7 @@ public partial class DetalleLibro
         var prestamo = prestamos
             .OrderByDescending(p => p.FechaVencimiento)
             .FirstOrDefault();
-                              
+
         if (prestamo != null)
         {
             NavigationManager.NavigateTo($"/prestamos/{prestamo.PrestamoId}");

@@ -1,10 +1,9 @@
 using AutoMapper;
-using System.Text.RegularExpressions;
-using LibroManager.Models;
 using LibroManager.DTOs;
+using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services.Interfaces;
-using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
 
 namespace LibroManager.Services;
 
@@ -106,7 +105,7 @@ public class EstudianteService : IEstudianteService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al crear estudiante: {Nombre}, {Email}", 
+            _logger.LogError(ex, "Error al crear estudiante: {Nombre}, {Email}",
                 estudianteDto.Nombre, estudianteDto.Email);
             return false;
         }
@@ -118,7 +117,7 @@ public class EstudianteService : IEstudianteService
         {
             if (!ValidateEstudianteData(estudianteDto))
             {
-                _logger.LogWarning("Datos de estudiante no válidos durante la actualización: {EstudianteId}", 
+                _logger.LogWarning("Datos de estudiante no válidos durante la actualización: {EstudianteId}",
                     estudianteDto.EstudianteId);
                 return false;
             }
@@ -126,7 +125,7 @@ public class EstudianteService : IEstudianteService
             var existingEstudiante = await _unitOfWork.Estudiantes.GetByIdAsync(estudianteDto.EstudianteId);
             if (existingEstudiante == null)
             {
-                _logger.LogWarning("Estudiante no encontrado para actualización: {EstudianteId}", 
+                _logger.LogWarning("Estudiante no encontrado para actualización: {EstudianteId}",
                     estudianteDto.EstudianteId);
                 return false;
             }
@@ -149,7 +148,7 @@ public class EstudianteService : IEstudianteService
 
             _unitOfWork.Estudiantes.Update(estudiante);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Estudiante actualizado: {EstudianteId}, Nombre: {Nombre}, Email: {Email}", 
+            _logger.LogInformation("Estudiante actualizado: {EstudianteId}, Nombre: {Nombre}, Email: {Email}",
                 estudiante.EstudianteId, estudiante.Nombre, estudiante.Email);
             return true;
         }
@@ -180,7 +179,7 @@ public class EstudianteService : IEstudianteService
 
             _unitOfWork.Estudiantes.Remove(estudiante);
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Estudiante eliminado: {EstudianteId}, Nombre: {Nombre}", 
+            _logger.LogInformation("Estudiante eliminado: {EstudianteId}, Nombre: {Nombre}",
                 estudiante.EstudianteId, estudiante.Nombre);
             return true;
         }
@@ -198,7 +197,7 @@ public class EstudianteService : IEstudianteService
             _logger.LogWarning("Nombre de estudiante vacío");
             return false;
         }
-            
+
         if (estudiante.Nombre.Length > MAX_NOMBRE_LENGTH)
         {
             _logger.LogWarning("Nombre de estudiante excede el límite de {MaxLength} caracteres: {Length}",
@@ -211,7 +210,7 @@ public class EstudianteService : IEstudianteService
             _logger.LogWarning("Email de estudiante vacío");
             return false;
         }
-            
+
         if (!IsValidEmail(estudiante.Email))
         {
             _logger.LogWarning("Email de estudiante con formato inválido: {Email}", estudiante.Email);

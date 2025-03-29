@@ -1,9 +1,8 @@
-using LibroManager.Models;
+using AutoMapper;
 using LibroManager.DTOs;
+using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
-using AutoMapper;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -23,7 +22,7 @@ public class AutorServiceTests
         _mockAutorRepository = new Mock<IAutorRepository>();
         _mockMapper = new Mock<IMapper>();
         _mockLogger = new Mock<ILogger<AutorService>>();
-        
+
         _mockUnitOfWork.Setup(u => u.Autores).Returns(_mockAutorRepository.Object);
         _autorService = new AutorService(_mockUnitOfWork.Object, _mockMapper.Object, _mockLogger.Object);
     }

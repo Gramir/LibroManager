@@ -1,15 +1,15 @@
 ﻿using LibroManager.Components;
+using LibroManager.Components.Account;
+using LibroManager.Constants;
 using LibroManager.Data.Context;
-using LibroManager.Services;
-using LibroManager.Services.Interfaces;
+using LibroManager.Models;
 using LibroManager.Repositories;
 using LibroManager.Repositories.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using LibroManager.Models;
-using LibroManager.Constants;
-using LibroManager.Components.Account;
+using LibroManager.Services;
+using LibroManager.Services.Interfaces;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +25,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure Identity
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
     // Password settings - Simplificados para evitar problemas de validación
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;

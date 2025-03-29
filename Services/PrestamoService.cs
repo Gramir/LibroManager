@@ -3,7 +3,6 @@ using LibroManager.DTOs;
 using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace LibroManager.Services;
 
@@ -15,8 +14,8 @@ public class PrestamoService : IPrestamoService
     private readonly ILogger<PrestamoService> _logger;
 
     public PrestamoService(
-        IUnitOfWork unitOfWork, 
-        IMapper mapper, 
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
         ILibroValidationService libroValidationService,
         ILogger<PrestamoService> logger)
     {
@@ -53,10 +52,10 @@ public class PrestamoService : IPrestamoService
                 _unitOfWork.Libros.Update(libro);
                 _unitOfWork.Prestamos.Update(prestamo);
                 await _unitOfWork.SaveChangesAsync();
-                
+
                 _logger.LogInformation(
-                    "Préstamo marcado como expirado y libro como perdido: Préstamo {PrestamoId}, Libro {LibroId}", 
-                    prestamo.PrestamoId, 
+                    "Préstamo marcado como expirado y libro como perdido: Préstamo {PrestamoId}, Libro {LibroId}",
+                    prestamo.PrestamoId,
                     prestamo.LibroId
                 );
             }
@@ -68,15 +67,15 @@ public class PrestamoService : IPrestamoService
         try
         {
             var prestamos = await _unitOfWork.Prestamos.GetAllAsync();
-            
+
             // Verificar y actualizar el estado de cada préstamo antes de mapearlos
             foreach (var prestamo in prestamos)
             {
                 await VerificarYActualizarEstadoPrestamo(prestamo);
             }
-            
+
             var prestamosDto = _mapper.Map<IEnumerable<PrestamoDTO>>(prestamos);
-            
+
             if (!prestamosDto.Any())
             {
                 _logger.LogInformation("No se encontraron préstamos");
@@ -114,7 +113,7 @@ public class PrestamoService : IPrestamoService
         {
             var prestamos = await _unitOfWork.Prestamos.GetPrestamosByEstudianteAsync(estudianteId);
             var prestamosDto = _mapper.Map<IEnumerable<PrestamoDTO>>(prestamos);
-            
+
             // Solo después del mapeo verificamos si la colección está vacía
             if (!prestamosDto.Any())
             {
@@ -135,7 +134,7 @@ public class PrestamoService : IPrestamoService
         {
             var prestamos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(libroId);
             var prestamosDto = _mapper.Map<IEnumerable<PrestamoDTO>>(prestamos);
-            
+
             // Solo después del mapeo verificamos si la colección está vacía
             if (!prestamosDto.Any())
             {
@@ -200,10 +199,10 @@ public class PrestamoService : IPrestamoService
 
             prestamo.Estado = EstadoPrestamo.Activo;
             libro.Estado = EstadoLibro.Prestado;
-            
+
             // Actualizar el estado del libro en la base de datos
             _unitOfWork.Libros.Update(libro);
-            
+
             await _unitOfWork.Prestamos.AddAsync(prestamo);
             await _unitOfWork.SaveChangesAsync();
 
@@ -239,7 +238,7 @@ public class PrestamoService : IPrestamoService
             // Actualizar las propiedades del préstamo existente
             prestamoExistente.FechaVencimiento = prestamoUpdateDto.FechaVencimiento;
             prestamoExistente.FechaDevolucion = prestamoUpdateDto.FechaDevolucion;
-            
+
             // Determinar el estado del préstamo y libro
             if (prestamoExistente.FechaDevolucion.HasValue)
             {
@@ -311,7 +310,7 @@ public class PrestamoService : IPrestamoService
         {
             var prestamos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(libroId);
             var prestamosNoActivos = prestamos.Where(p => p.Estado != EstadoPrestamo.Activo).ToList();
-            
+
             if (!prestamosNoActivos.Any())
                 return true;
 
@@ -335,7 +334,7 @@ public class PrestamoService : IPrestamoService
         // Verificar si hay préstamos activos para este libro
         var prestamosActivos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(libro.LibroId);
         var tieneActivosCount = prestamosActivos.Any(p => p.Estado == EstadoPrestamo.Activo);
-        
+
         if (!tieneActivosCount)
         {
             libro.Estado = EstadoLibro.Disponible;

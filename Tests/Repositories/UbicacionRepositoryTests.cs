@@ -23,7 +23,7 @@ public class UbicacionRepositoryTests
 
         _context = new ApplicationDbContext(_options);
         _repository = new UbicacionRepository(_context);
-        
+
         // Limpiar la base de datos antes de cada test
         _context.Ubicaciones.RemoveRange(_context.Ubicaciones);
         _context.Libros.RemoveRange(_context.Libros);
@@ -240,7 +240,7 @@ public class UbicacionRepositoryTests
         Assert.Contains(result.Libros, l => l.Titulo == "Libro 4");
         Assert.Contains(result.Libros, l => l.Titulo == "Libro 5");
     }
-    
+
     [Fact]
     public async Task GetUbicacionWithLibrosAsync_ReturnsNull_WhenUbicacionDoesNotExist()
     {

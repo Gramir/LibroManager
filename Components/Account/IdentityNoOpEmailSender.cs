@@ -1,5 +1,4 @@
-﻿using LibroManager.Data.Context;
-using LibroManager.Models;
+﻿using LibroManager.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 

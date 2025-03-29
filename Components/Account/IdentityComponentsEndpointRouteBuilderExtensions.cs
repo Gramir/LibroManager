@@ -1,8 +1,5 @@
-﻿using System.Security.Claims;
-using System.Text.Json;
-using LibroManager.Components.Account.Pages;
+﻿using LibroManager.Components.Account.Pages;
 using LibroManager.Components.Account.Pages.Manage;
-using LibroManager.Data.Context;
 using LibroManager.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -10,8 +7,9 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
-
-namespace Microsoft.AspNetCore.Routing
+using System.Security.Claims;
+using System.Text.Json;
+namespace LibroManager.Components.Account
 {
     internal static class IdentityComponentsEndpointRouteBuilderExtensions
     {

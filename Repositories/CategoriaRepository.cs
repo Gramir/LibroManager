@@ -15,7 +15,7 @@ public class CategoriaRepository : GenericRepository<Categoria>, ICategoriaRepos
             .Include(c => c.Libros)
             .ToListAsync();
     }
-    
+
     public override async Task<Categoria?> GetByIdAsync(int id)
     {
         return await _context.Set<Categoria>()

@@ -23,7 +23,7 @@ public class ValidationService
             return GetUniqueValidationMessage("Nombre");
         if (ex.InnerException?.Message.Contains("IX_Estudiantes_Email") ?? false)
             return GetUniqueValidationMessage("Email");
-            
+
         return "Error al guardar los cambios en la base de datos";
     }
 }

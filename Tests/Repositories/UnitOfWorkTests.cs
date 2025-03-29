@@ -3,7 +3,6 @@ using LibroManager.Models;
 using LibroManager.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
@@ -29,33 +28,33 @@ public class UnitOfWorkTests : IDisposable
         _context = new ApplicationDbContext(_options);
         _context.Database.EnsureDeleted();
         _context.Database.EnsureCreated();
-        
+
         // Asegurarse de que no hay datos residuales en las tablas
         if (_context.Prestamos.Any())
         {
             _context.Prestamos.RemoveRange(_context.Prestamos);
         }
-        
+
         if (_context.Libros.Any())
         {
             _context.Libros.RemoveRange(_context.Libros);
         }
-        
+
         if (_context.Estudiantes.Any())
         {
             _context.Estudiantes.RemoveRange(_context.Estudiantes);
         }
-        
+
         if (_context.Autores.Any())
         {
             _context.Autores.RemoveRange(_context.Autores);
         }
-        
+
         if (_context.Categorias.Any())
         {
             _context.Categorias.RemoveRange(_context.Categorias);
         }
-        
+
         _context.SaveChanges();
 
         // Setup UserManager Mock
@@ -142,7 +141,7 @@ public class UnitOfWorkTests : IDisposable
         Assert.Equal(1, savedEntries);
         var savedAutor = await _context.Autores.FirstOrDefaultAsync();
         var savedLibro = await _context.Libros.FirstOrDefaultAsync();
-        
+
         Assert.NotNull(savedAutor);
         Assert.NotNull(savedLibro);
         Assert.Equal("Test Autor", savedAutor.Nombre);
@@ -157,13 +156,13 @@ public class UnitOfWorkTests : IDisposable
         await _unitOfWork.Autores.AddAsync(autor);
         await _unitOfWork.SaveChangesAsync();
 
-        var libro = new Libro 
-        { 
-            Titulo = "Test Libro", 
+        var libro = new Libro
+        {
+            Titulo = "Test Libro",
             ISBN = "1234567890",
             AutorId = autor.AutorId
         };
-        
+
         await _unitOfWork.Libros.AddAsync(libro);
         await _unitOfWork.SaveChangesAsync();
 
@@ -181,7 +180,7 @@ public class UnitOfWorkTests : IDisposable
         Assert.NotNull(autorConLibros.Libros);
         Assert.Single(autorConLibros.Libros);
         Assert.Equal(libro.Titulo, autorConLibros.Libros.First().Titulo);
-        
+
         Assert.NotNull(libroConAutor);
         Assert.NotNull(libroConAutor.Autor);
         Assert.Equal(autor.Nombre, libroConAutor.Autor.Nombre);

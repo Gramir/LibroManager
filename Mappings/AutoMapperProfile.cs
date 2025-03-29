@@ -1,6 +1,6 @@
 using AutoMapper;
-using LibroManager.Models;
 using LibroManager.DTOs;
+using LibroManager.Models;
 
 namespace LibroManager.Mappings;
 
@@ -36,8 +36,8 @@ public class AutoMapperProfile : Profile
 
         // Mapeos de Estudiante
         CreateMap<Estudiante, EstudianteDTO>()
-            .ForMember(dest => dest.PrestamosActivos, 
-                opt => opt.MapFrom(src => src.Prestamos != null ? 
+            .ForMember(dest => dest.PrestamosActivos,
+                opt => opt.MapFrom(src => src.Prestamos != null ?
                     src.Prestamos.Count(p => p.FechaVencimiento >= DateTime.Now) : 0));
         CreateMap<EstudianteCreateDTO, Estudiante>();
         CreateMap<EstudianteUpdateDTO, Estudiante>();
@@ -47,13 +47,13 @@ public class AutoMapperProfile : Profile
             .ForMember(dest => dest.LibroTitulo, opt => opt.MapFrom(src => src.Libro != null ? src.Libro.Titulo : string.Empty))
             .ForMember(dest => dest.LibroSerial, opt => opt.MapFrom(src => src.Libro != null ? src.Libro.Serial : string.Empty))
             .ForMember(dest => dest.EstudianteNombre, opt => opt.MapFrom(src => src.Estudiante != null ? src.Estudiante.Nombre : string.Empty))
-            .ForMember(dest => dest.EstaActivo, opt => opt.MapFrom(src => 
-                src.Estado == EstadoPrestamo.Activo && 
+            .ForMember(dest => dest.EstaActivo, opt => opt.MapFrom(src =>
+                src.Estado == EstadoPrestamo.Activo &&
                 !src.FechaDevolucion.HasValue));
         CreateMap<PrestamoCreateDTO, Prestamo>()
             .ForMember(dest => dest.FechaPrestamo, opt => opt.MapFrom(src => DateTime.Now));
         CreateMap<PrestamoUpdateDTO, Prestamo>();
-        
+
         // Mapeos de Ubicacion
         CreateMap<Ubicacion, UbicacionDTO>()
             .ForMember(dest => dest.EstaDisponible, opt => opt.MapFrom(src => src.Libros == null || !src.Libros.Any()))

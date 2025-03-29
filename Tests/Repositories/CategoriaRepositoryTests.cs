@@ -22,36 +22,36 @@ public class CategoriaRepositoryTests
 
         _context = new ApplicationDbContext(_options);
         _repository = new CategoriaRepository(_context);
-        
+
         _context.Database.EnsureDeleted();
         _context.Database.EnsureCreated();
-        
+
         // Asegurarse de que no hay datos residuales en las tablas
         if (_context.Prestamos.Any())
         {
             _context.Prestamos.RemoveRange(_context.Prestamos);
         }
-        
+
         if (_context.Libros.Any())
         {
             _context.Libros.RemoveRange(_context.Libros);
         }
-        
+
         if (_context.Estudiantes.Any())
         {
             _context.Estudiantes.RemoveRange(_context.Estudiantes);
         }
-        
+
         if (_context.Autores.Any())
         {
             _context.Autores.RemoveRange(_context.Autores);
         }
-        
+
         if (_context.Categorias.Any())
         {
             _context.Categorias.RemoveRange(_context.Categorias);
         }
-        
+
         _context.SaveChanges();
     }
 
@@ -92,15 +92,15 @@ public class CategoriaRepositoryTests
 
         var libros = new List<Libro>
         {
-            new() { 
-                Titulo = "Libro 1", 
-                ISBN = "1234567890", 
-                CategoriaId = categoria1.CategoriaId 
+            new() {
+                Titulo = "Libro 1",
+                ISBN = "1234567890",
+                CategoriaId = categoria1.CategoriaId
             },
-            new() { 
-                Titulo = "Libro 2", 
-                ISBN = "0987654321", 
-                CategoriaId = categoria1.CategoriaId 
+            new() {
+                Titulo = "Libro 2",
+                ISBN = "0987654321",
+                CategoriaId = categoria1.CategoriaId
             }
         };
         await _context.Libros.AddRangeAsync(libros);
