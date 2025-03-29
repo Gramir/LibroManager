@@ -216,22 +216,22 @@
         _prestamos = prestamos ?? Array.Empty<PrestamoDTO>();
     }
 
-    private string GetEstadoBadgeClass(PrestamoDTO prestamo)
-    {
-        if (prestamo.EstaActivo)
-            return "bg-warning";
-        if (prestamo.FechaDevolucion.HasValue)
-            return "bg-success";
-        return "bg-danger text-white";
-    }
-
     private string GetEstadoText(PrestamoDTO prestamo)
     {
-        if (prestamo.EstaActivo)
-            return "Activo";
         if (prestamo.FechaDevolucion.HasValue)
-            return "Devuelto";
-        return "Vencido";
+            return "Concluido";
+        if (prestamo.FechaVencimiento < DateTime.Now)
+            return "Expirado";
+        return "Activo";
+    }
+
+    private string GetEstadoBadgeClass(PrestamoDTO prestamo)
+    {
+        if (prestamo.FechaDevolucion.HasValue)
+            return "bg-success";
+        if (prestamo.FechaVencimiento < DateTime.Now)
+            return "bg-danger";
+        return "bg-warning";
     }
 
     private void Volver()

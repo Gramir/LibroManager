@@ -18,7 +18,6 @@ public class AutoMapperProfile : Profile
 
         CreateMap<LibroCreateDTO, Libro>()
             .ForMember(dest => dest.UbicacionId, opt => opt.Ignore());
-
         CreateMap<LibroUpdateDTO, Libro>()
             .ForMember(dest => dest.UbicacionId, opt => opt.Ignore());
 
@@ -38,7 +37,8 @@ public class AutoMapperProfile : Profile
         CreateMap<Estudiante, EstudianteDTO>()
             .ForMember(dest => dest.PrestamosActivos,
                 opt => opt.MapFrom(src => src.Prestamos != null ?
-                    src.Prestamos.Count(p => p.FechaVencimiento >= DateTime.Now) : 0));
+                    src.Prestamos.Count(p => p.Estado == EstadoPrestamo.Activo &&
+                                           !p.FechaDevolucion.HasValue) : 0));
         CreateMap<EstudianteCreateDTO, Estudiante>();
         CreateMap<EstudianteUpdateDTO, Estudiante>();
 

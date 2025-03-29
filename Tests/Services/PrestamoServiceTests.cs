@@ -100,7 +100,9 @@ public class PrestamoServiceTests
 
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByEstudianteAsync(estudianteId))
             .ReturnsAsync(prestamos);
-        _mockMapper.Setup(m => m.Map<IEnumerable<PrestamoDTO>>(prestamos))
+        _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(1))
+            .ReturnsAsync(new Libro { LibroId = 1, Titulo = "Libro 1" });
+        _mockMapper.Setup(m => m.Map<IEnumerable<PrestamoDTO>>(It.Is<IEnumerable<Prestamo>>(p => p.Any(x => x.EstudianteId == estudianteId))))
             .Returns(prestamosDto);
 
         // Act
@@ -138,7 +140,9 @@ public class PrestamoServiceTests
 
         _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(libroId))
             .ReturnsAsync(prestamos);
-        _mockMapper.Setup(m => m.Map<IEnumerable<PrestamoDTO>>(prestamos))
+        _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(1))
+            .ReturnsAsync(new Libro { LibroId = 1, Titulo = "Libro 1" });
+        _mockMapper.Setup(m => m.Map<IEnumerable<PrestamoDTO>>(It.Is<IEnumerable<Prestamo>>(p => p.Any(x => x.LibroId == libroId))))
             .Returns(prestamosDto);
 
         // Act
@@ -1001,13 +1005,19 @@ public class PrestamoServiceTests
         _mockLibroValidationService.Setup(s => s.PrestamoEsValido(It.IsAny<Prestamo>()))
             .ReturnsAsync(true);
 
-        _mockUnitOfWork.Setup(uow => uow.Libros.GetByIdAsync(prestamo.LibroId))
+        _mockUnitOfWork.Setup(u => u.Libros.GetByIdAsync(prestamo.LibroId))
             .ReturnsAsync(libro);
-        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByLibroAsync(prestamo.LibroId))
+        _mockUnitOfWork.Setup(u => u.Libros.GetByIdAsync(prestamo.LibroId))
+            .ReturnsAsync(libro);
+        _mockUnitOfWork.Setup(u => u.Prestamos.GetPrestamosByLibroAsync(prestamo.LibroId))
             .ReturnsAsync(new List<Prestamo>());
-        _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByIdAsync(prestamo.EstudianteId))
+
+        // Mock estudiante existe
+        _mockUnitOfWork.Setup(u => u.Estudiantes.GetByIdAsync(prestamo.EstudianteId))
             .ReturnsAsync(new Estudiante { EstudianteId = prestamo.EstudianteId });
-        _mockUnitOfWork.Setup(uow => uow.Prestamos.GetPrestamosByEstudianteAsync(prestamo.EstudianteId))
+
+        // Mock estudiante no tiene préstamos vencidos
+        _mockUnitOfWork.Setup(u => u.Prestamos.GetPrestamosByEstudianteAsync(prestamo.EstudianteId))
             .ReturnsAsync(new List<Prestamo>());
 
         _mockMapper.Setup(m => m.Map<Prestamo>(prestamoCreateDto))
@@ -1020,8 +1030,8 @@ public class PrestamoServiceTests
         Assert.True(result);
         Assert.Equal(EstadoPrestamo.Activo, prestamo.Estado);
         Assert.Equal(EstadoLibro.Prestado, libro.Estado);
-        _mockUnitOfWork.Verify(uow => uow.Libros.Update(libro), Times.Once);
-        _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Once);
+        _mockUnitOfWork.Verify(u => u.Libros.Update(libro), Times.Once);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Fact]

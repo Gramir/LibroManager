@@ -104,10 +104,22 @@ public class PrestamoService(
         try
         {
             var prestamos = await _unitOfWork.Prestamos.GetPrestamosByEstudianteAsync(estudianteId);
+            
+            // Verificar y actualizar el estado de cada préstamo antes de mapearlos
+            foreach (var prestamo in prestamos)
+            {
+                await VerificarYActualizarEstadoPrestamo(prestamo);
+            }
+
             var prestamosDto = _mapper.Map<IEnumerable<PrestamoDTO>>(prestamos);
 
-            // Ordenar los préstamos por fecha de préstamo descendente
-            return prestamosDto.OrderByDescending(p => p.FechaPrestamo);
+            // Ordenar los préstamos por fecha descendente y verificar si la colección está vacía
+            var prestamosOrdenados = prestamosDto.OrderByDescending(p => p.FechaPrestamo).ToList();
+            if (!prestamosOrdenados.Any())
+            {
+                _logger.LogInformation("No se encontraron préstamos para el estudiante {EstudianteId}", estudianteId);
+            }
+            return prestamosOrdenados;
         }
         catch (Exception ex)
         {
@@ -121,14 +133,22 @@ public class PrestamoService(
         try
         {
             var prestamos = await _unitOfWork.Prestamos.GetPrestamosByLibroAsync(libroId);
+            
+            // Verificar y actualizar el estado de cada préstamo antes de mapearlos
+            foreach (var prestamo in prestamos)
+            {
+                await VerificarYActualizarEstadoPrestamo(prestamo);
+            }
+
             var prestamosDto = _mapper.Map<IEnumerable<PrestamoDTO>>(prestamos);
 
-            // Solo después del mapeo verificamos si la colección está vacía
-            if (!prestamosDto.Any())
+            // Ordenar los préstamos por fecha descendente y verificar si la colección está vacía
+            var prestamosOrdenados = prestamosDto.OrderByDescending(p => p.FechaPrestamo).ToList();
+            if (!prestamosOrdenados.Any())
             {
                 _logger.LogInformation("No se encontraron préstamos para el libro {LibroId}", libroId);
             }
-            return prestamosDto;
+            return prestamosOrdenados;
         }
         catch (Exception ex)
         {
