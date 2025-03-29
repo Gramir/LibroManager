@@ -67,12 +67,12 @@ public class LibroRepository : ILibroRepository
 
     public async Task<bool> IsbnExistsAsync(string isbn)
     {
-        return await _context.Libros.AnyAsync(l => string.Equals(l.ISBN, isbn, StringComparison.OrdinalIgnoreCase));
+        return await _context.Libros.AnyAsync(l => l.ISBN.ToLower() == isbn.ToLower());
     }
 
     public async Task<bool> SerialExistsAsync(string serial)
     {
-        return await _context.Libros.AnyAsync(l => string.Equals(l.Serial, serial, StringComparison.OrdinalIgnoreCase));
+        return await _context.Libros.AnyAsync(l => l.Serial.ToLower() == serial.ToLower());
     }
 
     public async Task<IEnumerable<Libro>> GetLibrosWithAutorAndCategoriaAsync()
