@@ -72,7 +72,7 @@ public class LibroService(
             if (autor?.Libros == null)
             {
                 _logger.LogWarning("No se encontraron libros para el autor con ID {AutorId}", autorId);
-                return Array.Empty<LibroDTO>();
+                return [];
             }
 
             foreach (var libro in autor.Libros)
@@ -151,11 +151,35 @@ public class LibroService(
         }
     }
 
-    private async Task<string> GenerateSerial(string isbn)
+    public async Task<string> GetNextAvailableSerial(string isbn)
     {
-        var ejemplares = await _unitOfWork.Libros.GetAllAsync();
-        var numeroEjemplar = ejemplares.Count(l => l.ISBN == isbn) + 1;
-        return $"{isbn}-{numeroEjemplar}";
+        try
+        {
+            var libros = await _unitOfWork.Libros.GetAllAsync();
+            var ejemplaresDelIsbn = libros.Where(l => l.ISBN == isbn).ToList();
+            
+            var numerosSerialExistentes = ejemplaresDelIsbn
+                .Select(l => int.Parse(l.Serial[(l.Serial.LastIndexOf('-') + 1)..]))
+                .OrderBy(n => n)
+                .ToList();
+
+            int nuevoNumero = 1;
+            foreach (var numero in numerosSerialExistentes)
+            {
+                if (numero != nuevoNumero)
+                {
+                    break;
+                }
+                nuevoNumero++;
+            }
+
+            return $"{isbn}-{nuevoNumero}";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al generar serial para ISBN {ISBN}", isbn);
+            throw;
+        }
     }
 
     public async Task<bool> UpdateLibroAsync(LibroUpdateDTO libroDto)
@@ -345,10 +369,7 @@ public class LibroService(
             // Cargar las ubicaciones para cada ejemplar
             foreach (var ejemplar in ejemplares)
             {
-                if (ejemplar.Ubicacion == null)
-                {
-                    ejemplar.Ubicacion = await _unitOfWork.Ubicaciones.GetByIdAsync(ejemplar.UbicacionId);
-                }
+                ejemplar.Ubicacion ??= await _unitOfWork.Ubicaciones.GetByIdAsync(ejemplar.UbicacionId);
             }
 
             return _mapper.Map<IEnumerable<LibroDTO>>(ejemplares);
@@ -364,7 +385,6 @@ public class LibroService(
     {
         try
         {
-            // Buscar la ubicación en la base de datos
             var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
             var ubicacionEncontrada = ubicaciones.FirstOrDefault(u => u.ObtenerUbicacionFormateada() == ubicacion);
 
@@ -374,7 +394,6 @@ public class LibroService(
                 return false;
             }
 
-            // Obtener el libro original con sus detalles
             var ejemplares = await _unitOfWork.Libros.GetLibrosWithAutorAndCategoriaAsync();
             var primerEjemplar = ejemplares.FirstOrDefault(l => l.ISBN == isbn);
             if (primerEjemplar == null)
@@ -383,10 +402,8 @@ public class LibroService(
                 return false;
             }
 
-            // Generar el serial con el nuevo formato
-            var serial = await GenerateSerial(isbn);
+            var serial = await GetNextAvailableSerial(isbn);
 
-            // Crear el nuevo ejemplar con los mismos datos del libro original
             var nuevoEjemplar = new Libro
             {
                 Titulo = primerEjemplar.Titulo,
@@ -422,10 +439,7 @@ public class LibroService(
 
             foreach (var libro in librosEnUbicacion)
             {
-                if (libro.Ubicacion == null)
-                {
-                    libro.Ubicacion = await _unitOfWork.Ubicaciones.GetByIdAsync(libro.UbicacionId);
-                }
+                libro.Ubicacion ??= await _unitOfWork.Ubicaciones.GetByIdAsync(libro.UbicacionId);
             }
 
             return _mapper.Map<IEnumerable<LibroDTO>>(librosEnUbicacion);
@@ -453,10 +467,7 @@ public class LibroService(
             // Cargar las ubicaciones para cada libro
             foreach (var libro in librosPorCategoria)
             {
-                if (libro.Ubicacion == null)
-                {
-                    libro.Ubicacion = await _unitOfWork.Ubicaciones.GetByIdAsync(libro.UbicacionId);
-                }
+                libro.Ubicacion ??= await _unitOfWork.Ubicaciones.GetByIdAsync(libro.UbicacionId);
             }
 
             return _mapper.Map<IEnumerable<LibroDTO>>(librosPorCategoria);
@@ -475,7 +486,7 @@ public class LibroService(
             var ejemplares = await _unitOfWork.Libros.GetLibrosWithAutorAndCategoriaAsync();
             var ejemplaresDelMismoLibro = ejemplares.Where(l => l.ISBN == isbn).ToList();
 
-            if (!ejemplaresDelMismoLibro.Any())
+            if (ejemplaresDelMismoLibro.Count == 0)
             {
                 _logger.LogWarning("No se encontraron ejemplares con el ISBN {ISBN}", isbn);
                 return false;

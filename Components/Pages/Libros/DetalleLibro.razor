@@ -228,7 +228,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Serial a Asignar</label>
-                        <input type="text" class="form-control" value="@(_libro?.ISBN + "-" + (_ejemplares.Count() + 1))" readonly />
+                        <input type="text" class="form-control" value="@_proximoSerial" readonly />
                     </div>
                     <div class="mb-3 dropdown-container" @onclick:stopPropagation>
                         <label for="ubicacion" class="form-label">Ubicación</label>

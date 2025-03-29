@@ -32,6 +32,7 @@ public partial class DetalleLibro
     private IEnumerable<UbicacionDTO>? _ubicacionesFiltradas;
     private string _errorMessageUbicacion = string.Empty;
     private bool _tienePrestamosHistoricos;
+    private string? _proximoSerial;
 
     [Parameter]
     public int LibroId { get; set; }
@@ -163,11 +164,16 @@ public partial class DetalleLibro
         return _ejemplares.Any(e => e.EstaPrestado);
     }
 
-    private void MostrarFormularioEjemplar()
+    private async Task MostrarFormularioEjemplar()
     {
-        _mostrarFormularioEjemplar = true;
+        _errorMessageUbicacion = string.Empty;
         _nuevaUbicacion = string.Empty;
-        _showDropdown = false;
+        _mostrarFormularioEjemplar = true;
+        if (_libro != null)
+        {
+            _proximoSerial = await LibroService.GetNextAvailableSerial(_libro.ISBN);
+        }
+        await LoadUbicaciones();
     }
 
     private void CerrarFormularioEjemplar()
