@@ -49,6 +49,7 @@ else
                     <th>Estudiante</th>
                     <th>Fecha de Préstamo</th>
                     <th>Fecha de Vencimiento</th>
+                    <th>Fecha de Devolución</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -65,6 +66,16 @@ else
                             <span class="@(prestamo.FechaVencimiento < DateTime.Now && prestamo.EstaActivo ? "text-danger" : "")">
                                 @prestamo.FechaVencimiento.ToShortDateString()
                             </span>
+                        </td>
+                        <td>
+                            @if (prestamo.FechaDevolucion.HasValue)
+                            {
+                                @prestamo.FechaDevolucion.Value.ToShortDateString()
+                            }
+                            else
+                            {
+                                <span>Pendiente</span>
+                            }
                         </td>
                         <td>
                             @{
