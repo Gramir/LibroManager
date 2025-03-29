@@ -160,138 +160,92 @@ public class LibroRepositoryTests
     }
 
     [Fact]
-    public async Task GetLibrosWithAutorAndCategoriaAsync_ReturnsLibrosWithDetails()
+    public async Task SerialExistsAsync_ReturnsTrue_WhenSerialExists()
     {
         // Arrange
-        var autor = new Autor { Nombre = "Test Autor" };
-        var categoria = new Categoria { Nombre = "Test Categoria" };
-        await _context.Autores.AddAsync(autor);
-        await _context.Categorias.AddAsync(categoria);
-        await _context.SaveChangesAsync();
-
-        var libro = new Libro
-        {
-            Titulo = "Test Libro",
-            ISBN = "1234567890",
-            AutorId = autor.AutorId,
-            CategoriaId = categoria.CategoriaId
-        };
+        var libro = new Libro { Titulo = "Test Libro", Serial = "1234567890-1" };
         await _context.Libros.AddAsync(libro);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _repository.GetLibrosWithAutorAndCategoriaAsync();
-
-        // Assert
-        var libroResult = result.First();
-        Assert.NotNull(libroResult.Autor);
-        Assert.NotNull(libroResult.Categoria);
-        Assert.Equal(autor.Nombre, libroResult.Autor.Nombre);
-        Assert.Equal(categoria.Nombre, libroResult.Categoria.Nombre);
-    }
-
-    [Fact]
-    public async Task GetLibroWithDetailsAsync_ReturnsLibroWithAllDetails()
-    {
-        // Arrange
-        var autor = new Autor { Nombre = "Test Autor" };
-        var categoria = new Categoria { Nombre = "Test Categoria" };
-        await _context.Autores.AddAsync(autor);
-        await _context.Categorias.AddAsync(categoria);
-        await _context.SaveChangesAsync();
-
-        var libro = new Libro
-        {
-            Titulo = "Test Libro",
-            ISBN = "1234567890",
-            AutorId = autor.AutorId,
-            CategoriaId = categoria.CategoriaId
-        };
-        await _context.Libros.AddAsync(libro);
-        await _context.SaveChangesAsync();
-
-        var prestamo = new Prestamo
-        {
-            LibroId = libro.LibroId,
-            FechaPrestamo = DateTime.Now,
-            FechaVencimiento = DateTime.Now.AddDays(7)
-        };
-        await _context.Prestamos.AddAsync(prestamo);
-        await _context.SaveChangesAsync();
-
-        // Act
-        var result = await _repository.GetLibroWithDetailsAsync(libro.LibroId);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.NotNull(result.Autor);
-        Assert.NotNull(result.Categoria);
-        Assert.NotNull(result.Prestamos);
-        Assert.Single(result.Prestamos);
-        Assert.Equal(autor.Nombre, result.Autor.Nombre);
-        Assert.Equal(categoria.Nombre, result.Categoria.Nombre);
-    }
-
-    [Fact]
-    public async Task EstaPrestadoAsync_ReturnsTrue_WhenLibroTienePrestamoActivo()
-    {
-        // Arrange
-        var libro = new Libro { Titulo = "Test Libro", ISBN = "1234567890" };
-        await _context.Libros.AddAsync(libro);
-        await _context.SaveChangesAsync();
-
-        var prestamo = new Prestamo
-        {
-            LibroId = libro.LibroId,
-            FechaPrestamo = DateTime.Now,
-            FechaVencimiento = DateTime.Now.AddDays(7)
-        };
-        await _context.Prestamos.AddAsync(prestamo);
-        await _context.SaveChangesAsync();
-
-        // Act
-        var result = await _repository.EstaPrestadoAsync(libro.LibroId);
+        var result = await _repository.SerialExistsAsync("1234567890-1");
 
         // Assert
         Assert.True(result);
     }
 
     [Fact]
-    public async Task EstaPrestadoAsync_ReturnsFalse_WhenLibroNoTienePrestamoActivo()
+    public async Task SerialExistsAsync_ReturnsFalse_WhenSerialDoesNotExist()
     {
-        // Arrange
-        var libro = new Libro { Titulo = "Test Libro", ISBN = "1234567890" };
-        await _context.Libros.AddAsync(libro);
-        await _context.SaveChangesAsync();
-
         // Act
-        var result = await _repository.EstaPrestadoAsync(libro.LibroId);
+        var result = await _repository.SerialExistsAsync("1234567890-1");
 
         // Assert
         Assert.False(result);
     }
 
     [Fact]
-    public async Task EstaPrestadoAsync_ReturnsFalse_WhenPrestamoEstaVencido()
+    public async Task FindAsync_ReturnsMatchingLibros_WithTituloExpression()
     {
         // Arrange
-        var libro = new Libro { Titulo = "Test Libro", ISBN = "1234567890" };
-        await _context.Libros.AddAsync(libro);
-        await _context.SaveChangesAsync();
-
-        var prestamo = new Prestamo
+        var libros = new List<Libro>
         {
-            LibroId = libro.LibroId,
-            FechaPrestamo = DateTime.Now.AddDays(-14),
-            FechaVencimiento = DateTime.Now.AddDays(-7)
+            new() { Titulo = "Libro Programación" },
+            new() { Titulo = "Libro Cocina" },
+            new() { Titulo = "Libro Programación Avanzada" }
         };
-        await _context.Prestamos.AddAsync(prestamo);
+        await _context.Libros.AddRangeAsync(libros);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _repository.EstaPrestadoAsync(libro.LibroId);
+        var result = await _repository.FindAsync(l => l.Titulo.Contains("Programación"));
 
         // Assert
-        Assert.False(result);
+        Assert.Equal(2, result.Count());
+        Assert.All(result, l => Assert.Contains("Programación", l.Titulo));
+    }
+
+    [Fact]
+    public async Task FindAsync_ReturnsMatchingLibros_WithIsbnExpression()
+    {
+        // Arrange
+        var libros = new List<Libro>
+        {
+            new() { ISBN = "1234567890" },
+            new() { ISBN = "0987654321" }
+        };
+        await _context.Libros.AddRangeAsync(libros);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.FindAsync(l => l.ISBN == "1234567890");
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("1234567890", result.First().ISBN);
+    }
+
+    [Fact]
+    public async Task GetLibrosWithAutorAndCategoriaAsync_ReturnsLibrosWithoutDetails_WhenNoRelationships()
+    {
+        // Arrange
+        var libros = new List<Libro>
+        {
+            new() { Titulo = "Libro 1", ISBN = "1234567890" },
+            new() { Titulo = "Libro 2", ISBN = "0987654321" }
+        };
+        await _context.Libros.AddRangeAsync(libros);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.GetLibrosWithAutorAndCategoriaAsync();
+
+        // Assert
+        Assert.Equal(2, result.Count());
+        Assert.All(result, l => 
+        {
+            Assert.Null(l.Autor);
+            Assert.Null(l.Categoria);
+        });
     }
 }

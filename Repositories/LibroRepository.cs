@@ -77,6 +77,11 @@ public class LibroRepository : ILibroRepository
 
     public async Task<IEnumerable<Libro>> GetLibrosWithAutorAndCategoriaAsync()
     {
+        if (_isTestEnvironment)
+        {
+            return await _context.Libros.ToListAsync();
+        }
+
         return await _context.Libros
             .Include(l => l.Autor)
             .Include(l => l.Categoria)

@@ -771,4 +771,265 @@ public class LibroServiceTests
         _mockLibroRepository.Verify(r => r.Update(It.IsAny<Libro>()), Times.Never);
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
+
+    [Fact]
+    public async Task GetLibrosPorCategoriaAsync_ReturnaLibrosFiltrados()
+    {
+        // Arrange
+        var categoriaId = 1;
+        var libros = new List<Libro>
+        {
+            new() { LibroId = 1, Titulo = "Libro 1", CategoriaId = 1 },
+            new() { LibroId = 2, Titulo = "Libro 2", CategoriaId = 1 },
+            new() { LibroId = 3, Titulo = "Libro 3", CategoriaId = 2 }
+        };
+
+        var librosDto = new List<LibroDTO>
+        {
+            new() { LibroId = 1, Titulo = "Libro 1" },
+            new() { LibroId = 2, Titulo = "Libro 2" }
+        };
+
+        _mockLibroRepository.Setup(r => r.GetLibrosWithAutorAndCategoriaAsync())
+            .ReturnsAsync(libros);
+        _mockMapper.Setup(m => m.Map<IEnumerable<LibroDTO>>(It.IsAny<IEnumerable<Libro>>()))
+            .Returns(librosDto);
+
+        // Act
+        var result = await _libroService.GetLibrosPorCategoriaAsync(categoriaId);
+
+        // Assert
+        Assert.Equal(2, result.Count());
+        _mockLibroRepository.Verify(r => r.GetLibrosWithAutorAndCategoriaAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetLibrosPorCategoriaAsync_CuandoNoHayLibros_RetornaListaVacia()
+    {
+        // Arrange
+        var categoriaId = 1;
+        _mockLibroRepository.Setup(r => r.GetLibrosWithAutorAndCategoriaAsync())
+            .ReturnsAsync(new List<Libro>());
+
+        // Act
+        var result = await _libroService.GetLibrosPorCategoriaAsync(categoriaId);
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetLibrosPorUbicacionAsync_ReturnaLibrosFiltrados()
+    {
+        // Arrange
+        var ubicacionId = 1;
+        var libros = new List<Libro>
+        {
+            new() { LibroId = 1, Titulo = "Libro 1", UbicacionId = 1 },
+            new() { LibroId = 2, Titulo = "Libro 2", UbicacionId = 1 },
+            new() { LibroId = 3, Titulo = "Libro 3", UbicacionId = 2 }
+        };
+
+        var librosDto = new List<LibroDTO>
+        {
+            new() { LibroId = 1, Titulo = "Libro 1" },
+            new() { LibroId = 2, Titulo = "Libro 2" }
+        };
+
+        _mockLibroRepository.Setup(r => r.GetLibrosWithAutorAndCategoriaAsync())
+            .ReturnsAsync(libros);
+        _mockMapper.Setup(m => m.Map<IEnumerable<LibroDTO>>(It.IsAny<IEnumerable<Libro>>()))
+            .Returns(librosDto);
+
+        // Act
+        var result = await _libroService.GetLibrosPorUbicacionAsync(ubicacionId);
+
+        // Assert
+        Assert.Equal(2, result.Count());
+        _mockLibroRepository.Verify(r => r.GetLibrosWithAutorAndCategoriaAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetNextAvailableSerial_RetornaSerialCorrecto()
+    {
+        // Arrange
+        var isbn = "1234567890";
+        var libros = new List<Libro>
+        {
+            new() { ISBN = isbn, Serial = "1234567890-1" },
+            new() { ISBN = isbn, Serial = "1234567890-2" }
+        };
+
+        _mockLibroRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(libros);
+
+        // Act
+        var result = await _libroService.GetNextAvailableSerial(isbn);
+
+        // Assert
+        Assert.Equal("1234567890-3", result);
+    }
+
+    [Fact]
+    public async Task GetNextAvailableSerial_CuandoNoHayLibros_RetornaPrimerSerial()
+    {
+        // Arrange
+        var isbn = "1234567890";
+        _mockLibroRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(new List<Libro>());
+
+        // Act
+        var result = await _libroService.GetNextAvailableSerial(isbn);
+
+        // Assert
+        Assert.Equal("1234567890-1", result);
+    }
+
+    [Fact]
+    public async Task GetNextAvailableSerial_ConNumerosNoSecuenciales_RetornaNumeroFaltante()
+    {
+        // Arrange
+        var isbn = "1234567890";
+        var libros = new List<Libro>
+        {
+            new() { ISBN = isbn, Serial = "1234567890-1" },
+            new() { ISBN = isbn, Serial = "1234567890-3" }
+        };
+
+        _mockLibroRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(libros);
+
+        // Act
+        var result = await _libroService.GetNextAvailableSerial(isbn);
+
+        // Assert
+        Assert.Equal("1234567890-2", result);
+    }
+
+    [Fact]
+    public async Task ContarEjemplaresPerdidosPorIsbnAsync_RetornaCantidadCorrecta()
+    {
+        // Arrange
+        var isbn = "1234567890";
+        var libros = new List<Libro>
+        {
+            new() { ISBN = isbn, Estado = EstadoLibro.Perdido },
+            new() { ISBN = isbn, Estado = EstadoLibro.Perdido },
+            new() { ISBN = isbn, Estado = EstadoLibro.Disponible },
+            new() { ISBN = "9876543210", Estado = EstadoLibro.Perdido }
+        };
+
+        _mockLibroRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(libros);
+
+        // Act
+        var result = await _libroService.ContarEjemplaresPerdidosPorIsbnAsync(isbn);
+
+        // Assert
+        Assert.Equal(2, result);
+        _mockLibroRepository.Verify(r => r.GetAllAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task ContarEjemplaresPerdidosPorIsbnAsync_SinEjemplaresPerdidos_RetornaCero()
+    {
+        // Arrange
+        var isbn = "1234567890";
+        var libros = new List<Libro>
+        {
+            new() { ISBN = isbn, Estado = EstadoLibro.Disponible },
+            new() { ISBN = isbn, Estado = EstadoLibro.Prestado }
+        };
+
+        _mockLibroRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(libros);
+
+        // Act
+        var result = await _libroService.ContarEjemplaresPerdidosPorIsbnAsync(isbn);
+
+        // Assert
+        Assert.Equal(0, result);
+    }
+
+    [Fact]
+    public async Task CreateLibroAsync_ConUbicacionInvalida_RetornaFalso()
+    {
+        // Arrange
+        var libroCreateDto = new LibroCreateDTO
+        {
+            Titulo = "Test Libro",
+            ISBN = "1234567890",
+            AutorId = 1,
+            CategoriaId = 1,
+            UbicacionString = "X-99-99" // Ubicación que no existe
+        };
+
+        var ubicaciones = new List<Ubicacion>
+        {
+            new() { UbicacionId = 1, Estante = "A", Nivel = 1, Posicion = 1 }
+        };
+
+        _mockUbicacionRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(ubicaciones);
+
+        // Act
+        var result = await _libroService.CreateLibroAsync(libroCreateDto);
+
+        // Assert
+        Assert.False(result);
+        _mockLibroRepository.Verify(r => r.AddAsync(It.IsAny<Libro>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateLibroAsync_ConUbicacionValida_PeroSinEncontrarla_RetornaFalso()
+    {
+        // Arrange
+        var libroCreateDto = new LibroCreateDTO
+        {
+            Titulo = "Test Libro",
+            ISBN = "1234567890",
+            AutorId = 1,
+            CategoriaId = 1,
+            UbicacionString = "A-1-1"
+        };
+
+        var ubicaciones = new List<Ubicacion>(); // Lista vacía de ubicaciones
+
+        _mockUbicacionRepository.Setup(r => r.GetAllAsync())
+            .ReturnsAsync(ubicaciones);
+
+        // Act
+        var result = await _libroService.CreateLibroAsync(libroCreateDto);
+
+        // Assert
+        Assert.False(result);
+        _mockLibroRepository.Verify(r => r.AddAsync(It.IsAny<Libro>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateLibroAsync_ConErrorAlBuscarUbicaciones_RetornaFalso()
+    {
+        // Arrange
+        var libroCreateDto = new LibroCreateDTO
+        {
+            Titulo = "Test Libro",
+            ISBN = "1234567890",
+            AutorId = 1,
+            CategoriaId = 1,
+            UbicacionString = "A-1-1"
+        };
+
+        _mockUbicacionRepository.Setup(r => r.GetAllAsync())
+            .ThrowsAsync(new Exception("Error simulado"));
+
+        // Act
+        var result = await _libroService.CreateLibroAsync(libroCreateDto);
+
+        // Assert
+        Assert.False(result);
+        _mockLibroRepository.Verify(r => r.AddAsync(It.IsAny<Libro>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
 }

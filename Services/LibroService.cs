@@ -24,7 +24,6 @@ public class LibroService(
             var libros = await _unitOfWork.Libros.GetLibrosWithAutorAndCategoriaAsync();
             foreach (var libro in libros)
             {
-                // Load the ubicacion for each libro to ensure it's available for mapping
                 if (libro.Ubicacion == null)
                 {
                     var ubicacion = await _unitOfWork.Ubicaciones.GetByIdAsync(libro.UbicacionId);
@@ -36,7 +35,7 @@ public class LibroService(
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener todos los libros");
-            return [];
+            return Enumerable.Empty<LibroDTO>();
         }
     }
 
