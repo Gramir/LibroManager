@@ -6,24 +6,16 @@ using LibroManager.Services.Interfaces;
 
 namespace LibroManager.Services;
 
-public class PrestamoService : IPrestamoService
+public class PrestamoService(
+    IUnitOfWork unitOfWork,
+    IMapper mapper,
+    ILibroValidationService libroValidationService,
+    ILogger<PrestamoService> logger) : IPrestamoService
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
-    private readonly ILibroValidationService _libroValidationService;
-    private readonly ILogger<PrestamoService> _logger;
-
-    public PrestamoService(
-        IUnitOfWork unitOfWork,
-        IMapper mapper,
-        ILibroValidationService libroValidationService,
-        ILogger<PrestamoService> logger)
-    {
-        _unitOfWork = unitOfWork;
-        _mapper = mapper;
-        _libroValidationService = libroValidationService;
-        _logger = logger;
-    }
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IMapper _mapper = mapper;
+    private readonly ILibroValidationService _libroValidationService = libroValidationService;
+    private readonly ILogger<PrestamoService> _logger = logger;
 
     private async Task VerificarYActualizarEstadoPrestamo(Prestamo prestamo)
     {
@@ -85,7 +77,7 @@ public class PrestamoService : IPrestamoService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener todos los préstamos");
-            return Enumerable.Empty<PrestamoDTO>();
+            return [];
         }
     }
 
@@ -124,7 +116,7 @@ public class PrestamoService : IPrestamoService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener préstamos del estudiante {EstudianteId}", estudianteId);
-            return Enumerable.Empty<PrestamoDTO>();
+            return [];
         }
     }
 
@@ -145,7 +137,7 @@ public class PrestamoService : IPrestamoService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener préstamos del libro {LibroId}", libroId);
-            return Enumerable.Empty<PrestamoDTO>();
+            return [];
         }
     }
 
@@ -163,7 +155,7 @@ public class PrestamoService : IPrestamoService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener préstamos activos");
-            return Enumerable.Empty<PrestamoDTO>();
+            return [];
         }
     }
 

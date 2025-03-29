@@ -5,11 +5,14 @@ using Microsoft.AspNetCore.Identity;
 
 namespace LibroManager.Repositories;
 
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork(
+    ApplicationDbContext context,
+    UserManager<ApplicationUser> userManager,
+    RoleManager<IdentityRole> roleManager) : IUnitOfWork
 {
-    private readonly ApplicationDbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly ApplicationDbContext _context = context;
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly RoleManager<IdentityRole> _roleManager = roleManager;
     private ILibroRepository? _libroRepository;
     private IAutorRepository? _autorRepository;
     private IPrestamoRepository? _prestamoRepository;
@@ -18,16 +21,6 @@ public class UnitOfWork : IUnitOfWork
     private IUbicacionRepository? _ubicacionRepository;
     private IUserRepository? _userRepository;
     private IRoleRepository? _roleRepository;
-
-    public UnitOfWork(
-        ApplicationDbContext context,
-        UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager)
-    {
-        _context = context;
-        _userManager = userManager;
-        _roleManager = roleManager;
-    }
 
     public ILibroRepository Libros => _libroRepository ??= new LibroRepository(_context);
     public IAutorRepository Autores => _autorRepository ??= new AutorRepository(_context);
@@ -45,6 +38,15 @@ public class UnitOfWork : IUnitOfWork
 
     public void Dispose()
     {
-        _context.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _context.Dispose();
+        }
     }
 }

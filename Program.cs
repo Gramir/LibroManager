@@ -57,86 +57,97 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 // Add Authorization policies
-builder.Services.AddAuthorization(options =>
-{
-    // Admin policy
-    options.AddPolicy("RequireAdmin", policy =>
-        policy.RequireRole(RoleConstants.AdminRole));
-
-    // Librarian policy
-    options.AddPolicy("RequireLibrarian", policy =>
-        policy.RequireRole(RoleConstants.LibrarianRole, RoleConstants.AdminRole));
-
-    // Libros policies
-    options.AddPolicy(RoleConstants.Permissions.Libros.Create, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Create));
-    options.AddPolicy(RoleConstants.Permissions.Libros.Read, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Read));
-    options.AddPolicy(RoleConstants.Permissions.Libros.Update, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Update));
-    options.AddPolicy(RoleConstants.Permissions.Libros.Delete, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Delete));
-    options.AddPolicy(RoleConstants.Permissions.Libros.Manage, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Manage));
-
-    // Autores policies
-    options.AddPolicy(RoleConstants.Permissions.Autores.Create, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Autores.Create));
-    options.AddPolicy(RoleConstants.Permissions.Autores.Read, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Autores.Read));
-    options.AddPolicy(RoleConstants.Permissions.Autores.Update, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Autores.Update));
-    options.AddPolicy(RoleConstants.Permissions.Autores.Delete, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Autores.Delete));
-
-    // Prestamos policies
-    options.AddPolicy(RoleConstants.Permissions.Prestamos.Create, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Create));
-    options.AddPolicy(RoleConstants.Permissions.Prestamos.Read, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Read));
-    options.AddPolicy(RoleConstants.Permissions.Prestamos.Update, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Update));
-    options.AddPolicy(RoleConstants.Permissions.Prestamos.Delete, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Delete));
-    options.AddPolicy(RoleConstants.Permissions.Prestamos.Manage, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Manage));
-
-    // Estudiantes policies
-    options.AddPolicy(RoleConstants.Permissions.Estudiantes.Create, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Create));
-    options.AddPolicy(RoleConstants.Permissions.Estudiantes.Read, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Read));
-    options.AddPolicy(RoleConstants.Permissions.Estudiantes.Update, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Update));
-    options.AddPolicy(RoleConstants.Permissions.Estudiantes.Delete, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Delete));
-
-    // Ubicaciones policies
-    options.AddPolicy(RoleConstants.Permissions.Ubicaciones.Create, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Ubicaciones.Create));
-    options.AddPolicy(RoleConstants.Permissions.Ubicaciones.Read, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Ubicaciones.Read));
-    options.AddPolicy(RoleConstants.Permissions.Ubicaciones.Update, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Ubicaciones.Update));
-    options.AddPolicy(RoleConstants.Permissions.Ubicaciones.Delete, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Ubicaciones.Delete));
-
-    // Categorias policies
-    options.AddPolicy(RoleConstants.Permissions.Categorias.Create, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Categorias.Create));
-    options.AddPolicy(RoleConstants.Permissions.Categorias.Read, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Categorias.Read));
-    options.AddPolicy(RoleConstants.Permissions.Categorias.Update, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Categorias.Update));
-    options.AddPolicy(RoleConstants.Permissions.Categorias.Delete, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Categorias.Delete));
-
-    // Users policies
-    options.AddPolicy(RoleConstants.Permissions.Users.ManageRoles, policy =>
-        policy.RequireClaim("Permission", RoleConstants.Permissions.Users.ManageRoles));
-    options.AddPolicy(RoleConstants.Permissions.Users.ManageUsers, policy =>
+builder.Services.AddAuthorizationBuilder()
+                                 // Add Authorization policies
+                                 .AddPolicy("RequireAdmin", policy =>
+        policy.RequireRole(RoleConstants.AdminRole))
+                                 // Add Authorization policies
+                                 .AddPolicy("RequireLibrarian", policy =>
+        policy.RequireRole(RoleConstants.LibrarianRole, RoleConstants.AdminRole))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Libros.Create, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Create))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Libros.Read, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Read))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Libros.Update, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Update))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Libros.Delete, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Delete))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Libros.Manage, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Libros.Manage))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Autores.Create, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Autores.Create))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Autores.Read, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Autores.Read))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Autores.Update, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Autores.Update))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Autores.Delete, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Autores.Delete))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Prestamos.Create, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Create))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Prestamos.Read, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Read))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Prestamos.Update, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Update))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Prestamos.Delete, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Delete))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Prestamos.Manage, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Prestamos.Manage))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Estudiantes.Create, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Create))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Estudiantes.Read, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Read))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Estudiantes.Update, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Update))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Estudiantes.Delete, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Estudiantes.Delete))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Ubicaciones.Create, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Ubicaciones.Create))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Ubicaciones.Read, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Ubicaciones.Read))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Ubicaciones.Update, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Ubicaciones.Update))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Ubicaciones.Delete, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Ubicaciones.Delete))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Categorias.Create, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Categorias.Create))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Categorias.Read, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Categorias.Read))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Categorias.Update, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Categorias.Update))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Categorias.Delete, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Categorias.Delete))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Users.ManageRoles, policy =>
+        policy.RequireClaim("Permission", RoleConstants.Permissions.Users.ManageRoles))
+                                 // Add Authorization policies
+                                 .AddPolicy(RoleConstants.Permissions.Users.ManageUsers, policy =>
         policy.RequireClaim("Permission", RoleConstants.Permissions.Users.ManageUsers));
-});
 
 // Add Repositories
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();

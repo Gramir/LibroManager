@@ -6,19 +6,12 @@ using LibroManager.Services.Interfaces;
 
 namespace LibroManager.Services;
 
-public class CategoriaService : ICategoriaService
+public class CategoriaService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<CategoriaService> logger) : ICategoriaService
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
-    private readonly ILogger<CategoriaService> _logger;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IMapper _mapper = mapper;
+    private readonly ILogger<CategoriaService> _logger = logger;
     private const int MAX_NOMBRE_LENGTH = 50;
-
-    public CategoriaService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<CategoriaService> logger)
-    {
-        _unitOfWork = unitOfWork;
-        _mapper = mapper;
-        _logger = logger;
-    }
 
     public async Task<IEnumerable<CategoriaDTO>> GetAllAsync()
     {
@@ -30,7 +23,7 @@ public class CategoriaService : ICategoriaService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener todas las categorías");
-            return Enumerable.Empty<CategoriaDTO>();
+            return [];
         }
     }
 
@@ -72,7 +65,7 @@ public class CategoriaService : ICategoriaService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener categorías con libros");
-            return Enumerable.Empty<CategoriaDTO>();
+            return [];
         }
     }
 

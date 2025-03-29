@@ -6,16 +6,10 @@ using System.Security.Claims;
 
 namespace LibroManager.Repositories;
 
-public class RoleRepository : IRoleRepository
+public class RoleRepository(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager) : IRoleRepository
 {
-    private readonly RoleManager<IdentityRole> _roleManager;
-    private readonly UserManager<ApplicationUser> _userManager;
-
-    public RoleRepository(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager)
-    {
-        _roleManager = roleManager;
-        _userManager = userManager;
-    }
+    private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
 
     public async Task<IEnumerable<IdentityRole>> GetAllRolesAsync()
     {

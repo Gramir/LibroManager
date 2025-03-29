@@ -6,24 +6,16 @@ using Microsoft.AspNetCore.Identity;
 
 namespace LibroManager.Services;
 
-public class AuthService : IAuthService
+public class AuthService(
+    UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager,
+    RoleManager<IdentityRole> roleManager,
+    AuthenticationStateProvider authenticationStateProvider) : IAuthService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
-    private readonly AuthenticationStateProvider _authenticationStateProvider;
-
-    public AuthService(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        RoleManager<IdentityRole> roleManager,
-        AuthenticationStateProvider authenticationStateProvider)
-    {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _roleManager = roleManager;
-        _authenticationStateProvider = authenticationStateProvider;
-    }
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
+    private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+    private readonly AuthenticationStateProvider _authenticationStateProvider = authenticationStateProvider;
 
     public async Task<(bool Success, string[] Errors)> LoginAsync(string email, string password, bool rememberMe)
     {

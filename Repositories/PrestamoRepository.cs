@@ -5,10 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibroManager.Repositories;
 
-public class PrestamoRepository : GenericRepository<Prestamo>, IPrestamoRepository
+public class PrestamoRepository(ApplicationDbContext context) : GenericRepository<Prestamo>(context), IPrestamoRepository
 {
-    public PrestamoRepository(ApplicationDbContext context) : base(context) { }
-
     public override async Task<IEnumerable<Prestamo>> GetAllAsync()
     {
         return await _context.Set<Prestamo>()

@@ -7,16 +7,10 @@ using MimeKit.Text;
 
 namespace LibroManager.Services;
 
-public class EmailService : IEmailSender<ApplicationUser>
+public class EmailService(IConfiguration configuration, ILogger<EmailService> logger) : IEmailSender<ApplicationUser>
 {
-    private readonly EmailSettings _emailSettings;
-    private readonly ILogger<EmailService> _logger;
-
-    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
-    {
-        _emailSettings = configuration.GetSection("EmailSettings").Get<EmailSettings>()!;
-        _logger = logger;
-    }
+    private readonly EmailSettings _emailSettings = configuration.GetSection("EmailSettings").Get<EmailSettings>()!;
+    private readonly ILogger<EmailService> _logger = logger;
 
     public async Task SendEmailAsync(string email, string subject, string htmlMessage)
     {

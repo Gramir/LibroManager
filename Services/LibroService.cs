@@ -6,24 +6,16 @@ using LibroManager.Services.Interfaces;
 
 namespace LibroManager.Services;
 
-public class LibroService : ILibroService
+public class LibroService(
+    IUnitOfWork unitOfWork,
+    ILibroValidationService validationService,
+    IMapper mapper,
+    ILogger<LibroService> logger) : ILibroService
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ILibroValidationService _validationService;
-    private readonly IMapper _mapper;
-    private readonly ILogger<LibroService> _logger;
-
-    public LibroService(
-        IUnitOfWork unitOfWork,
-        ILibroValidationService validationService,
-        IMapper mapper,
-        ILogger<LibroService> logger)
-    {
-        _unitOfWork = unitOfWork;
-        _validationService = validationService;
-        _mapper = mapper;
-        _logger = logger;
-    }
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly ILibroValidationService _validationService = validationService;
+    private readonly IMapper _mapper = mapper;
+    private readonly ILogger<LibroService> _logger = logger;
 
     public async Task<IEnumerable<LibroDTO>> GetAllLibrosAsync()
     {
@@ -44,7 +36,7 @@ public class LibroService : ILibroService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener todos los libros");
-            return Enumerable.Empty<LibroDTO>();
+            return [];
         }
     }
 
@@ -103,7 +95,7 @@ public class LibroService : ILibroService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener libros del autor {AutorId}", autorId);
-            return Enumerable.Empty<LibroDTO>();
+            return [];
         }
     }
 
@@ -364,7 +356,7 @@ public class LibroService : ILibroService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener ejemplares para ISBN {ISBN}", isbn);
-            return Enumerable.Empty<LibroDTO>();
+            return [];
         }
     }
 
@@ -441,7 +433,7 @@ public class LibroService : ILibroService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener libros para la ubicación {UbicacionId}", ubicacionId);
-            return Enumerable.Empty<LibroDTO>();
+            return [];
         }
     }
 
@@ -472,7 +464,7 @@ public class LibroService : ILibroService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener libros para la categoría {CategoriaId}", categoriaId);
-            return Enumerable.Empty<LibroDTO>();
+            return [];
         }
     }
 

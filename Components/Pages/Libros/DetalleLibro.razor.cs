@@ -19,7 +19,7 @@ public partial class DetalleLibro
     private NavigationManager NavigationManager { get; set; } = default!;
 
     private LibroDTO? _libro;
-    private IEnumerable<LibroDTO> _ejemplares = Enumerable.Empty<LibroDTO>();
+    private IEnumerable<LibroDTO> _ejemplares = [];
     private string _errorMessage = string.Empty;
     private bool _mostrarConfirmacion;
     private LibroDTO? _ejemplarAEliminar;
@@ -207,7 +207,7 @@ public partial class DetalleLibro
         else
         {
             _ubicacionesFiltradas = _ubicaciones?
-                .Where(u => u.UbicacionFormateada.ToLower().Contains(searchText))
+                .Where(u => u.UbicacionFormateada.Contains(searchText, StringComparison.CurrentCultureIgnoreCase))
                 .ToList();
         }
         _showDropdown = true;
@@ -328,7 +328,7 @@ public partial class DetalleLibro
         }
     }
 
-    private string GetEstadoBadgeClass(LibroDTO ejemplar)
+    private static string GetEstadoBadgeClass(LibroDTO ejemplar)
     {
         if (ejemplar.EstaPerdido)
             return "bg-danger";
@@ -337,7 +337,7 @@ public partial class DetalleLibro
         return "bg-success";
     }
 
-    private string GetEstadoText(LibroDTO ejemplar)
+    private static string GetEstadoText(LibroDTO ejemplar)
     {
         if (ejemplar.EstaPerdido)
             return "Perdido";

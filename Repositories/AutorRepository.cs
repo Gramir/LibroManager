@@ -6,14 +6,9 @@ using System.Linq.Expressions;
 
 namespace LibroManager.Repositories;
 
-public class AutorRepository : IAutorRepository
+public class AutorRepository(ApplicationDbContext context) : IAutorRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    public AutorRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    private readonly ApplicationDbContext _context = context;
 
     public async Task<IEnumerable<Autor>> GetAllAsync()
     {

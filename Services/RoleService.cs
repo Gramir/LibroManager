@@ -6,14 +6,9 @@ using System.Security.Claims;
 
 namespace LibroManager.Services;
 
-public class RoleService : IRoleService
+public class RoleService(IUnitOfWork unitOfWork) : IRoleService
 {
-    private readonly IUnitOfWork _unitOfWork;
-
-    public RoleService(IUnitOfWork unitOfWork)
-    {
-        _unitOfWork = unitOfWork;
-    }
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<IEnumerable<IdentityRole>> GetAllRolesAsync()
     {
@@ -37,7 +32,7 @@ public class RoleService : IRoleService
     public async Task<IList<Claim>> GetRolePermissionsAsync(string roleId)
     {
         var role = await _unitOfWork.Roles.FindByIdAsync(roleId);
-        if (role == null) return new List<Claim>();
+        if (role == null) return [];
         return await _unitOfWork.Roles.GetClaimsAsync(role);
     }
 
@@ -52,7 +47,7 @@ public class RoleService : IRoleService
         }
 
         // Verificar y actualizar permisos del Admin
-        var adminClaims = (await _unitOfWork.Roles.GetClaimsAsync(adminRole))?.Select(c => c.Value).ToList() ?? new List<string>();
+        var adminClaims = (await _unitOfWork.Roles.GetClaimsAsync(adminRole))?.Select(c => c.Value).ToList() ?? [];
         var adminPermissionsToAdd = RoleConstants.DefaultPermissions.AdminPermissions
             .Except(adminClaims);
 
@@ -70,7 +65,7 @@ public class RoleService : IRoleService
         }
 
         // Verificar y actualizar permisos del Librarian
-        var librarianClaims = (await _unitOfWork.Roles.GetClaimsAsync(librarianRole))?.Select(c => c.Value).ToList() ?? new List<string>();
+        var librarianClaims = (await _unitOfWork.Roles.GetClaimsAsync(librarianRole))?.Select(c => c.Value).ToList() ?? [];
         var librarianPermissionsToAdd = RoleConstants.DefaultPermissions.LibrarianPermissions
             .Except(librarianClaims);
 

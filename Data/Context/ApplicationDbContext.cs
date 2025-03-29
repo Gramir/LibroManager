@@ -4,13 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibroManager.Data.Context
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
-
         public DbSet<Libro> Libros { get; set; }
         public DbSet<Autor> Autores { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
@@ -95,7 +90,7 @@ namespace LibroManager.Data.Context
             SeedData(modelBuilder);
         }
 
-        private void SeedData(ModelBuilder modelBuilder)
+        private static void SeedData(ModelBuilder modelBuilder)
         {
             var fechaPredeterminada = new DateTime(2023, 1, 1);
 

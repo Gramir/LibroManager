@@ -7,18 +7,11 @@ using Microsoft.AspNetCore.Identity;
 
 namespace LibroManager.Services;
 
-public class UserService : IUserService
+public class UserService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<UserService> logger) : IUserService
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
-    private readonly ILogger<UserService> _logger;
-
-    public UserService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<UserService> logger)
-    {
-        _unitOfWork = unitOfWork;
-        _mapper = mapper;
-        _logger = logger;
-    }
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IMapper _mapper = mapper;
+    private readonly ILogger<UserService> _logger = logger;
 
     public async Task<IEnumerable<ApplicationUser>> GetAllUsersAsync()
     {
@@ -33,7 +26,7 @@ public class UserService : IUserService
         foreach (var user in users)
         {
             var roles = await _unitOfWork.Users.GetRolesAsync(user);
-            usersWithRoles[user.Id] = roles.ToList();
+            usersWithRoles[user.Id] = [.. roles];
         }
 
         return usersWithRoles;

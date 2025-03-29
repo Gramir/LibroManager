@@ -7,7 +7,7 @@ public static class RoleConstants
 
     public static class DefaultPermissions
     {
-        public static readonly string[] AdminPermissions = {
+        public static readonly string[] AdminPermissions = [
             Permissions.Libros.Create, Permissions.Libros.Read, Permissions.Libros.Update, Permissions.Libros.Delete, Permissions.Libros.Manage,
             Permissions.Autores.Create, Permissions.Autores.Read, Permissions.Autores.Update, Permissions.Autores.Delete,
             Permissions.Prestamos.Create, Permissions.Prestamos.Read, Permissions.Prestamos.Update, Permissions.Prestamos.Delete, Permissions.Prestamos.Manage,
@@ -15,16 +15,16 @@ public static class RoleConstants
             Permissions.Ubicaciones.Create, Permissions.Ubicaciones.Read, Permissions.Ubicaciones.Update, Permissions.Ubicaciones.Delete,
             Permissions.Categorias.Create, Permissions.Categorias.Read, Permissions.Categorias.Update, Permissions.Categorias.Delete,
             Permissions.Users.ManageUsers
-        };
+        ];
 
-        public static readonly string[] LibrarianPermissions = {
+        public static readonly string[] LibrarianPermissions = [
             Permissions.Libros.Read, Permissions.Libros.Update, Permissions.Libros.Create,
             Permissions.Autores.Create, Permissions.Autores.Read, Permissions.Autores.Update,
             Permissions.Prestamos.Create, Permissions.Prestamos.Read, Permissions.Prestamos.Update,
             Permissions.Estudiantes.Read, Permissions.Estudiantes.Update, Permissions.Estudiantes.Create,
             Permissions.Ubicaciones.Read,
             Permissions.Categorias.Read
-        };
+        ];
     }
 
     public static class Permissions

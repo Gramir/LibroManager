@@ -5,10 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibroManager.Repositories;
 
-public class EstudianteRepository : GenericRepository<Estudiante>, IEstudianteRepository
+public class EstudianteRepository(ApplicationDbContext context) : GenericRepository<Estudiante>(context), IEstudianteRepository
 {
-    public EstudianteRepository(ApplicationDbContext context) : base(context) { }
-
     public override async Task<IEnumerable<Estudiante>> GetAllAsync()
     {
         return await _context.Set<Estudiante>()

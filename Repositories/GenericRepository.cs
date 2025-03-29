@@ -5,14 +5,9 @@ using System.Linq.Expressions;
 
 namespace LibroManager.Repositories;
 
-public abstract class GenericRepository<T> : IGenericRepository<T> where T : class
+public abstract class GenericRepository<T>(ApplicationDbContext context) : IGenericRepository<T> where T : class
 {
-    protected readonly ApplicationDbContext _context;
-
-    protected GenericRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    protected readonly ApplicationDbContext _context = context;
 
     public virtual async Task<IEnumerable<T>> GetAllAsync()
     {

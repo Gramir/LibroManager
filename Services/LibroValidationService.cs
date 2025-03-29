@@ -5,14 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibroManager.Services;
 
-public class LibroValidationService : ILibroValidationService
+public class LibroValidationService(ApplicationDbContext context) : ILibroValidationService
 {
-    private readonly ApplicationDbContext _context;
-
-    public LibroValidationService(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    private readonly ApplicationDbContext _context = context;
 
     public async Task<bool> LibroEsValido(Libro libro)
     {

@@ -6,12 +6,8 @@ using System.Linq.Expressions;
 
 namespace LibroManager.Repositories;
 
-public class UbicacionRepository : GenericRepository<Ubicacion>, IUbicacionRepository
+public class UbicacionRepository(ApplicationDbContext context) : GenericRepository<Ubicacion>(context), IUbicacionRepository
 {
-    public UbicacionRepository(ApplicationDbContext context) : base(context)
-    {
-    }
-
     public override async Task<IEnumerable<Ubicacion>> GetAllAsync()
     {
         return await _context.Ubicaciones

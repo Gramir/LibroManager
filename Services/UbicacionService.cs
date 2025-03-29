@@ -6,18 +6,11 @@ using LibroManager.Services.Interfaces;
 
 namespace LibroManager.Services;
 
-public class UbicacionService : IUbicacionService
+public class UbicacionService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<UbicacionService> logger) : IUbicacionService
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
-    private readonly ILogger<UbicacionService> _logger;
-
-    public UbicacionService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<UbicacionService> logger)
-    {
-        _unitOfWork = unitOfWork;
-        _mapper = mapper;
-        _logger = logger;
-    }
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IMapper _mapper = mapper;
+    private readonly ILogger<UbicacionService> _logger = logger;
 
     public async Task<IEnumerable<UbicacionDTO>> GetAllUbicacionesAsync()
     {
@@ -31,7 +24,7 @@ public class UbicacionService : IUbicacionService
                 ubicacion.EstaDisponible = !ubicaciones.Any(u =>
                     u.UbicacionId == ubicacion.UbicacionId &&
                     u.Libros != null &&
-                    u.Libros.Any());
+                    u.Libros.Count > 0);
             }
 
             return ubicacionesDto;
@@ -39,7 +32,7 @@ public class UbicacionService : IUbicacionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener todas las ubicaciones");
-            return Enumerable.Empty<UbicacionDTO>();
+            return [];
         }
     }
 
@@ -51,7 +44,7 @@ public class UbicacionService : IUbicacionService
             if (ubicacion == null) return null;
 
             var ubicacionDto = _mapper.Map<UbicacionDTO>(ubicacion);
-            ubicacionDto.EstaDisponible = ubicacion.Libros == null || !ubicacion.Libros.Any();
+            ubicacionDto.EstaDisponible = ubicacion.Libros == null || ubicacion.Libros.Count == 0;
             return ubicacionDto;
         }
         catch (Exception ex)
@@ -72,7 +65,7 @@ public class UbicacionService : IUbicacionService
             foreach (var ubicacion in ubicacionesDto)
             {
                 var original = ubicaciones.First(u => u.UbicacionId == ubicacion.UbicacionId);
-                ubicacion.EstaDisponible = original.Libros == null || !original.Libros.Any();
+                ubicacion.EstaDisponible = original.Libros == null || original.Libros.Count == 0;
             }
 
             return ubicacionesDto;
@@ -80,7 +73,7 @@ public class UbicacionService : IUbicacionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener ubicaciones del estante {Estante}", estante);
-            return Enumerable.Empty<UbicacionDTO>();
+            return [];
         }
     }
 
@@ -97,7 +90,7 @@ public class UbicacionService : IUbicacionService
             foreach (var ubicacion in ubicacionesDto)
             {
                 var original = ubicaciones.First(u => u.UbicacionId == ubicacion.UbicacionId);
-                ubicacion.EstaDisponible = original.Libros == null || !original.Libros.Any();
+                ubicacion.EstaDisponible = original.Libros == null || original.Libros.Count == 0;
             }
 
             return ubicacionesDto;
@@ -105,7 +98,7 @@ public class UbicacionService : IUbicacionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener ubicaciones del estante {Estante} y nivel {Nivel}", estante, nivel);
-            return Enumerable.Empty<UbicacionDTO>();
+            return [];
         }
     }
 
@@ -114,7 +107,7 @@ public class UbicacionService : IUbicacionService
         try
         {
             var ubicaciones = await _unitOfWork.Ubicaciones.GetAllAsync();
-            var ubicacionesDisponibles = ubicaciones.Where(u => u.Libros == null || !u.Libros.Any());
+            var ubicacionesDisponibles = ubicaciones.Where(u => u.Libros == null || u.Libros.Count == 0);
             var ubicacionesDto = _mapper.Map<IEnumerable<UbicacionDTO>>(ubicacionesDisponibles);
 
             foreach (var ubicacion in ubicacionesDto)
@@ -127,7 +120,7 @@ public class UbicacionService : IUbicacionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener ubicaciones disponibles");
-            return Enumerable.Empty<UbicacionDTO>();
+            return [];
         }
     }
 
@@ -185,7 +178,7 @@ public class UbicacionService : IUbicacionService
                 return false;
             }
 
-            if (ubicacion.Libros != null && ubicacion.Libros.Any())
+            if (ubicacion.Libros != null && ubicacion.Libros.Count > 0)
             {
                 _logger.LogWarning("No se puede eliminar la ubicación {UbicacionId} porque tiene libros asociados", id);
                 return false;
@@ -228,7 +221,7 @@ public class UbicacionService : IUbicacionService
             if (libroActual == null)
             {
                 _logger.LogWarning("No se encontró el libro con ID {LibroId}", libroId);
-                return Enumerable.Empty<UbicacionDTO>();
+                return [];
             }
 
             var ubicacionesOcupadas = libros
@@ -255,7 +248,7 @@ public class UbicacionService : IUbicacionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener ubicaciones disponibles para el libro {LibroId}", libroId);
-            return Enumerable.Empty<UbicacionDTO>();
+            return [];
         }
     }
 }

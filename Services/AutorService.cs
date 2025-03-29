@@ -6,18 +6,11 @@ using LibroManager.Services.Interfaces;
 
 namespace LibroManager.Services;
 
-public class AutorService : IAutorService
+public class AutorService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<AutorService> logger) : IAutorService
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
-    private readonly ILogger<AutorService> _logger;
-
-    public AutorService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<AutorService> logger)
-    {
-        _unitOfWork = unitOfWork;
-        _mapper = mapper;
-        _logger = logger;
-    }
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IMapper _mapper = mapper;
+    private readonly ILogger<AutorService> _logger = logger;
 
     public async Task<IEnumerable<AutorDTO>> GetAllAsync()
     {
@@ -29,7 +22,7 @@ public class AutorService : IAutorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener todos los autores");
-            return Enumerable.Empty<AutorDTO>();
+            return [];
         }
     }
 

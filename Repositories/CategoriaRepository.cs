@@ -5,10 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibroManager.Repositories;
 
-public class CategoriaRepository : GenericRepository<Categoria>, ICategoriaRepository
+public class CategoriaRepository(ApplicationDbContext context) : GenericRepository<Categoria>(context), ICategoriaRepository
 {
-    public CategoriaRepository(ApplicationDbContext context) : base(context) { }
-
     public override async Task<IEnumerable<Categoria>> GetAllAsync()
     {
         return await _context.Set<Categoria>()

@@ -6,14 +6,9 @@ using System.Security.Claims;
 
 namespace LibroManager.Repositories;
 
-public class UserRepository : IUserRepository
+public class UserRepository(UserManager<ApplicationUser> userManager) : IUserRepository
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-
-    public UserRepository(UserManager<ApplicationUser> userManager)
-    {
-        _userManager = userManager;
-    }
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
 
     public async Task<IEnumerable<ApplicationUser>> GetAllUsersAsync()
     {

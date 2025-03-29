@@ -7,19 +7,12 @@ using System.Text.RegularExpressions;
 
 namespace LibroManager.Services;
 
-public class EstudianteService : IEstudianteService
+public class EstudianteService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<EstudianteService> logger) : IEstudianteService
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
-    private readonly ILogger<EstudianteService> _logger;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IMapper _mapper = mapper;
+    private readonly ILogger<EstudianteService> _logger = logger;
     private const int MAX_NOMBRE_LENGTH = 100;
-
-    public EstudianteService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<EstudianteService> logger)
-    {
-        _unitOfWork = unitOfWork;
-        _mapper = mapper;
-        _logger = logger;
-    }
 
     public async Task<IEnumerable<EstudianteDTO>> GetAllAsync()
     {
@@ -31,7 +24,7 @@ public class EstudianteService : IEstudianteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener todos los estudiantes");
-            return Enumerable.Empty<EstudianteDTO>();
+            return [];
         }
     }
 
@@ -73,7 +66,7 @@ public class EstudianteService : IEstudianteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener estudiantes con préstamos activos");
-            return Enumerable.Empty<EstudianteDTO>();
+            return [];
         }
     }
 
@@ -220,7 +213,8 @@ public class EstudianteService : IEstudianteService
         return true;
     }
 
-    private bool IsValidEmail(string email)
+    // Este método podría ser estático ya que no accede a datos de instancia
+    public static bool IsValidEmail(string email)
     {
         var pattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
         return Regex.IsMatch(email, pattern);
