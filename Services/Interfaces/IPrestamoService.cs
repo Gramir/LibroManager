@@ -1,5 +1,4 @@
 using LibroManager.DTOs;
-using LibroManager.Models;
 
 namespace LibroManager.Services.Interfaces;
 
@@ -14,4 +13,5 @@ public interface IPrestamoService
     Task<bool> UpdateAsync(PrestamoUpdateDTO prestamo);
     Task<bool> DeleteAsync(int id);
     Task<bool> DeletePrestamosByLibroIdAsync(int libroId);
+    Task<bool> TienePrestamosHistoricosAsync(int libroId);
 }

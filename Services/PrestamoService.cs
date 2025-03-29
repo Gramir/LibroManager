@@ -344,4 +344,17 @@ public class PrestamoService : IPrestamoService
             _logger.LogInformation("Estado del libro actualizado a Disponible: {LibroId}", libro.LibroId);
         }
     }
+
+    public async Task<bool> TienePrestamosHistoricosAsync(int libroId)
+    {
+        try
+        {
+            return await _unitOfWork.Prestamos.TienePrestamosHistoricosAsync(libroId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al verificar préstamos históricos del libro {LibroId}", libroId);
+            return false;
+        }
+    }
 }

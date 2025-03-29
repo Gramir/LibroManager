@@ -73,4 +73,10 @@ public class PrestamoRepository : GenericRepository<Prestamo>, IPrestamoReposito
             return false;
         }
     }
+
+    public async Task<bool> TienePrestamosHistoricosAsync(int libroId)
+    {
+        return await _context.Prestamos
+            .AnyAsync(p => p.LibroId == libroId && p.Estado != EstadoPrestamo.Activo);
+    }
 }
