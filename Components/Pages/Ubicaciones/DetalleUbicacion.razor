@@ -23,24 +23,28 @@
     else
     {
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h3 class="mb-0">@_ubicacion.UbicacionFormateada</h3>
-                <div>
-                    <AuthorizeView Roles="@RoleConstants.AdminRole">
-                        <Authorized>
-                            <button class="btn btn-warning me-2" @onclick="EditarUbicacion">Editar</button>
-                            <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@(!_ubicacion.EstaDisponible)">
-                                Eliminar
-                            </button>
-                            @if (!_ubicacion.EstaDisponible)
-                            {
-                                <div class="text-danger mt-2 small">
-                                    <i class="bi bi-exclamation-circle"></i> No se puede eliminar una ubicación que tiene libros asignados
-                                </div>
-                            }
-                        </Authorized>
-                    </AuthorizeView>
-                    <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h3 class="mb-0">@_ubicacion.UbicacionFormateada</h3>
+                    <div class="d-flex flex-column align-items-end">
+                        <div class="d-flex">
+                            <AuthorizeView Roles="@RoleConstants.AdminRole">
+                                <Authorized>
+                                    <button class="btn btn-warning me-2" @onclick="EditarUbicacion">Editar</button>
+                                    <button class="btn btn-danger me-2" @onclick="MostrarConfirmacion" disabled="@(!_ubicacion.EstaDisponible)">
+                                        Eliminar
+                                    </button>
+                                </Authorized>
+                            </AuthorizeView>
+                            <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+                        </div>
+                        @if (!_ubicacion.EstaDisponible)
+                        {
+                            <div class="text-danger mt-2 small">
+                                <i class="bi bi-exclamation-circle"></i> No se puede eliminar una ubicación que tiene libros asignados
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -69,40 +73,43 @@
                 @if (_libros.Any())
                 {
                     <div class="mt-4">
-                        <h4>Libros en esta Ubicación</h4>
+                        <h4>Libro en esta Ubicación</h4>
                         <div class="table-responsive">
                             <table class="table">
                                 <thead>
                                     <tr>
                                         <th>Título</th>
-                                        <th>ISBN</th>
+                                        <th>Serial</th>
                                         <th>Autor</th>
                                         <th>Estado</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var libro in _libros)
-                                    {
-                                        <tr>
-                                            <td>@libro.Titulo</td>
-                                            <td>@libro.ISBN</td>
-                                            <td>@libro.AutorNombre</td>
-                                            <td>
-                                                <span class="badge @(libro.EstaPrestado ? "bg-warning" : "bg-success")">
-                                                    @(libro.EstaPrestado ? "Prestado" : "Disponible")
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Read">
-                                                    <Authorized>
-                                                        <button class="btn btn-primary btn-sm" @onclick="() => VerDetalleLibro(libro.LibroId)">
-                                                            <i class="bi bi-eye"></i> Detalles
-                                                        </button>
-                                                    </Authorized>
-                                                </AuthorizeView>
-                                            </td>
-                                        </tr>
+                                    @{
+                                        var libro = _libros.FirstOrDefault();
+                                        if (libro != null)
+                                        {
+                                            <tr>
+                                                <td>@libro.Titulo</td>
+                                                <td>@libro.Serial</td>
+                                                <td>@libro.AutorNombre</td>
+                                                <td>
+                                                    <span class="badge @(libro.EstaPrestado ? "bg-warning" : "bg-success")">
+                                                        @(libro.EstaPrestado ? "Prestado" : "Disponible")
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Read">
+                                                        <Authorized>
+                                                            <button class="btn btn-primary btn-sm" @onclick="() => VerDetalleLibro(libro.LibroId)">
+                                                                <i class="bi bi-eye"></i> Detalles
+                                                            </button>
+                                                        </Authorized>
+                                                    </AuthorizeView>
+                                                </td>
+                                            </tr>
+                                        }
                                     }
                                 </tbody>
                             </table>
