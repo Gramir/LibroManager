@@ -9,7 +9,10 @@
 @attribute [Authorize(Policy = RoleConstants.Permissions.Prestamos.Read)]
 @rendermode InteractiveServer
 @using System.Diagnostics
-
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 <PageTitle>Préstamos - LibroManager</PageTitle>
 
 <h1>Préstamos</h1>

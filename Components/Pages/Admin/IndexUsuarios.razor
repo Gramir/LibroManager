@@ -9,7 +9,10 @@
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = RoleConstants.Permissions.Users.ManageUsers)]
 @rendermode InteractiveServer
-
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 <PageTitle>Gestión de Usuarios - LibroManager</PageTitle>
 
 <div class="container">

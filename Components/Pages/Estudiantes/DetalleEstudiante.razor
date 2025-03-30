@@ -9,7 +9,10 @@
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = RoleConstants.Permissions.Estudiantes.Read)]
 @rendermode InteractiveServer
-
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 <PageTitle>Detalle del Estudiante</PageTitle>
 
 <div class="container mt-4">

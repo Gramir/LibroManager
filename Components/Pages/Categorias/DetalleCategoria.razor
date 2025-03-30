@@ -8,7 +8,10 @@
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = RoleConstants.Permissions.Categorias.Read)]
 @rendermode InteractiveServer
-
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 <PageTitle>Detalle de Categoría</PageTitle>
 
 <div class="container mt-4">

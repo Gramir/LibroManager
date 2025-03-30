@@ -7,7 +7,10 @@
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Roles = RoleConstants.AdminRole)]
 @rendermode InteractiveServer
-
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 <PageTitle>Editar Categoría - LibroManager</PageTitle>
 
 <div class="container">

@@ -11,7 +11,10 @@
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = RoleConstants.Permissions.Libros.Create)]
 @rendermode InteractiveServer
-
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 <PageTitle>Crear Libro - LibroManager</PageTitle>
 
 <style>
