@@ -9,90 +9,101 @@
 @rendermode InteractiveServer
 
 <PageTitle>Libros - LibroManager</PageTitle>
-
-<h1>Catálogo de Libros</h1>
-
-<AuthorizeView Policy="@RoleConstants.Permissions.Libros.Create">
-    <Authorized>
-        <div class="mb-3">
-            <button class="btn btn-primary" @onclick="CrearLibro">
-                <i class="bi bi-plus-circle"></i> Crear Libro
-            </button>
-        </div>
-    </Authorized>
-</AuthorizeView>
-
-@if (libros == null)
-{
-    <p><em>Cargando...</em></p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Título</th>
-                    <th>ISBN</th>
-                    <th>Ejemplares</th>
-                    <th>Autor</th>
-                    <th>Categoría</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var libro in librosUnicos)
-                {
-                    var totalEjemplares = ejemplaresPorIsbn.TryGetValue(libro.ISBN, out var count) ? count : 0;
-                    var prestados = ejemplaresPrestadosPorIsbn.TryGetValue(libro.ISBN, out var prestadosCount) ? prestadosCount : 0;
-                    var perdidos = ejemplaresPerdidosPorIsbn.TryGetValue(libro.ISBN, out var perdidosCount) ? perdidosCount : 0;
-                    var disponibles = totalEjemplares - prestados - perdidos;
-                    var colorClass = disponibles > 0 ? "text-success" : "text-danger";
-
-                    <tr>
-                        <td>@libro.Titulo</td>
-                        <td>@libro.ISBN</td>
-                        <td class="@colorClass">
-                            <strong>@disponibles</strong> disponibles 
-                            <span class="text-muted">|</span> 
-                            <span class="@(prestados > 0 ? "text-orange" : "")">@prestados prestados</span>
-                            <span class="text-muted">|</span> 
-                            <span class="@(perdidos > 0 ? "text-danger" : "")">@perdidos perdidos</span>
-                            <span class="text-muted">|</span> 
-                            @totalEjemplares total
-                        </td>
-                        <td>@libro.AutorNombre</td>
-                        <td>@libro.CategoriaNombre</td>
-                        <td>
-                            <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Read">
-                                <Authorized>
-                                    <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(libro.LibroId)">
-                                        <i class="bi bi-eye"></i> Detalles
-                                    </button>
-                                </Authorized>
-                            </AuthorizeView>
-                            <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Update">
-                                <Authorized>
-                                    <button class="btn btn-warning btn-sm me-1" @onclick="() => EditarLibro(libro.LibroId)">
-                                        <i class="bi bi-pencil"></i> Editar
-                                    </button>
-                                </Authorized>
-                            </AuthorizeView>
-                            <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Create">
-                                <Authorized>
-                                    <button class="btn btn-success btn-sm" @onclick="() => PrestarLibro(libro.LibroId)"
-                                            disabled="@(disponibles <= 0)">
-                                        <i class="bi bi-book"></i> Prestar
-                                    </button>
-                                </Authorized>
-                            </AuthorizeView>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider /> 
+<MudSnackbarProvider />
+<MudContainer Class="mt-4">
+    <div class="d-flex justify-space-between align-center">
+        <MudText Typo="Typo.h4" Class="mb-4">Catálogo de Libros</MudText>
+        <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Create">
+            <Authorized>
+                <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" OnClick="CrearLibro">
+                    Crear Libro
+                </MudButton>
+            </Authorized>
+        </AuthorizeView>
     </div>
-}
+
+    @if (libros == null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="@librosUnicos" Dense="true" Hover="true" Filter="FiltrarLibros"
+                  T="LibroDTO" Elevation="0" Class="mt-4" FixedHeader="true">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Buscar..." Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="LibroDTO" SortBy="x => x.Titulo">Título</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="LibroDTO" SortBy="x => x.ISBN">ISBN</MudTableSortLabel></MudTh>
+                <MudTh>Ejemplares</MudTh>
+                <MudTh><MudTableSortLabel T="LibroDTO" SortBy="x => x.AutorNombre">Autor</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="LibroDTO" SortBy="x => x.CategoriaNombre">Categoría</MudTableSortLabel></MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Título">@context.Titulo</MudTd>
+                <MudTd DataLabel="ISBN">@context.ISBN</MudTd>
+                <MudTd DataLabel="Ejemplares">
+                    @{
+                        var totalEjemplares = ejemplaresPorIsbn.TryGetValue(context.ISBN, out var count) ? count : 0;
+                        var prestados = ejemplaresPrestadosPorIsbn.TryGetValue(context.ISBN, out var prestadosCount) ? prestadosCount : 0;
+                        var perdidos = ejemplaresPerdidosPorIsbn.TryGetValue(context.ISBN, out var perdidosCount) ? perdidosCount : 0;
+                        var disponibles = totalEjemplares - prestados - perdidos;
+                        var colorClass = disponibles > 0 ? Color.Success : Color.Error;
+                    }
+                    <MudStack Row="true" Spacing="1">
+                        <MudChip T="string" Color="@colorClass" Size="Size.Small">@disponibles disponibles</MudChip>
+                        <MudChip T="string" Color="@(prestados > 0 ? Color.Warning : Color.Default)" Size="Size.Small">@prestados prestados</MudChip>
+                        <MudChip T="string" Color="@(perdidos > 0 ? Color.Error : Color.Default)" Size="Size.Small">@perdidos perdidos</MudChip>
+                        <MudChip T="string" Color="Color.Default" Size="Size.Small">@totalEjemplares total</MudChip>
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="Autor">@context.AutorNombre</MudTd>
+                <MudTd DataLabel="Categoría">@context.CategoriaNombre</MudTd>
+                <MudTd>
+                    <MudStack Row="true" Spacing="1">
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Read">
+                            <Authorized Context="authView">
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small"
+                                             OnClick="@(() => VerDetalles(context.LibroId))" 
+                                             aria-label="Ver detalles" />
+                            </Authorized>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Update">
+                            <Authorized Context="authEdit">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small"
+                                             OnClick="@(() => EditarLibro(context.LibroId))" 
+                                             aria-label="Editar libro" />
+                            </Authorized>
+                        </AuthorizeView>
+                        @{
+                            var disponibleParaPrestamo = ejemplaresPorIsbn.TryGetValue(context.ISBN, out var total) &&
+                                                      ejemplaresPrestadosPorIsbn.TryGetValue(context.ISBN, out var prest) &&
+                                                      ejemplaresPerdidosPorIsbn.TryGetValue(context.ISBN, out var perd) &&
+                                                      (total - prest - perd) > 0;
+                        }
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Create">
+                            <Authorized Context="authLoan">
+                                <MudIconButton Icon="@Icons.Material.Filled.Book" Color="Color.Success" Size="Size.Small"
+                                             OnClick="@(() => PrestarLibro(context.LibroId))" 
+                                             Disabled="@(!disponibleParaPrestamo)"
+                                             aria-label="Prestar libro" />
+                            </Authorized>
+                        </AuthorizeView>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    }
+</MudContainer>
 
 @code {
     private List<LibroDTO>? libros;
@@ -100,6 +111,7 @@ else
     private Dictionary<string, int> ejemplaresPorIsbn = new();
     private Dictionary<string, int> ejemplaresPrestadosPorIsbn = new();
     private Dictionary<string, int> ejemplaresPerdidosPorIsbn = new();
+    private string _searchString = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -149,11 +161,9 @@ else
 
     private void PrestarLibro(int libroId)
     {
-        // Obtener el libro seleccionado
         var libro = libros?.FirstOrDefault(l => l.LibroId == libroId);
         if (libro == null) return;
 
-        // Buscar un ejemplar disponible del mismo ISBN
         var ejemplarDisponible = libros?.FirstOrDefault(l => 
             l.ISBN == libro.ISBN && 
             !l.EstaPrestado);
@@ -162,5 +172,15 @@ else
         {
             NavigationManager.NavigateTo($"/prestamos/crear/{ejemplarDisponible.LibroId}");
         }
+    }
+
+    private bool FiltrarLibros(LibroDTO libro)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString)) return true;
+        
+        return libro.Titulo?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true ||
+               libro.ISBN?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true ||
+               libro.AutorNombre?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true ||
+               libro.CategoriaNombre?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true;
     }
 }

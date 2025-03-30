@@ -3,13 +3,13 @@
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.Components.Forms
 @using LibroManager.Models
+@using MudBlazor
 @inject NavigationManager NavigationManager
 
 <div class="page">
     <div class="sidebar">
         <NavMenu />
     </div>
-
     <main>
         <div class="top-row px-4">
             <AuthorizeView>
@@ -36,6 +36,7 @@
 
         <article class="content px-4">
             @Body
+            
         </article>
     </main>
 </div>

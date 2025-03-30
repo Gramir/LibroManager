@@ -10,12 +10,16 @@ using LibroManager.Services.Interfaces;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Add MudBlazor
+builder.Services.AddMudServices();
 
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
