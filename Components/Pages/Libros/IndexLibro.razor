@@ -13,9 +13,9 @@
 <MudPopoverProvider />
 <MudDialogProvider /> 
 <MudSnackbarProvider />
-<MudContainer Class="mt-4">
-    <div class="d-flex justify-space-between align-center">
-        <MudText Typo="Typo.h4" Class="mb-4">Catálogo de Libros</MudText>
+<div class="ma-4" style="height: calc(100vh - 140px); display: flex; flex-direction: column;">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h4">Catálogo de Libros</MudText>
         <AuthorizeView Policy="@RoleConstants.Permissions.Libros.Create">
             <Authorized>
                 <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" OnClick="CrearLibro">
@@ -32,7 +32,7 @@
     else
     {
         <MudTable Items="@librosUnicos" Dense="true" Hover="true" Filter="FiltrarLibros"
-                  T="LibroDTO" Elevation="0" Class="mt-4" FixedHeader="true">
+                  T="LibroDTO" Elevation="0" Class="flex-grow-1" FixedHeader="true">
             <ToolBarContent>
                 <MudTextField @bind-Value="_searchString" Placeholder="Buscar..." Adornment="Adornment.Start"
                             AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true"></MudTextField>
@@ -99,11 +99,11 @@
                 </MudTd>
             </RowTemplate>
             <PagerContent>
-                <MudTablePager />
+                <MudTablePager RowsPerPageString="Filas por página" />
             </PagerContent>
         </MudTable>
     }
-</MudContainer>
+</div>
 
 @code {
     private List<LibroDTO>? libros;
