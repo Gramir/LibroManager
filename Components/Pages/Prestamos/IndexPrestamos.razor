@@ -8,172 +8,147 @@
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = RoleConstants.Permissions.Prestamos.Read)]
 @rendermode InteractiveServer
-@using System.Diagnostics
+
+<PageTitle>Préstamos - LibroManager</PageTitle>
 <MudThemeProvider />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
-<PageTitle>Préstamos - LibroManager</PageTitle>
 
-<h1>Préstamos</h1>
-
-<AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Create">
-    <Authorized>
-        <div class="mb-3">
-            <a href="/prestamos/crear" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Nuevo Préstamo
-            </a>
-        </div>
-    </Authorized>
-</AuthorizeView>
-
-@if (_prestamos == null)
-{
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Cargando...</span>
-        </div>
+<div class="ma-4" style="height: calc(100vh - 140px); display: flex; flex-direction: column;">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h4">Registro de Préstamos</MudText>
+        <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Create">
+            <Authorized>
+                <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" OnClick="CrearPrestamo">
+                    Nuevo Préstamo
+                </MudButton>
+            </Authorized>
+        </AuthorizeView>
     </div>
-}
-else if (!_prestamos.Any())
-{
-    <div class="alert alert-info" role="alert">
-        No hay préstamos registrados.
-    </div>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Libro</th>
-                    <th>Serial</th>
-                    <th>Estudiante</th>
-                    <th>Fecha de Préstamo</th>
-                    <th>Fecha de Vencimiento</th>
-                    <th>Fecha de Devolución</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var prestamo in _prestamos)
-                {
+
+    @if (_prestamos == null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="@_prestamos" Dense="true" Hover="true" Filter="FiltrarPrestamos"
+                  T="PrestamoDTO" Elevation="0" Class="flex-grow-1" FixedHeader="true">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Buscar..." Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="PrestamoDTO" SortBy="x => x.LibroTitulo">Libro</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="PrestamoDTO" SortBy="x => x.LibroSerial">Serial</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="PrestamoDTO" SortBy="x => x.EstudianteNombre">Estudiante</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="PrestamoDTO" SortBy="x => x.FechaPrestamo">Fecha Préstamo</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="PrestamoDTO" SortBy="x => x.FechaVencimiento">Fecha Vencimiento</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="PrestamoDTO" SortBy="x => x.FechaDevolucion">Fecha Devolución</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="PrestamoDTO" SortBy="x => ObtenerEstadoParaOrdenamiento(x)">Estado</MudTableSortLabel></MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Libro">@context.LibroTitulo</MudTd>
+                <MudTd DataLabel="Serial">@(!string.IsNullOrEmpty(context.LibroSerial) ? context.LibroSerial : "No disponible")</MudTd>
+                <MudTd DataLabel="Estudiante">@context.EstudianteNombre</MudTd>
+                <MudTd DataLabel="Fecha Préstamo">@context.FechaPrestamo.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Fecha Vencimiento">
+                    <MudText Color="@(context.FechaVencimiento < DateTime.Now && context.EstaActivo ? Color.Error : Color.Default)">
+                        @context.FechaVencimiento.ToShortDateString()
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Fecha Devolución">
+                    @if (context.FechaDevolucion.HasValue)
+                    {
+                        @context.FechaDevolucion.Value.ToShortDateString()
+                    }
+                    else
+                    {
+                        <MudText>Pendiente</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Estado">
+                    @{
+                        var chipColor = context.EstaActivo ? Color.Warning :
+                                      context.FechaDevolucion.HasValue ? Color.Success : Color.Error;
+                        var estadoTexto = context.EstaActivo ? "Activo" :
+                                        context.FechaDevolucion.HasValue ? "Concluido" : "Expirado";
+                    }
+                    <MudChip T="string" Color="chipColor" Size="Size.Small">@estadoTexto</MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudStack Row="true" Spacing="1">
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Read" Context="authView">
+                            <Authorized>
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small"
+                                             OnClick="@(() => VerDetalles(context.PrestamoId))"
+                                             aria-label="Ver detalles" />
+                            </Authorized>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Update" Context="authEdit">
+                            <Authorized>
+                                @if (context.EstaActivo)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small"
+                                                 OnClick="@(() => DevolverPrestamo(context))"
+                                                 aria-label="Devolver préstamo" />
+                                }
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small"
+                                             OnClick="@(() => EditarPrestamo(context.PrestamoId))"
+                                             aria-label="Editar préstamo" />
+                            </Authorized>
+                        </AuthorizeView>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager RowsPerPageString="Filas por página" />
+            </PagerContent>
+        </MudTable>
+    }
+</div>
+
+<MudDialog Visible="@_mostrarConfirmacionDevolucion" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Confirmar devolución</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_prestamoADevolver != null)
+        {
+            <MudText>¿Está seguro que desea devolver el siguiente libro?</MudText>
+            <MudSimpleTable Dense="true">
+                <tbody>
                     <tr>
-                        <td>@prestamo.LibroTitulo</td>
-                        <td>@(!string.IsNullOrEmpty(prestamo.LibroSerial) ? prestamo.LibroSerial : "No disponible")</td>
-                        <td>@prestamo.EstudianteNombre</td>
-                        <td>@prestamo.FechaPrestamo.ToShortDateString()</td>
-                        <td>
-                            <span class="@(prestamo.FechaVencimiento < DateTime.Now && prestamo.EstaActivo ? "text-danger" : "")">
-                                @prestamo.FechaVencimiento.ToShortDateString()
-                            </span>
-                        </td>
-                        <td>
-                            @if (prestamo.FechaDevolucion.HasValue)
-                            {
-                                @prestamo.FechaDevolucion.Value.ToShortDateString()
-                            }
-                            else
-                            {
-                                <span>Pendiente</span>
-                            }
-                        </td>
-                        <td>
-                            @{
-                                string badgeClass;
-                                string estadoTexto;
-                                
-                                if (prestamo.EstaActivo)
-                                {
-                                    badgeClass = "bg-warning";
-                                    estadoTexto = "Activo";
-                                }
-                                else if (prestamo.FechaDevolucion.HasValue)
-                                {
-                                    badgeClass = "bg-success";
-                                    estadoTexto = "Concluido";
-                                }
-                                else
-                                {
-                                    badgeClass = "bg-danger";
-                                    estadoTexto = "Expirado";
-                                }
-                            }
-                            <span class="badge @badgeClass">@estadoTexto</span>
-                        </td>
-                        <td>
-                            <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Read">
-                                <Authorized>
-                                    <a href="/prestamos/@prestamo.PrestamoId" class="btn btn-primary btn-sm me-2">
-                                        <i class="bi bi-eye"></i> Detalles
-                                    </a>
-                                </Authorized>
-                            </AuthorizeView>
-                            <AuthorizeView Policy="@RoleConstants.Permissions.Prestamos.Update">
-                                <Authorized>
-                                    @if (prestamo.EstaActivo)
-                                    {
-                                        <button class="btn btn-success btn-sm me-2" @onclick="() => DevolverPrestamo(prestamo)">
-                                            <i class="bi bi-check-circle"></i> Devolver
-                                        </button>
-                                    }
-                                    <a href="/prestamos/editar/@prestamo.PrestamoId" class="btn btn-warning btn-sm">
-                                        <i class="bi bi-pencil"></i> Editar
-                                    </a>
-                                </Authorized>
-                            </AuthorizeView>
-                        </td>
+                        <td>Título:</td>
+                        <td>@_prestamoADevolver.LibroTitulo</td>
                     </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
-
-@if (!string.IsNullOrEmpty(_errorMessage))
-{
-    <div class="alert alert-danger mt-3">
-        @_errorMessage
-    </div>
-}
-
-@if (_mostrarConfirmacionDevolucion)
-{
-    <div class="modal fade show" style="display: block;" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirmar devolución</h5>
-                    <button type="button" class="btn-close" @onclick="CancelarDevolucion"></button>
-                </div>
-                <div class="modal-body">
-                    <p>¿Está seguro que desea devolver el siguiente libro?</p>
-                    <dl class="row">
-                        <dt class="col-sm-3">Título:</dt>
-                        <dd class="col-sm-9">@_prestamoADevolver?.LibroTitulo</dd>
-                        <dt class="col-sm-3">Serial:</dt>
-                        <dd class="col-sm-9">@_prestamoADevolver?.LibroSerial</dd>
-                        <dt class="col-sm-3">Estudiante:</dt>
-                        <dd class="col-sm-9">@_prestamoADevolver?.EstudianteNombre</dd>
-                    </dl>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CancelarDevolucion">Cancelar</button>
-                    <button type="button" class="btn btn-success" @onclick="ConfirmarDevolucion">Confirmar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
-}
+                    <tr>
+                        <td>Serial:</td>
+                        <td>@_prestamoADevolver.LibroSerial</td>
+                    </tr>
+                    <tr>
+                        <td>Estudiante:</td>
+                        <td>@_prestamoADevolver.EstudianteNombre</td>
+                    </tr>
+                </tbody>
+            </MudSimpleTable>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CancelarDevolucion">Cancelar</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="ConfirmarDevolucion">Confirmar</MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
     private IEnumerable<PrestamoDTO>? _prestamos;
     private string _errorMessage = string.Empty;
     private bool _mostrarConfirmacionDevolucion;
     private PrestamoDTO? _prestamoADevolver;
+    private string _searchString = "";
+    private DialogOptions dialogOptions = new() { FullWidth = true };
 
     protected override async Task OnInitializedAsync()
     {
@@ -183,6 +158,21 @@ else
     private async Task CargarPrestamos()
     {
         _prestamos = await PrestamoService.GetAllAsync();
+    }
+
+    private void CrearPrestamo()
+    {
+        NavigationManager.NavigateTo("/prestamos/crear");
+    }
+
+    private void VerDetalles(int prestamoId)
+    {
+        NavigationManager.NavigateTo($"/prestamos/{prestamoId}");
+    }
+
+    private void EditarPrestamo(int prestamoId)
+    {
+        NavigationManager.NavigateTo($"/prestamos/editar/{prestamoId}");
     }
 
     private void DevolverPrestamo(PrestamoDTO prestamo)
@@ -219,19 +209,42 @@ else
             {
                 await CargarPrestamos();
             }
-            else
-            {
-                _errorMessage = "No se pudo devolver el préstamo. Por favor, intente nuevamente.";
-            }
         }
-        catch (Exception ex)
-        {
-            _errorMessage = $"Error al devolver el préstamo: {ex.Message}";
-        }
+        catch (Exception) { }
         finally
         {
             _mostrarConfirmacionDevolucion = false;
             _prestamoADevolver = null;
         }
+    }
+
+    private bool FiltrarPrestamos(PrestamoDTO prestamo)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString)) return true;
+
+        var estadoTexto = ObtenerTextoEstado(prestamo);
+
+        return prestamo.LibroTitulo?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true ||
+               prestamo.LibroSerial?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true ||
+               prestamo.EstudianteNombre?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true ||
+               estadoTexto.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string ObtenerTextoEstado(PrestamoDTO prestamo)
+    {
+        if (prestamo == null) return string.Empty;
+        
+        if (prestamo.EstaActivo) return "Activo";
+        if (prestamo.FechaDevolucion.HasValue) return "Concluido";
+        return "Expirado";
+    }
+
+    private int ObtenerEstadoParaOrdenamiento(PrestamoDTO prestamo)
+    {
+        if (prestamo == null) return 0;
+        
+        if (prestamo.EstaActivo) return 1;
+        if (prestamo.FechaDevolucion.HasValue) return 2;
+        return 3;
     }
 }
