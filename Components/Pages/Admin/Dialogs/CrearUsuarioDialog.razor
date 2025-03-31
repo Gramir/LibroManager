@@ -1,0 +1,115 @@
+@using Microsoft.AspNetCore.Identity
+@using LibroManager.Models
+@using LibroManager.Constants
+@using LibroManager.Services.Interfaces
+@using System.ComponentModel.DataAnnotations
+@using MudBlazor
+@inject IUserService UserService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Crear Usuario</MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="NuevoUsuario" OnValidSubmit="CrearUsuario">
+            <DataAnnotationsValidator />
+            <MudTextField @bind-Value="NuevoUsuario.Email" Label="Email" Required="true"
+                        For="@(() => NuevoUsuario.Email)" />
+            @if (_emailExistente)
+            {
+                <MudText Color="Color.Error" Class="mt-1">Este correo electrónico ya está en uso</MudText>
+            }
+
+            <MudTextField @bind-Value="NuevoUsuario.NombreCompleto" Label="Nombre Completo"
+                        Required="true" Class="mt-3"
+                        For="@(() => NuevoUsuario.NombreCompleto)" />
+
+            <MudTextField @bind-Value="NuevoUsuario.Password" Label="Contraseña"
+                        Required="true" InputType="InputType.Password" Class="mt-3"
+                        For="@(() => NuevoUsuario.Password)" />
+
+            <MudTextField @bind-Value="NuevoUsuario.ConfirmPassword" Label="Confirmar Contraseña"
+                        Required="true" InputType="InputType.Password" Class="mt-3"
+                        For="@(() => NuevoUsuario.ConfirmPassword)" />
+
+            <MudRadioGroup @bind-Value="NuevoUsuario.Role" Required="true" Class="mt-3">
+                <MudText>Rol</MudText>
+                <MudRadio T="string" Value="@RoleConstants.AdminRole" Color="Color.Primary">Administrador</MudRadio>
+                <MudRadio T="string" Value="@RoleConstants.LibrarianRole" Color="Color.Primary">Bibliotecario</MudRadio>
+            </MudRadioGroup>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar" Color="Color.Default">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="CrearUsuario">Guardar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public required IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public NuevoUsuarioModel NuevoUsuario { get; set; } = new();
+    private bool _emailExistente;
+
+    private async Task CrearUsuario()
+    {
+        try
+        {
+            var existeUsuario = await UserService.GetUserByEmailAsync(NuevoUsuario.Email);
+            if (existeUsuario != null)
+            {
+                _emailExistente = true;
+                StateHasChanged();
+                return;
+            }
+
+            var usuario = new ApplicationUser
+            {
+                UserName = NuevoUsuario.Email,
+                Email = NuevoUsuario.Email,
+                NombreCompleto = NuevoUsuario.NombreCompleto,
+                EmailConfirmed = true,
+                FechaCreacion = DateTime.UtcNow
+            };
+
+            var roles = new List<string> { NuevoUsuario.Role };
+            var (resultado, user) = await UserService.CreateUserAsync(usuario, NuevoUsuario.Password, roles);
+
+            if (resultado.Succeeded)
+            {
+                Snackbar.Add("Usuario creado exitosamente", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(string.Join(", ", resultado.Errors.Select(e => e.Description)), Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al crear el usuario: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    public class NuevoUsuarioModel
+    {
+        [Required(ErrorMessage = "El email es requerido")]
+        [EmailAddress(ErrorMessage = "El email no tiene un formato válido")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "El nombre es requerido")]
+        public string NombreCompleto { get; set; } = "";
+
+        [Required(ErrorMessage = "La contraseña es requerida")]
+        [StringLength(100, ErrorMessage = "La contraseña debe tener al menos {2} caracteres.", MinimumLength = 6)]
+        public string Password { get; set; } = "";
+
+        [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]
+        public string ConfirmPassword { get; set; } = "";
+
+        [Required(ErrorMessage = "El rol es requerido")]
+        public string Role { get; set; } = RoleConstants.LibrarianRole;
+    }
+}

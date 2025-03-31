@@ -1,0 +1,70 @@
+@using Microsoft.AspNetCore.Identity
+@using LibroManager.Models
+@using LibroManager.Constants
+@using LibroManager.Services.Interfaces
+@using System.ComponentModel.DataAnnotations
+@using MudBlazor
+@inject IUserService UserService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Editar Usuario</MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@Usuario" OnValidSubmit="GuardarCambios">
+            <DataAnnotationsValidator />
+            <MudTextField @bind-Value="@Usuario.Email" Label="Email"
+                        ReadOnly="true" Class="mt-3" />
+
+            <MudTextField @bind-Value="@Usuario.NombreCompleto" Label="Nombre Completo"
+                        Required="true" Class="mt-3"
+                        For="@(() => Usuario.NombreCompleto)" />
+
+            @if (!IsAdmin)
+            {
+                <MudRadioGroup @bind-Value="Rol" Required="true" Class="mt-3">
+                    <MudText>Rol</MudText>
+                    <MudRadio T="string" Value="@RoleConstants.AdminRole" Color="Color.Primary">Administrador</MudRadio>
+                    <MudRadio T="string" Value="@RoleConstants.LibrarianRole" Color="Color.Primary">Bibliotecario</MudRadio>
+                </MudRadioGroup>
+            }
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar" Color="Color.Default">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="GuardarCambios">Guardar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public required IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public ApplicationUser Usuario { get; set; } = new() { NombreCompleto = "" };
+    [Parameter] public string Rol { get; set; } = RoleConstants.LibrarianRole;
+    [Parameter] public bool IsAdmin { get; set; }
+
+    private async Task GuardarCambios()
+    {
+        try
+        {
+            var roles = new List<string> { Rol };
+            var resultado = await UserService.UpdateUserAsync(Usuario, roles);
+
+            if (resultado.Succeeded)
+            {
+                Snackbar.Add("Usuario actualizado exitosamente", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(string.Join(", ", resultado.Errors.Select(e => e.Description)), Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al actualizar el usuario: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+}
