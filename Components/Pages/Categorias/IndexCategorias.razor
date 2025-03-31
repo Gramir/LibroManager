@@ -7,80 +7,80 @@
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = RoleConstants.Permissions.Categorias.Read)]
 @rendermode InteractiveServer
+
+<PageTitle>Categorías - LibroManager</PageTitle>
 <MudThemeProvider />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
-<PageTitle>Categorías - LibroManager</PageTitle>
 
-<h1>Categorías</h1>
+<div class="ma-4" style="height: calc(100vh - 140px); display: flex; flex-direction: column;">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h4">Catálogo de Categorías</MudText>
+        <AuthorizeView Policy="@RoleConstants.Permissions.Categorias.Create">
+            <Authorized>
+                <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" OnClick="CrearCategoria">
+                    Nueva Categoría
+                </MudButton>
+            </Authorized>
+        </AuthorizeView>
+    </div>
 
-<AuthorizeView Roles="@RoleConstants.AdminRole">
-    <Authorized>
-        <div class="mb-3">
-            <a href="/categorias/crear" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Nueva Categoría
-            </a>
-        </div>
-    </Authorized>
-</AuthorizeView>
-
-@if (_categorias == null)
-{
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Cargando...</span>
-        </div>
-    </div>
-}
-else if (!_categorias.Any())
-{
-    <div class="alert alert-info" role="alert">
-        No hay categorías registradas.
-    </div>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Libros Asociados</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var categoria in _categorias)
-                {
-                    <tr>
-                        <td>@categoria.Nombre</td>
-                        <td>@categoria.CantidadLibros</td>
-                        <td>
-                            <AuthorizeView Policy="@RoleConstants.Permissions.Categorias.Read">
-                                <Authorized>
-                                    <button class="btn btn-primary btn-sm me-2" @onclick="() => VerDetalles(categoria.CategoriaId)">
-                                        <i class="bi bi-eye"></i> Detalles
-                                    </button>
-                                </Authorized>
-                            </AuthorizeView>
-                            <AuthorizeView Roles="@RoleConstants.AdminRole">
-                                <Authorized>
-                                    <button class="btn btn-warning btn-sm me-2" @onclick="() => EditarCategoria(categoria.CategoriaId)">
-                                        <i class="bi bi-pencil"></i> Editar
-                                    </button>
-                                </Authorized>
-                            </AuthorizeView>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+    @if (_categorias == null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="@_categorias" Dense="true" Hover="true" Filter="FiltrarCategorias"
+                  T="CategoriaDTO" Elevation="0" Class="flex-grow-1" FixedHeader="true">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Buscar..." Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="CategoriaDTO" SortBy="x => x.Nombre">Nombre</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="CategoriaDTO" SortBy="x => x.CantidadLibros">Libros Asociados</MudTableSortLabel></MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="categoria">
+                <MudTd DataLabel="Nombre">@categoria.Nombre</MudTd>
+                <MudTd DataLabel="Libros Asociados">
+                    <MudChip Color="@(categoria.CantidadLibros > 0 ? Color.Success : Color.Default)" 
+                            Size="Size.Small" 
+                            T="string">
+                        @categoria.CantidadLibros
+                    </MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudStack Row="true" Spacing="1">
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Categorias.Read" Context="authContext">
+                            <Authorized>
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small"
+                                             OnClick="@(() => VerDetalles(categoria.CategoriaId))"
+                                             aria-label="Ver detalles" />
+                            </Authorized>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Categorias.Update" Context="authContext">
+                            <Authorized>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small"
+                                             OnClick="@(() => EditarCategoria(categoria.CategoriaId))"
+                                             aria-label="Editar categoría" />
+                            </Authorized>
+                        </AuthorizeView>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager RowsPerPageString="Filas por página" />
+            </PagerContent>
+        </MudTable>
+    }
+</div>
 
 @code {
     private IEnumerable<CategoriaDTO>? _categorias;
+    private string _searchString = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -92,8 +92,19 @@ else
         NavigationManager.NavigateTo($"/categorias/{categoriaId}");
     }
 
+    private void CrearCategoria()
+    {
+        NavigationManager.NavigateTo("/categorias/crear");
+    }
+
     private void EditarCategoria(int categoriaId)
     {
         NavigationManager.NavigateTo($"/categorias/editar/{categoriaId}");
+    }
+
+    private bool FiltrarCategorias(CategoriaDTO categoria)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString)) return true;
+        return categoria.Nombre?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true;
     }
 }

@@ -7,88 +7,86 @@
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = RoleConstants.Permissions.Estudiantes.Read)]
 @rendermode InteractiveServer
+
+<PageTitle>Estudiantes - LibroManager</PageTitle>
 <MudThemeProvider />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
-<PageTitle>Estudiantes - LibroManager</PageTitle>
 
-<h1>Catálogo de Estudiantes</h1>
-
-<AuthorizeView Policy="@RoleConstants.Permissions.Estudiantes.Create">
-    <Authorized>
-        <div class="mb-3">
-            <button class="btn btn-primary" @onclick="CrearEstudiante">
-                <i class="bi bi-plus-circle"></i> Crear Estudiante
-            </button>
-        </div>
-    </Authorized>
-</AuthorizeView>
-
-@if (estudiantes == null)
-{
-    <p><em>Cargando...</em></p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Email</th>
-                    <th>Fecha de Inscripción</th>
-                    <th>Préstamos Activos</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var estudiante in estudiantes)
-                {
-                    <tr>
-                        <td>@estudiante.EstudianteId</td>
-                        <td>@estudiante.Nombre</td>
-                        <td>@estudiante.Email</td>
-                        <td>@estudiante.FechaInscripcion.ToShortDateString()</td>
-                        <td>
-                            <span class="badge @(estudiante.PrestamosActivos > 0 ? "bg-warning" : "bg-success")">
-                                @estudiante.PrestamosActivos
-                            </span>
-                        </td>
-                        <td>
-                            <AuthorizeView Policy="@RoleConstants.Permissions.Estudiantes.Read">
-                                <Authorized>
-                                    <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(estudiante.EstudianteId)">
-                                        <i class="bi bi-eye"></i> Detalles
-                                    </button>
-                                </Authorized>
-                            </AuthorizeView>
-                            <AuthorizeView Policy="@RoleConstants.Permissions.Estudiantes.Update">
-                                <Authorized>
-                                    <button class="btn btn-warning btn-sm" @onclick="() => EditarEstudiante(estudiante.EstudianteId)">
-                                        <i class="bi bi-pencil"></i> Editar
-                                    </button>
-                                </Authorized>
-                            </AuthorizeView>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+<div class="ma-4" style="height: calc(100vh - 140px); display: flex; flex-direction: column;">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h4">Catálogo de Estudiantes</MudText>
+        <AuthorizeView Policy="@RoleConstants.Permissions.Estudiantes.Create">
+            <Authorized>
+                <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" OnClick="CrearEstudiante">
+                    Nuevo Estudiante
+                </MudButton>
+            </Authorized>
+        </AuthorizeView>
     </div>
-}
 
-@if (errorMessage != null)
-{
-    <div class="alert alert-danger mt-3">
-        @errorMessage
-    </div>
-}
+    @if (estudiantes == null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="@estudiantes" Dense="true" Hover="true" Filter="FiltrarEstudiantes"
+                  T="EstudianteDTO" Elevation="0" Class="flex-grow-1" FixedHeader="true">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Buscar..." Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="EstudianteDTO" SortBy="x => x.EstudianteId">ID</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="EstudianteDTO" SortBy="x => x.Nombre">Nombre</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="EstudianteDTO" SortBy="x => x.Email">Email</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="EstudianteDTO" SortBy="x => x.FechaInscripcion">Fecha de Inscripción</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="EstudianteDTO" SortBy="x => x.PrestamosActivos">Préstamos Activos</MudTableSortLabel></MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="estudiante">
+                <MudTd DataLabel="ID">@estudiante.EstudianteId</MudTd>
+                <MudTd DataLabel="Nombre">@estudiante.Nombre</MudTd>
+                <MudTd DataLabel="Email">@estudiante.Email</MudTd>
+                <MudTd DataLabel="Fecha de Inscripción">@estudiante.FechaInscripcion.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Préstamos Activos">
+                    <MudChip Color="@(estudiante.PrestamosActivos > 0 ? Color.Warning : Color.Success)" 
+                            Size="Size.Small" 
+                            T="string">
+                        @estudiante.PrestamosActivos
+                    </MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudStack Row="true" Spacing="1">
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Estudiantes.Read" Context="authContext">
+                            <Authorized>
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small"
+                                             OnClick="@(() => VerDetalles(estudiante.EstudianteId))"
+                                             aria-label="Ver detalles" />
+                            </Authorized>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Estudiantes.Update" Context="authContext">
+                            <Authorized>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small"
+                                             OnClick="@(() => EditarEstudiante(estudiante.EstudianteId))"
+                                             aria-label="Editar estudiante" />
+                            </Authorized>
+                        </AuthorizeView>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager RowsPerPageString="Filas por página" />
+            </PagerContent>
+        </MudTable>
+    }
+</div>
 
 @code {
     private IEnumerable<EstudianteDTO>? estudiantes;
-    private string? errorMessage;
+    private string _searchString = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -100,11 +98,11 @@ else
         try
         {
             estudiantes = await EstudianteService.GetAllAsync();
-            errorMessage = null;
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error al cargar estudiantes: {ex.Message}";
+            Console.WriteLine($"Error al cargar estudiantes: {ex.Message}");
+            throw;
         }
     }
 
@@ -121,5 +119,13 @@ else
     private void EditarEstudiante(int estudianteId)
     {
         NavigationManager.NavigateTo($"/estudiantes/editar/{estudianteId}");
+    }
+
+    private bool FiltrarEstudiantes(EstudianteDTO estudiante)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString)) return true;
+        return estudiante.Nombre?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true ||
+               estudiante.Email?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true ||
+               estudiante.EstudianteId.ToString().Contains(_searchString);
     }
 }

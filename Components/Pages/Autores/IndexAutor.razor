@@ -8,92 +8,92 @@
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = RoleConstants.Permissions.Autores.Read)]
 @rendermode InteractiveServer
+
+<PageTitle>Autores - LibroManager</PageTitle>
 <MudThemeProvider />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
-<PageTitle>Autores - LibroManager</PageTitle>
 
-<h1>Catálogo de Autores</h1>
-
-<AuthorizeView Policy="@RoleConstants.Permissions.Autores.Create">
-    <Authorized>
-        <div class="mb-3">
-            <button class="btn btn-primary" @onclick="CrearAutor">
-                <i class="bi bi-plus-circle"></i> Crear Autor
-            </button>
-        </div>
-    </Authorized>
-</AuthorizeView>
-
-@if (autores == null)
-{
-    <p><em>Cargando...</em></p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Cantidad de Títulos</th>
-                    <th>Ejemplares</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var autor in autores)
-                {
-                    var totalEjemplares = ejemplaresPorAutor.TryGetValue(autor.AutorId, out var count) ? count : 0;
-                    var prestados = ejemplaresPrestadosPorAutor.TryGetValue(autor.AutorId, out var prestadosCount) ? prestadosCount : 0;
-                    var perdidos = ejemplaresPerdidosPorAutor.TryGetValue(autor.AutorId, out var perdidosCount) ? perdidosCount : 0;
-                    var disponibles = totalEjemplares - prestados - perdidos;
-                    var colorClass = disponibles > 0 ? "text-success" : "text-danger";
-
-                    <tr>
-                        <td>@autor.Nombre</td>
-                        <td>@autor.CantidadLibros</td>
-                        <td class="@(totalEjemplares > 0 ? colorClass : "")">
-                            @if (totalEjemplares > 0)
-                            {
-                                <span>
-                                    <strong>@disponibles</strong> disponibles 
-                                    <span class="text-muted">|</span> 
-                                    <span class="@(prestados > 0 ? "text-orange" : "")">@prestados prestados</span>
-                                    <span class="text-muted">|</span> 
-                                    <span class="@(perdidos > 0 ? "text-danger" : "")">@perdidos perdidos</span>
-                                    <span class="text-muted">|</span> 
-                                    @totalEjemplares total
-                                </span>
-                            }
-                            else
-                            {
-                                <span>Sin ejemplares</span>
-                            }
-                        </td>
-                        <td>
-                            <AuthorizeView Policy="@RoleConstants.Permissions.Autores.Read">
-                                <Authorized>
-                                    <button class="btn btn-primary btn-sm me-1" @onclick="() => VerDetalles(autor.AutorId)">
-                                        <i class="bi bi-eye"></i> Detalles
-                                    </button>
-                                </Authorized>
-                            </AuthorizeView>
-                            <AuthorizeView Policy="@RoleConstants.Permissions.Autores.Update">
-                                <Authorized>
-                                    <button class="btn btn-warning btn-sm" @onclick="() => EditarAutor(autor.AutorId)">
-                                        <i class="bi bi-pencil"></i> Editar
-                                    </button>
-                                </Authorized>
-                            </AuthorizeView>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+<div class="ma-4" style="height: calc(100vh - 140px); display: flex; flex-direction: column;">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h4">Catálogo de Autores</MudText>
+        <AuthorizeView Policy="@RoleConstants.Permissions.Autores.Create">
+            <Authorized>
+                <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" OnClick="CrearAutor">
+                    Nuevo Autor
+                </MudButton>
+            </Authorized>
+        </AuthorizeView>
     </div>
-}
+
+    @if (autores == null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="@autores" Dense="true" Hover="true" Filter="FiltrarAutores"
+                  T="AutorDTO" Elevation="0" Class="flex-grow-1" FixedHeader="true">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Buscar..." Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="AutorDTO" SortBy="x => x.Nombre">Nombre</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="AutorDTO" SortBy="x => x.CantidadLibros">Cantidad de Títulos</MudTableSortLabel></MudTh>
+                <MudTh>Ejemplares</MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="autor">
+                <MudTd DataLabel="Nombre">@autor.Nombre</MudTd>
+                <MudTd DataLabel="Cantidad de Títulos">@autor.CantidadLibros</MudTd>
+                <MudTd DataLabel="Ejemplares">
+                    @{
+                        var totalEjemplares = ejemplaresPorAutor.TryGetValue(autor.AutorId, out var count) ? count : 0;
+                        var prestados = ejemplaresPrestadosPorAutor.TryGetValue(autor.AutorId, out var prestadosCount) ? prestadosCount : 0;
+                        var perdidos = ejemplaresPerdidosPorAutor.TryGetValue(autor.AutorId, out var perdidosCount) ? perdidosCount : 0;
+                        var disponibles = totalEjemplares - prestados - perdidos;
+                    }
+                    @if (totalEjemplares > 0)
+                    {
+                        <MudStack Row="true" Spacing="1">
+                            <MudChip Color="Color.Success" Size="Size.Small" T="string">@disponibles disponibles</MudChip>
+                            <MudChip Color="Color.Warning" Size="Size.Small" T="string">@prestados prestados</MudChip>
+                            <MudChip Color="Color.Error" Size="Size.Small" T="string">@perdidos perdidos</MudChip>
+                            <MudChip Color="Color.Default" Size="Size.Small" T="string">@totalEjemplares total</MudChip>
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudText>Sin ejemplares</MudText>
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudStack Row="true" Spacing="1">
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Autores.Read" Context="authContext">
+                            <Authorized>
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small"
+                                             OnClick="@(() => VerDetalles(autor.AutorId))"
+                                             aria-label="Ver detalles" />
+                            </Authorized>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Autores.Update" Context="authContext">
+                            <Authorized>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small"
+                                             OnClick="@(() => EditarAutor(autor.AutorId))"
+                                             aria-label="Editar autor" />
+                            </Authorized>
+                        </AuthorizeView>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager RowsPerPageString="Filas por página" />
+            </PagerContent>
+        </MudTable>
+    }
+</div>
 
 @code {
     private IEnumerable<AutorDTO>? autores;
@@ -159,5 +159,13 @@ else
     private void EditarAutor(int autorId)
     {
         NavigationManager.NavigateTo($"/autores/editar/{autorId}");
+    }
+
+    private string _searchString = "";
+
+    private bool FiltrarAutores(AutorDTO autor)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString)) return true;
+        return autor.Nombre?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true;
     }
 }
