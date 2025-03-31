@@ -8,90 +8,84 @@
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = RoleConstants.Permissions.Ubicaciones.Read)]
 @rendermode InteractiveServer
+
+<PageTitle>Ubicaciones - LibroManager</PageTitle>
 <MudThemeProvider />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
-<PageTitle>Ubicaciones - LibroManager</PageTitle>
 
-<h1>Ubicaciones</h1>
+<div class="ma-4" style="height: calc(100vh - 140px); display: flex; flex-direction: column;">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h4">Catálogo de Ubicaciones</MudText>
+        <AuthorizeView Policy="@RoleConstants.Permissions.Ubicaciones.Create">
+            <Authorized>
+                <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" OnClick="@(() => NavigationManager.NavigateTo("/ubicaciones/crear"))">
+                    Nueva Ubicación
+                </MudButton>
+            </Authorized>
+        </AuthorizeView>
+    </div>
 
-<AuthorizeView Roles="@RoleConstants.AdminRole">
-    <Authorized>
-        <div class="mb-3">
-            <a href="/ubicaciones/crear" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Nueva Ubicación
-            </a>
-        </div>
-    </Authorized>
-</AuthorizeView>
-
-@if (_ubicaciones == null)
-{
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Cargando...</span>
-        </div>
-    </div>
-}
-else if (!_ubicaciones.Any())
-{
-    <div class="alert alert-info" role="alert">
-        No hay ubicaciones registradas.
-    </div>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Ubicación</th>
-                    <th>Estante</th>
-                    <th>Nivel</th>
-                    <th>Posición</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var ubicacion in _ubicaciones)
-                {
-                    <tr>
-                        <td>@ubicacion.UbicacionFormateada</td>
-                        <td>@ubicacion.Estante</td>
-                        <td>@ubicacion.Nivel</td>
-                        <td>@ubicacion.Posicion</td>
-                        <td>
-                            <span class="badge @(ubicacion.EstaDisponible ? "bg-success" : "bg-warning")">
-                                @(ubicacion.EstaDisponible ? "Disponible" : "Ocupada")
-                            </span>
-                        </td>
-                        <td>
-                            <AuthorizeView Policy="@RoleConstants.Permissions.Ubicaciones.Read">
-                                <Authorized>
-                                    <button class="btn btn-primary btn-sm me-2" @onclick="() => VerDetalles(ubicacion.UbicacionId)">
-                                        <i class="bi bi-eye"></i> Detalles
-                                    </button>
-                                </Authorized>
-                            </AuthorizeView>
-                            <AuthorizeView Roles="@RoleConstants.AdminRole">
-                                <Authorized>
-                                    <button class="btn btn-warning btn-sm me-2" @onclick="() => EditarUbicacion(ubicacion.UbicacionId)">
-                                        <i class="bi bi-pencil"></i> Editar
-                                    </button>
-                                </Authorized>
-                            </AuthorizeView>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+    @if (_ubicaciones == null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="@_ubicaciones" Dense="true" Hover="true" Filter="FiltrarUbicaciones"
+                  T="UbicacionDTO" Elevation="0" Class="flex-grow-1" FixedHeader="true">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Buscar..." Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="UbicacionDTO" SortBy="x => x.UbicacionFormateada">Ubicación</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="UbicacionDTO" SortBy="x => x.Estante">Estante</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="UbicacionDTO" SortBy="x => x.Nivel">Nivel</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="UbicacionDTO" SortBy="x => x.Posicion">Posición</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="UbicacionDTO" SortBy="x => x.EstaDisponible">Estado</MudTableSortLabel></MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="ubicacion">
+                <MudTd DataLabel="Ubicación">@ubicacion.UbicacionFormateada</MudTd>
+                <MudTd DataLabel="Estante">@ubicacion.Estante</MudTd>
+                <MudTd DataLabel="Nivel">@ubicacion.Nivel</MudTd>
+                <MudTd DataLabel="Posición">@ubicacion.Posicion</MudTd>
+                <MudTd DataLabel="Estado">
+                    <MudChip T="string" Variant="Variant.Filled" Color="@(ubicacion.EstaDisponible ? Color.Success : Color.Warning)" Size="Size.Small">
+                        @(ubicacion.EstaDisponible ? "Disponible" : "Ocupada")
+                    </MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudStack Row="true" Spacing="1">
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Ubicaciones.Read">
+                            <Authorized>
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small"
+                                             OnClick="@(() => VerDetalles(ubicacion.UbicacionId))"
+                                             aria-label="Ver detalles" />
+                            </Authorized>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@RoleConstants.Permissions.Ubicaciones.Update">
+                            <Authorized>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small"
+                                             OnClick="@(() => EditarUbicacion(ubicacion.UbicacionId))"
+                                             aria-label="Editar ubicación" />
+                            </Authorized>
+                        </AuthorizeView>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager RowsPerPageString="Filas por página" />
+            </PagerContent>
+        </MudTable>
+    }
+</div>
 
 @code {
     private IEnumerable<UbicacionDTO>? _ubicaciones;
+    private string _searchString = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -106,5 +100,14 @@ else
     private void EditarUbicacion(int ubicacionId)
     {
         NavigationManager.NavigateTo($"/ubicaciones/editar/{ubicacionId}");
+    }
+
+    private bool FiltrarUbicaciones(UbicacionDTO ubicacion)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString)) return true;
+        return ubicacion.UbicacionFormateada?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true
+            || ubicacion.Estante.ToString()?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true
+            || ubicacion.Nivel.ToString()?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true
+            || ubicacion.Posicion.ToString()?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true;
     }
 }
