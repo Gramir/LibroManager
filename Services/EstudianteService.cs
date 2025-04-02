@@ -123,7 +123,6 @@ public class EstudianteService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<E
                 return false;
             }
 
-            // Verificar si el email ya existe en otro estudiante
             if (existingEstudiante.Email != estudianteDto.Email)
             {
                 var existingByEmail = await _unitOfWork.Estudiantes.GetByEmailAsync(estudianteDto.Email);
@@ -134,15 +133,13 @@ public class EstudianteService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<E
                 }
             }
 
-            // Usar el objeto mapeado directamente
-            var estudiante = _mapper.Map<Estudiante>(estudianteDto);
-            // Preservar la fecha de inscripción
-            estudiante.FechaInscripcion = existingEstudiante.FechaInscripcion;
+            // Actualizar las propiedades del estudiante existente
+            _mapper.Map(estudianteDto, existingEstudiante);
 
-            _unitOfWork.Estudiantes.Update(estudiante);
+            _unitOfWork.Estudiantes.Update(existingEstudiante);
             await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation("Estudiante actualizado: {EstudianteId}, Nombre: {Nombre}, Email: {Email}",
-                estudiante.EstudianteId, estudiante.Nombre, estudiante.Email);
+                existingEstudiante.EstudianteId, existingEstudiante.Nombre, existingEstudiante.Email);
             return true;
         }
         catch (Exception ex)

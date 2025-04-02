@@ -207,14 +207,6 @@ public class EstudianteServiceTests
             Email = "actualizado@test.com"
         };
 
-        var estudiante = new Estudiante
-        {
-            EstudianteId = 1,
-            Nombre = "Estudiante Actualizado",
-            Email = "actualizado@test.com",
-            FechaInscripcion = DateTime.Now
-        };
-
         var existingEstudiante = new Estudiante
         {
             EstudianteId = 1,
@@ -225,8 +217,8 @@ public class EstudianteServiceTests
 
         _mockUnitOfWork.Setup(uow => uow.Estudiantes.GetByIdAsync(estudianteUpdateDto.EstudianteId))
             .ReturnsAsync(existingEstudiante);
-        _mockMapper.Setup(m => m.Map<Estudiante>(estudianteUpdateDto))
-            .Returns(estudiante);
+        _mockMapper.Setup(m => m.Map(estudianteUpdateDto, existingEstudiante))
+            .Returns(existingEstudiante);
         _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync())
             .ReturnsAsync(1);
 
@@ -235,7 +227,7 @@ public class EstudianteServiceTests
 
         // Assert
         Assert.True(result);
-        _mockUnitOfWork.Verify(uow => uow.Estudiantes.Update(estudiante), Times.Once);
+        _mockUnitOfWork.Verify(uow => uow.Estudiantes.Update(existingEstudiante), Times.Once);
         _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Once);
     }
 
