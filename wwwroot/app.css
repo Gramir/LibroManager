@@ -1,5 +1,6 @@
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 1.1rem; /* Aumentar tamaño de fuente base */
 }
 
 a, .btn-link {
