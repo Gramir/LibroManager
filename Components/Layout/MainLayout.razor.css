@@ -61,6 +61,8 @@ main {
 @media (min-width: 641px) {
     .page {
         flex-direction: row;
+        height: 100vh; /* Asegura que la página ocupe toda la altura */
+        overflow: hidden; /* Evita el scroll en el contenedor principal */
     }
 
     .sidebar {
@@ -68,15 +70,37 @@ main {
         height: 100vh;
         position: sticky;
         top: 0;
+       
+    }
+
+    main {
+        display: flex; /* Usa flexbox para el layout interno de main */
+        flex-direction: column; /* Apila top-row y article verticalmente */
+        flex: 1; /* Ocupa el espacio restante */
+        overflow: hidden; /* Evita el scroll en main */
     }
 
     .top-row {
         position: sticky;
         top: 0;
         z-index: 1;
+        background-color: #f7f7f7; /* Asegura que tenga fondo */
+        /* Mantenemos el padding original */
+        padding-left: 2rem !important;
+        padding-right: 1.5rem !important;
+        /* Mantenemos las propiedades de flex y alineación */
+        border-bottom: 1px solid #d6d5d5;
+        justify-content: flex-end;
+        height: 3.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
     }
 
-    .top-row, article {
+    article {
+        flex: 1; /* Ocupa el espacio restante dentro de main */
+        overflow-y: auto; /* Permite el scroll vertical solo en el contenido */
+        /* Mantenemos el padding original */
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }
