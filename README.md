@@ -25,6 +25,7 @@ LibroManager es una aplicación web moderna para la gestión de bibliotecas que 
 - AutoMapper
 - xUnit para pruebas unitarias
 
+
 ## Estructura del Proyecto
 
 - `Components/`: Componentes Blazor y páginas de la aplicación
@@ -33,7 +34,8 @@ LibroManager es una aplicación web moderna para la gestión de bibliotecas que 
 - `Models/`: Modelos de dominio
 - `Repositories/`: Implementación del patrón repositorio
 - `Services/`: Lógica de negocio
-- `Tests/`: Pruebas unitarias
+- `Tests/`: Pruebas unitarias y pruebas automatizadas con Playwright
+  - `Playwright/`: Pruebas end-to-end automatizadas
 
 ## Modelos Principales
 
@@ -86,6 +88,28 @@ LibroManager es una aplicación web moderna para la gestión de bibliotecas que 
 dotnet ef database update
 ```
 
+
+## Pruebas Automatizadas con Playwright
+
+El proyecto incluye pruebas end-to-end automatizadas utilizando [Microsoft Playwright](https://playwright.dev/dotnet/).
+
+### ¿Qué se prueba?
+- Flujos principales de la aplicación web
+- Navegación, autenticación y validaciones visuales
+
+### Ejecución de pruebas Playwright
+1. Instala las dependencias de Playwright:
+  ```bash
+  dotnet tool install --global Microsoft.Playwright.CLI
+  playwright install
+  ```
+2. Ejecuta las pruebas:
+  ```bash
+  dotnet test Tests/Playwright
+  ```
+
+Consulta la carpeta `Tests/Playwright` para ver los archivos de las pruebas y las páginas automatizadas.
+
 ## Características de Desarrollo
 
 - Inyección de dependencias
@@ -93,6 +117,7 @@ dotnet ef database update
 - AutoMapper para mapeo de objetos
 - Validaciones personalizadas
 - Pruebas unitarias extensivas
+- Pruebas end-to-end con Playwright
 - Hot Reload habilitado
 
 ## Licencia
