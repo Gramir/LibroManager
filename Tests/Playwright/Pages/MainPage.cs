@@ -10,6 +10,8 @@ namespace LibroManager.Tests.Playwright.Pages
         public ILocator NavbarTitle { get; }
         public ILocator MainHeader { get; }
         public ILocator LoginLink { get; }
+        public ILocator UserLogged { get; }
+
 
         public MainPage(IPage page)
         {
@@ -17,6 +19,7 @@ namespace LibroManager.Tests.Playwright.Pages
             NavbarTitle = _page.Locator("a.navbar-brand");
             MainHeader = _page.Locator("h1");
             LoginLink = _page.Locator("a.btn.btn-primary:has-text('Iniciar Sesión')");
+            UserLogged = _page.Locator("span.user-name");
         }
 
         public async Task GotoAsync()
