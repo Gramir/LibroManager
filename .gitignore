@@ -101,3 +101,5 @@ ServiceDependencies/
 *.user
 *.userosscache
 *.sln.docstates
+LibroManager/LibroManager.db-wal
+LibroManager/LibroManager.db-shm
