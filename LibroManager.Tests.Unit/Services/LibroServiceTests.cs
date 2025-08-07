@@ -8,6 +8,7 @@ using Moq;
 using Xunit;
 
 namespace LibroManager.Tests.Services;
+using Microsoft.Extensions.Logging;
 
 public class LibroServiceTests
 {

@@ -5,6 +5,7 @@ using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
 using LibroManager.Services.Interfaces;
 using Moq;
+using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace LibroManager.Tests.Services;

@@ -3,6 +3,7 @@ using LibroManager.DTOs;
 using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
 using LibroManager.Services;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 

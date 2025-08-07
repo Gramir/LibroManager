@@ -2,6 +2,7 @@ using AutoMapper;
 using LibroManager.DTOs;
 using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
+using Microsoft.Extensions.Logging;
 using LibroManager.Services;
 using Moq;
 using Xunit;

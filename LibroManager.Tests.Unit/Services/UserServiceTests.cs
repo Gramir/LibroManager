@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using LibroManager.Constants;
 using LibroManager.Models;
 using LibroManager.Repositories.Interfaces;
