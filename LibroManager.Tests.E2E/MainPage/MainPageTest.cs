@@ -3,10 +3,9 @@ using LibroManager.Tests.Playwright.Helpers;
 
 namespace LibroManager.Tests.Playwright
 {
-    [Collection("PlaywrightServer")] // Mantener aislamiento de servidor para cada suite
     public class MainPageTest : PlaywrightTestBase
     {
-        public MainPageTest(PlaywrightServerFixture fixture) : base(fixture) { }
+        public MainPageTest() : base() { }
 
         [Fact(DisplayName = "La página principal muestra título y enlace de login")]
         public async Task MainPage_Should_Display_Title_And_LoginLink()

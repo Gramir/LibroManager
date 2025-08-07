@@ -4,19 +4,29 @@ using Xunit;
 
 namespace LibroManager.Tests.Playwright
 {
-    public abstract class PlaywrightTestBase
+    public abstract class PlaywrightTestBase : IAsyncDisposable
     {
-        protected IPlaywright PlaywrightInstance { get; }
-        protected IBrowser Browser { get; }
-        protected IBrowserContext Context { get; }
-        protected IPage Page { get; }
+        protected IPlaywright PlaywrightInstance { get; private set; }
+        protected IBrowser Browser { get; private set; }
+        protected IBrowserContext Context { get; private set; }
+        protected IPage Page { get; private set; }
 
-        protected PlaywrightTestBase(PlaywrightServerFixture fixture)
+        protected PlaywrightTestBase()
         {
-            PlaywrightInstance = fixture.PlaywrightInstance;
-            Browser = fixture.Browser;
-            Context = fixture.Context;
-            Page = fixture.Page;
+            PlaywrightInstance = Microsoft.Playwright.Playwright.CreateAsync().Result;
+            Browser = PlaywrightInstance.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }).Result;
+            Context = Browser.NewContextAsync().Result;
+            Page = Context.NewPageAsync().Result;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (Context != null)
+                await Context.CloseAsync();
+            if (Browser != null)
+                await Browser.CloseAsync();
+            if (PlaywrightInstance != null)
+                PlaywrightInstance.Dispose();
         }
     }
 }
