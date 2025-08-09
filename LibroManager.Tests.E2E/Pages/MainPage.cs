@@ -1,7 +1,6 @@
 using Microsoft.Playwright;
-using System.Threading.Tasks;
 
-namespace LibroManager.Tests.Playwright.Pages
+namespace LibroManager.Tests.E2E.Pages
 {
     public class MainPage
     {

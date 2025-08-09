@@ -1,21 +1,19 @@
 using Microsoft.Playwright;
 using System.Diagnostics;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
 using System.Net;
 using System.Net.Sockets;
 
-namespace LibroManager.Tests.Playwright
+namespace LibroManager.Tests.E2E
 {
 
 
-    public class PlaywrightServerFixture : IAsyncDisposable, Xunit.IAsyncLifetime
+    public class PlaywrightServerFixture : IAsyncDisposable, IAsyncLifetime
     {
         private Process? _serverProcess;
         public IPlaywright? PlaywrightInstance { get; private set; }
         public IBrowser? Browser { get; private set; }
         public string BaseUrl { get; private set; }
-        private int _port;
+        private readonly int _port;
 
         public PlaywrightServerFixture()
         {
@@ -59,7 +57,7 @@ namespace LibroManager.Tests.Playwright
         }
 
         // Este método lo llama xUnit automáticamente después de los tests
-        async Task Xunit.IAsyncLifetime.DisposeAsync()
+        async Task IAsyncLifetime.DisposeAsync()
         {
             await DisposeAsync();
         }
@@ -69,13 +67,16 @@ namespace LibroManager.Tests.Playwright
         {
             if (Browser == null)
                 throw new InvalidOperationException("El navegador no está inicializado. Llama a InitializeAsync primero.");
-            var context = await Browser.NewContextAsync();
+            var context = await Browser.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = 1920, Height = 1080 }
+            });
             var page = await context.NewPageAsync();
             return (context, page);
         }
 
         // Método para limpiar la base de datos antes de cada test
-        public void ResetDatabase()
+        public static void ResetDatabase()
         {
             // Aquí deberías implementar la lógica para restaurar el estado inicial de la base de datos
             // Ejemplo: ejecutar un script SQL, truncar tablas, restaurar snapshot, etc.
@@ -86,13 +87,13 @@ namespace LibroManager.Tests.Playwright
         {
             if (Browser != null)
                 await Browser.CloseAsync();
-            if (PlaywrightInstance != null)
-                PlaywrightInstance.Dispose();
+            PlaywrightInstance?.Dispose();
             if (_serverProcess != null && !_serverProcess.HasExited)
             {
                 _serverProcess.Kill(true);
                 _serverProcess.Dispose();
             }
+            GC.SuppressFinalize(this);
         }
 
         private static int GetRandomUnusedPort()
@@ -107,7 +108,7 @@ namespace LibroManager.Tests.Playwright
         private static string GetAppWorkingDirectory()
         {
             // Devuelve el directorio donde está el proyecto principal
-            return System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "LibroManager"));
+            return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "LibroManager"));
         }
 
         private static async Task<bool> WaitForServerReady(string url, int timeoutSeconds = 30)

@@ -1,6 +1,6 @@
 using Microsoft.Playwright;
 
-namespace LibroManager.Tests.Playwright.Pages
+namespace LibroManager.Tests.E2E.Pages
 {
     public class LoginPage
     {
@@ -11,6 +11,7 @@ namespace LibroManager.Tests.Playwright.Pages
         public ILocator PasswordInput { get; }
         public ILocator LoginButton { get; }
         public ILocator ErrorMessage { get; }
+        public ILocator LoginBox { get; }
 
         public LoginPage(IPage page, string baseUrl)
         {
@@ -20,6 +21,7 @@ namespace LibroManager.Tests.Playwright.Pages
             PasswordInput = _page.Locator("input[autocomplete='current-password']");
             LoginButton = _page.Locator("button[type='submit']");
             ErrorMessage = _page.Locator(".alert-danger");
+            LoginBox = _page.GetByText("Iniciar Sesión Correo Electró");
         }
 
         public async Task GotoAsync()
@@ -32,6 +34,15 @@ namespace LibroManager.Tests.Playwright.Pages
             await EmailInput.FillAsync(email);
             await PasswordInput.FillAsync(password);
             await LoginButton.ClickAsync();
+        }
+
+        // Screenshot del cuadro de login
+        public async Task<string> TakeLoginBoxScreenshotAsync(string path)
+        {
+            await LoginBox.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible });
+            var handle = await LoginBox.ElementHandleAsync() ?? throw new Exception("No se encontró el cuadro de login");
+            await handle.ScreenshotAsync(new() { Path = path });
+            return path;
         }
     }
 }

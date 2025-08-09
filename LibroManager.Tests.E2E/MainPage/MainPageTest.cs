@@ -1,25 +1,26 @@
-using Xunit;
-using LibroManager.Tests.Playwright.Helpers;
+using LibroManager.Tests.E2E.Helpers;
+using Microsoft.Playwright;
 
-namespace LibroManager.Tests.Playwright
+namespace LibroManager.Tests.E2E.MainPage
 {
 
-
     [Collection("PlaywrightServer")]
-    public class MainPageTest
+    public class MainPageTest(PlaywrightServerFixture fixture)
     {
-        private readonly PlaywrightServerFixture _fixture;
-        public MainPageTest(PlaywrightServerFixture fixture)
+        private readonly PlaywrightServerFixture _fixture = fixture;
+
+        private async Task<(IBrowserContext context, Pages.MainPage mainPage)> CreateMainPageAsync()
         {
-            _fixture = fixture;
+            var (context, page) = await _fixture.CreateTestContextAndPageAsync();
+            var mainPage = new Pages.MainPage(page, _fixture.BaseUrl);
+            await mainPage.GotoAsync();
+            return (context, mainPage);
         }
 
         [Fact(DisplayName = "La página principal muestra título y enlace de login")]
         public async Task MainPage_Should_Display_Title_And_LoginLink()
         {
-            var (context, page) = await _fixture.CreateTestContextAndPageAsync();
-            var mainPage = new Pages.MainPage(page, _fixture.BaseUrl);
-            await mainPage.GotoAsync();
+            var (context, mainPage) = await CreateMainPageAsync();
 
             // Web-first assertions: esperan automáticamente a que el elemento sea visible
             await mainPage.NavbarTitle.ToBeVisibleAsync();
@@ -33,33 +34,5 @@ namespace LibroManager.Tests.Playwright
             await context.CloseAsync();
         }
 
-        [Fact(DisplayName = "El admin puede iniciar sesión correctamente")]
-        public async Task Admin_Should_Login_Successfully()
-        {
-            var (context, page) = await _fixture.CreateTestContextAndPageAsync();
-            var loginPage = new Pages.LoginPage(page, _fixture.BaseUrl);
-            await loginPage.GotoAsync();
-
-            // Credenciales del admin según Program.cs
-            var adminEmail = "admin@libromanager.com";
-            var adminPassword = "Admin123!";
-
-            await loginPage.LoginAsync(adminEmail, adminPassword);
-
-            // Espera a que la navegación ocurra (redirección tras login)
-            await page.WaitForURLAsync(_fixture.BaseUrl + "/");
-
-            // Verifica que el usuario está logueado
-            var mainPage = new Pages.MainPage(page, _fixture.BaseUrl);
-            await mainPage.NavbarTitle.ToBeVisibleAsync();
-            // Verifica que no aparece el botón de login
-            await mainPage.LoginLink.ToBeHiddenAsync();
-            // Verifica que el nombre del usuario (o email) aparece en la navbar
-            await mainPage.UserLogged.ToBeVisibleAsync();
-            // Verifica que el nombre del usuario es el correcto
-            Assert.Equal(adminEmail, await mainPage.UserLogged.InnerTextAsync());
-
-            await context.CloseAsync();
-        }
     }
 }

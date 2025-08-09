@@ -1,7 +1,7 @@
 using Microsoft.Playwright;
 
 
-namespace LibroManager.Tests.Playwright.Helpers
+namespace LibroManager.Tests.E2E.Helpers
 {
     public static class PlaywrightExpectExtensions
     {
