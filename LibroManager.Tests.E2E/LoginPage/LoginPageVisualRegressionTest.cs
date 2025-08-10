@@ -9,12 +9,18 @@ namespace LibroManager.Tests.E2E.LoginPage
         private readonly PlaywrightServerFixture _fixture = fixture;
         private readonly ITestOutputHelper _output = output;
 
-        [Fact(DisplayName = "Visual regression: cuadro de login debe coincidir con la referencia")]
-        public async Task LoginBox_Should_Match_Golden_Image()
+        private async Task<(Microsoft.Playwright.IBrowserContext context, Pages.LoginPage loginPage)> CreateLoginPageAsync()
         {
             var (context, page) = await _fixture.CreateTestContextAndPageAsync();
             var loginPage = new Pages.LoginPage(page, _fixture.BaseUrl);
             await loginPage.GotoAsync();
+            return (context, loginPage);
+        }
+
+        [Fact(DisplayName = "Visual regression: cuadro de login debe coincidir con la referencia")]
+        public async Task LoginBox_Should_Match_Golden_Image()
+        {
+            var (context, loginPage) = await CreateLoginPageAsync();
 
             // Captura screenshot en cualquier ruta temporal
             var tempScreenshotPath = Path.GetTempFileName() + ".png";

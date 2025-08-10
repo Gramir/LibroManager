@@ -7,12 +7,18 @@ namespace LibroManager.Tests.E2E.LoginPage
     {
         private readonly PlaywrightServerFixture _fixture = fixture;
 
-        [Fact(DisplayName = "El admin puede iniciar sesión correctamente")]
-        public async Task Admin_Should_Login_Successfully()
+        private async Task<(Microsoft.Playwright.IBrowserContext context, Pages.LoginPage loginPage, Microsoft.Playwright.IPage page)> CreateLoginPageAsync()
         {
             var (context, page) = await _fixture.CreateTestContextAndPageAsync();
             var loginPage = new Pages.LoginPage(page, _fixture.BaseUrl);
             await loginPage.GotoAsync();
+            return (context, loginPage, page);
+        }
+
+        [Fact(DisplayName = "El admin puede iniciar sesión correctamente")]
+        public async Task Admin_Should_Login_Successfully()
+        {
+            var (context, loginPage, page) = await CreateLoginPageAsync();
 
             // Credenciales del admin según Program.cs
             var adminEmail = "admin@libromanager.com";
