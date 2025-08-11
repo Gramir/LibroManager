@@ -3,11 +3,16 @@ using Microsoft.Playwright;
 
 namespace LibroManager.Tests.E2E.MainPage
 {
-
     [Collection("PlaywrightServer")]
-    public class MainPageTest(PlaywrightServerFixture fixture)
+    public class MainPageTest
     {
-        private readonly PlaywrightServerFixture _fixture = fixture;
+        private readonly PlaywrightServerFixture _fixture;
+
+        public MainPageTest(PlaywrightServerFixture fixture)
+        {
+            PlaywrightServerFixture.NextSnapshotName = "db1.db";
+            _fixture = fixture;
+        }
 
         private async Task<(IBrowserContext context, Pages.MainPage mainPage)> CreateMainPageAsync()
         {

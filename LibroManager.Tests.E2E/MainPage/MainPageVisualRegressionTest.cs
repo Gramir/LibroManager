@@ -18,6 +18,7 @@ namespace LibroManager.Tests.E2E.MainPage
         }
 
         [Fact(DisplayName = "Visual regression: la página principal debe coincidir con la referencia")]
+        [UseSnapshot("db1.db")]
         public async Task MainPage_Should_Match_Golden_Image()
         {
             var (context, mainPage, page) = await CreateMainPageAsync();

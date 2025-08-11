@@ -9,14 +9,20 @@ namespace LibroManager.Tests.E2E
 
     public class PlaywrightServerFixture : IAsyncDisposable, IAsyncLifetime
     {
-        private Process? _serverProcess;
-        public IPlaywright? PlaywrightInstance { get; private set; }
-        public IBrowser? Browser { get; private set; }
-        public string BaseUrl { get; private set; }
-        private readonly int _port;
+    public static string? NextSnapshotName { get; set; } = null;
+    private Process? _serverProcess;
+    public IPlaywright? PlaywrightInstance { get; private set; }
+    public IBrowser? Browser { get; private set; }
+    public string BaseUrl { get; private set; }
+    private readonly int _port;
+    private static readonly List<string> _allTempDbPaths = new();
+    private string _testDbPath = string.Empty;
+    private string _testConnectionString = string.Empty;
+    private string? _snapshotPath;
 
         public PlaywrightServerFixture()
         {
+            NextSnapshotName = "db1.db";
             _port = GetRandomUnusedPort();
             BaseUrl = $"http://localhost:{_port}";
         }
@@ -24,7 +30,9 @@ namespace LibroManager.Tests.E2E
         // Este método lo llama xUnit automáticamente antes de los tests
         public async Task InitializeAsync()
         {
-            // Inicia el servidor como proceso externo
+            var snapshotName = NextSnapshotName;
+            SetSnapshot(snapshotName);
+
             var startInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
@@ -36,19 +44,24 @@ namespace LibroManager.Tests.E2E
                 CreateNoWindow = true
             };
             startInfo.EnvironmentVariables["ASPNETCORE_URLS"] = BaseUrl;
+            startInfo.EnvironmentVariables["ConnectionStrings__DefaultConnection"] = _testConnectionString;
             _serverProcess = Process.Start(startInfo);
 
-            // Si quieres logs del servidor, puedes habilitar las siguientes líneas:
-            // _serverProcess.OutputDataReceived += (s, e) => { if (e.Data != null) Console.WriteLine($"[SERVER STDOUT] {e.Data}"); };
-            // _serverProcess.ErrorDataReceived += (s, e) => { if (e.Data != null) Console.WriteLine($"[SERVER STDERR] {e.Data}"); };
-            // _serverProcess.BeginOutputReadLine();
-            // _serverProcess.BeginErrorReadLine();
+            if (_serverProcess != null)
+            {
+                _serverProcess.OutputDataReceived += (s, e) => { };
+                _serverProcess.ErrorDataReceived += (s, e) => { };
+                _serverProcess.BeginOutputReadLine();
+                _serverProcess.BeginErrorReadLine();
+            }
+            else
+            {
+                throw new Exception("No se pudo iniciar el proceso del servidor.");
+            }
 
-            // Espera a que el servidor esté listo
             var isReady = await WaitForServerReady(BaseUrl, timeoutSeconds: 30);
             if (!isReady)
             {
-                Console.WriteLine("[ERROR] El servidor no inició correctamente. Revisa los logs anteriores.");
                 throw new Exception($"El servidor no inició correctamente en {BaseUrl}");
             }
 
@@ -75,13 +88,11 @@ namespace LibroManager.Tests.E2E
             return (context, page);
         }
 
-        // Método para limpiar la base de datos antes de cada test
-        public static void ResetDatabase()
-        {
-            // Aquí deberías implementar la lógica para restaurar el estado inicial de la base de datos
-            // Ejemplo: ejecutar un script SQL, truncar tablas, restaurar snapshot, etc.
-            // Este método se debe llamar en el setup de cada test
-        }
+
+        /// <summary>
+        /// Permite seleccionar el snapshot de base de datos para el próximo test.
+        /// Si es null, se usará base vacía.
+        /// </summary>
 
         public async ValueTask DisposeAsync()
         {
@@ -93,7 +104,73 @@ namespace LibroManager.Tests.E2E
                 _serverProcess.Kill(true);
                 _serverProcess.Dispose();
             }
+            foreach (var tempPath in _allTempDbPaths)
+            {
+                if (File.Exists(tempPath))
+                {
+                    try { File.Delete(tempPath); } catch { /* Ignorar errores */ }
+                }
+                var walPath = tempPath + "-wal";
+                var shmPath = tempPath + "-shm";
+                if (File.Exists(walPath))
+                {
+                    try { File.Delete(walPath); } catch { /* Ignorar errores */ }
+                }
+                if (File.Exists(shmPath))
+                {
+                    try { File.Delete(shmPath); } catch { /* Ignorar errores */ }
+                }
+            }
             GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Permite seleccionar el snapshot de base de datos para el próximo test.
+        /// Si es null, se usará base vacía.
+        /// </summary>
+        public void SetSnapshot(string? snapshotFileName)
+        {
+            var snapshotsDir = Path.Combine(GetAppWorkingDirectory(), "..", "LibroManager.Tests.E2E", "Snapshots");
+            if (!Directory.Exists(snapshotsDir))
+            {
+                Directory.CreateDirectory(snapshotsDir);
+            }
+            if (!string.IsNullOrEmpty(snapshotFileName))
+            {
+                var fullSnapshotPath = Path.Combine(snapshotsDir, snapshotFileName);
+                bool srcExists = File.Exists(fullSnapshotPath);
+                long srcSize = srcExists ? new FileInfo(fullSnapshotPath).Length : -1;
+                if (!srcExists)
+                {
+                    throw new FileNotFoundException($"Snapshot no encontrado: {fullSnapshotPath}");
+                }
+                _snapshotPath = fullSnapshotPath;
+            }
+            else
+            {
+                _snapshotPath = null;
+            }
+            var tempDbName = $"LibroManager_E2E_{Guid.NewGuid()}.db";
+            _testDbPath = Path.Combine(snapshotsDir, tempDbName);
+            _allTempDbPaths.Add(_testDbPath);
+            if (_snapshotPath != null)
+            {
+                try
+                {
+                    File.Copy(_snapshotPath, _testDbPath, overwrite: true);
+                    bool destExists = File.Exists(_testDbPath);
+                    long destSize = destExists ? new FileInfo(_testDbPath).Length : -1;
+                    if (!destExists)
+                        throw new Exception($"El archivo destino NO existe tras copiar. Path: {_testDbPath}");
+                    else if (destSize == 0)
+                        throw new Exception($"El archivo destino está vacío tras copiar. Path: {_testDbPath}");
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+            }
+            _testConnectionString = $"Data Source={_testDbPath}";
         }
 
         private static int GetRandomUnusedPort()

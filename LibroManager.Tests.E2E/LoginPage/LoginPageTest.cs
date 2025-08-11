@@ -3,9 +3,15 @@ using LibroManager.Tests.E2E.Helpers;
 namespace LibroManager.Tests.E2E.LoginPage
 {
     [Collection("PlaywrightServer")]
-    public class LoginPageTest(PlaywrightServerFixture fixture)
+    public class LoginPageTest
     {
-        private readonly PlaywrightServerFixture _fixture = fixture;
+        private readonly PlaywrightServerFixture _fixture;
+
+        public LoginPageTest(PlaywrightServerFixture fixture)
+        {
+            PlaywrightServerFixture.NextSnapshotName = "db1.db";
+            _fixture = fixture;
+        }
 
         private async Task<(Microsoft.Playwright.IBrowserContext context, Pages.LoginPage loginPage, Microsoft.Playwright.IPage page)> CreateLoginPageAsync()
         {
