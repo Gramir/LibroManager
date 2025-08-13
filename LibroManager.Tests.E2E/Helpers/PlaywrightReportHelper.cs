@@ -10,9 +10,6 @@ namespace LibroManager.Tests.E2E.Helpers
         public static async Task SaveFailureReportAsync(IBrowserContext context, IPage page, string testName, Exception ex)
         {
             Console.WriteLine($"[PlaywrightReportHelper] INICIO SaveFailureReportAsync para {testName}");
-            // Usar la raíz del proyecto, no la carpeta de salida del build
-            // Forzar la ruta de reportes a la carpeta del proyecto LibroManager.Tests.E2E/Reports
-            // Forzar la ruta absoluta a la carpeta LibroManager.Tests.E2E/Reports en la raíz del proyecto
             string repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
             string reportsRoot = Path.Combine(repoRoot, "Reports");
             Directory.CreateDirectory(reportsRoot);
