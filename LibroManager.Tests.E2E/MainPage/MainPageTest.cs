@@ -3,8 +3,10 @@ using Microsoft.Playwright;
 
 namespace LibroManager.Tests.E2E.MainPage
 {
+    using LibroManager.Tests.E2E.Helpers;
+
     [Collection("PlaywrightServer")]
-    public class MainPageTest
+    public class MainPageTest : E2ETestBase
     {
         private readonly PlaywrightServerFixture _fixture;
 
@@ -26,17 +28,21 @@ namespace LibroManager.Tests.E2E.MainPage
         public async Task MainPage_Should_Display_Title_And_LoginLink()
         {
             var (context, mainPage) = await CreateMainPageAsync();
+            await RunWithReportAsync(
+                context,
+                mainPage.Page,
+                nameof(MainPage_Should_Display_Title_And_LoginLink),
+                async () =>
+                {
+                    // Web-first assertions: esperan automáticamente a que el elemento sea visible
+                    await mainPage.NavbarTitle.ToBeVisibleAsync();
+                    await mainPage.MainHeader.ToBeVisibleAsync();
+                    await mainPage.LoginLink.ToBeVisibleAsync();
 
-            // Web-first assertions: esperan automáticamente a que el elemento sea visible
-            await mainPage.NavbarTitle.ToBeVisibleAsync();
-            await mainPage.MainHeader.ToBeVisibleAsync();
-            await mainPage.LoginLink.ToBeVisibleAsync();
-
-            // Validar href del enlace de login
-            var href = await mainPage.LoginLink.GetAttributeAsync("href");
-            Assert.True(href == "/Account/Login" || href == "Account/Login", $"El href del botón de login es inesperado: {href}");
-
-            await context.CloseAsync();
+                    // Validar href del enlace de login
+                    var href = await mainPage.LoginLink.GetAttributeAsync("href");
+                    Assert.True(href == "/Account/Login" || href == "Account/Login", $"El href del botón de login es inesperado: {href}");
+                });
         }
 
     }

@@ -2,8 +2,10 @@ using LibroManager.Tests.E2E.Helpers;
 
 namespace LibroManager.Tests.E2E.LoginPage
 {
+    using LibroManager.Tests.E2E.Helpers;
+
     [Collection("PlaywrightServer")]
-    public class LoginPageTest
+    public class LoginPageTest : E2ETestBase
     {
         private readonly PlaywrightServerFixture _fixture;
 
@@ -25,27 +27,22 @@ namespace LibroManager.Tests.E2E.LoginPage
         public async Task Admin_Should_Login_Successfully()
         {
             var (context, loginPage, page) = await CreateLoginPageAsync();
-
-            // Credenciales del admin según Program.cs
             var adminEmail = "admin@libromanager.com";
             var adminPassword = "Admin123!";
-
-            await loginPage.LoginAsync(adminEmail, adminPassword);
-
-            // Espera a que la navegación ocurra (redirección tras login)
-            await page.WaitForURLAsync(_fixture.BaseUrl + "/");
-
-            // Verifica que el usuario está logueado
-            var mainPage = new Pages.MainPage(page, _fixture.BaseUrl);
-            await mainPage.NavbarTitle.ToBeVisibleAsync();
-            // Verifica que no aparece el botón de login
-            await mainPage.LoginLink.ToBeHiddenAsync();
-            // Verifica que el nombre del usuario (o email) aparece en la navbar
-            await mainPage.UserLogged.ToBeVisibleAsync();
-            // Verifica que el nombre del usuario es el correcto
-            Assert.Equal(adminEmail, await mainPage.UserLogged.InnerTextAsync());
-
-            await context.CloseAsync();
+            await RunWithReportAsync(
+                context,
+                page,
+                nameof(Admin_Should_Login_Successfully),
+                async () =>
+                {
+                    await loginPage.LoginAsync(adminEmail, adminPassword);
+                    await page.WaitForURLAsync(_fixture.BaseUrl + "/");
+                    var mainPage = new Pages.MainPage(page, _fixture.BaseUrl);
+                    await mainPage.NavbarTitle.ToBeVisibleAsync();
+                    await mainPage.LoginLink.ToBeHiddenAsync();
+                    await mainPage.UserLogged.ToBeVisibleAsync();
+                    Assert.Equal(adminEmail, await mainPage.UserLogged.InnerTextAsync());
+                });
         }
     }
 }

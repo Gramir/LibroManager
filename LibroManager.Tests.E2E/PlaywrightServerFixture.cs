@@ -9,16 +9,16 @@ namespace LibroManager.Tests.E2E
 
     public class PlaywrightServerFixture : IAsyncDisposable, IAsyncLifetime
     {
-    public static string? NextSnapshotName { get; set; } = null;
-    private Process? _serverProcess;
-    public IPlaywright? PlaywrightInstance { get; private set; }
-    public IBrowser? Browser { get; private set; }
-    public string BaseUrl { get; private set; }
-    private readonly int _port;
-    private static readonly List<string> _allTempDbPaths = new();
-    private string _testDbPath = string.Empty;
-    private string _testConnectionString = string.Empty;
-    private string? _snapshotPath;
+        public static string? NextSnapshotName { get; set; } = null;
+        private Process? _serverProcess;
+        public IPlaywright? PlaywrightInstance { get; private set; }
+        public IBrowser? Browser { get; private set; }
+        public string BaseUrl { get; private set; }
+        private readonly int _port;
+        private static readonly List<string> _allTempDbPaths = new();
+        private string _testDbPath = string.Empty;
+        private string _testConnectionString = string.Empty;
+        private string? _snapshotPath;
 
         public PlaywrightServerFixture()
         {
@@ -80,9 +80,13 @@ namespace LibroManager.Tests.E2E
         {
             if (Browser == null)
                 throw new InvalidOperationException("El navegador no está inicializado. Llama a InitializeAsync primero.");
+            var videoDir = Path.Combine("Reports", "Videos");
+            Directory.CreateDirectory(videoDir);
             var context = await Browser.NewContextAsync(new BrowserNewContextOptions
             {
-                ViewportSize = new ViewportSize { Width = 1920, Height = 1080 }
+                ViewportSize = new ViewportSize { Width = 1920, Height = 1080 },
+                RecordVideoDir = videoDir,
+                RecordVideoSize = new RecordVideoSize { Width = 1920, Height = 1080 }
             });
             var page = await context.NewPageAsync();
             return (context, page);
@@ -102,24 +106,14 @@ namespace LibroManager.Tests.E2E
             if (_serverProcess != null && !_serverProcess.HasExited)
             {
                 _serverProcess.Kill(true);
+                _serverProcess.WaitForExit(); // Esperar a que termine completamente
                 _serverProcess.Dispose();
             }
             foreach (var tempPath in _allTempDbPaths)
             {
-                if (File.Exists(tempPath))
-                {
-                    try { File.Delete(tempPath); } catch { /* Ignorar errores */ }
-                }
-                var walPath = tempPath + "-wal";
-                var shmPath = tempPath + "-shm";
-                if (File.Exists(walPath))
-                {
-                    try { File.Delete(walPath); } catch { /* Ignorar errores */ }
-                }
-                if (File.Exists(shmPath))
-                {
-                    try { File.Delete(shmPath); } catch { /* Ignorar errores */ }
-                }
+                BorrarArchivoConReintentos(tempPath);
+                BorrarArchivoConReintentos(tempPath + "-wal");
+                BorrarArchivoConReintentos(tempPath + "-shm");
             }
             GC.SuppressFinalize(this);
         }
@@ -208,6 +202,30 @@ namespace LibroManager.Tests.E2E
                 await Task.Delay(1000);
             }
             return false;
+        }
+
+        /// <summary>
+        /// Borra un archivo con reintentos por si está bloqueado temporalmente.
+        /// </summary>
+        private static void BorrarArchivoConReintentos(string path, int maxIntentos = 5, int msEspera = 500)
+        {
+            for (int intento = 0; intento < maxIntentos; intento++)
+            {
+                try
+                {
+                    if (File.Exists(path))
+                    {
+                        File.Delete(path);
+                    }
+                    return;
+                }
+                catch
+                {
+                    // Esperar antes de reintentar
+                    Thread.Sleep(msEspera);
+                }
+            }
+            // Si no se pudo borrar, dejarlo pasar (puedes loguear si lo deseas)
         }
     }
 }

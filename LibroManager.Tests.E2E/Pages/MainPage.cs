@@ -4,7 +4,8 @@ namespace LibroManager.Tests.E2E.Pages
 {
     public class MainPage
     {
-        private readonly IPage _page;
+    private readonly IPage _page;
+    public IPage Page => _page;
         private readonly string _baseUrl;
 
         public ILocator NavbarTitle { get; }

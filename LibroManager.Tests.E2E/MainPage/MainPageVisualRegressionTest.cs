@@ -4,10 +4,16 @@ using Xunit.Abstractions;
 namespace LibroManager.Tests.E2E.MainPage
 {
     [Collection("PlaywrightServer")]
-    public class MainPageVisualRegressionTest(PlaywrightServerFixture fixture, ITestOutputHelper output)
+    public class MainPageVisualRegressionTest : E2ETestBase
     {
-        private readonly PlaywrightServerFixture _fixture = fixture;
-        private readonly ITestOutputHelper _output = output;
+        private readonly PlaywrightServerFixture _fixture;
+        private readonly ITestOutputHelper _output;
+
+        public MainPageVisualRegressionTest(PlaywrightServerFixture fixture, ITestOutputHelper output)
+        {
+            _fixture = fixture;
+            _output = output;
+        }
 
         private async Task<(Microsoft.Playwright.IBrowserContext context, Pages.MainPage mainPage, Microsoft.Playwright.IPage page)> CreateMainPageAsync()
         {
@@ -22,20 +28,24 @@ namespace LibroManager.Tests.E2E.MainPage
         public async Task MainPage_Should_Match_Golden_Image()
         {
             var (context, mainPage, page) = await CreateMainPageAsync();
+            await RunWithReportAsync(
+                context,
+                page,
+                nameof(MainPage_Should_Match_Golden_Image),
+                async () =>
+                {
+                    // Captura screenshot de la página completa en una ruta temporal
+                    var tempScreenshotPath = Path.GetTempFileName() + ".png";
+                    await page.ScreenshotAsync(new() { Path = tempScreenshotPath, FullPage = true });
 
-            // Captura screenshot de la página completa en una ruta temporal
-            var tempScreenshotPath = Path.GetTempFileName() + ".png";
-            await page.ScreenshotAsync(new() { Path = tempScreenshotPath, FullPage = true });
-
-            VisualRegressionHelper.AssertScreenshotMatchesGolden(
-                tempScreenshotPath,
-                "MainPage",      // nombre de la página
-                "mainpage",      // nombre base de la imagen
-                _output,
-                0.01 // umbral ajustable
-            );
-
-            await context.CloseAsync();
+                    VisualRegressionHelper.AssertScreenshotMatchesGolden(
+                        tempScreenshotPath,
+                        "MainPage",      // nombre de la página
+                        "mainpage",      // nombre base de la imagen
+                        _output,
+                        0.01 // umbral ajustable
+                    );
+                });
         }
     }
 }
