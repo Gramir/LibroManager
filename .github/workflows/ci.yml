@@ -22,8 +22,10 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
         working-directory: LibroManager
+      - name: Install Playwright CLI
+        run: dotnet tool install --global Microsoft.Playwright.CLI
       - name: Install Playwright Browsers
-        run: dotnet playwright install
+        run: playwright install
         working-directory: LibroManager.Tests.E2E
       - name: Test
         run: dotnet test --no-build --verbosity normal
