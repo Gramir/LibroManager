@@ -30,3 +30,12 @@ jobs:
       - name: Test
         run: dotnet test --no-build --verbosity normal
         working-directory: LibroManager
+      - name: Upload Playwright Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            LibroManager.Tests.E2E/**/Diff/*.png
+            LibroManager.Tests.E2E/**/Actual/*.png
+            LibroManager.Tests.E2E/**/Golden/*.png
+            LibroManager.Tests.E2E/Reports/*
