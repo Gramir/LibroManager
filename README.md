@@ -1,3 +1,6 @@
+
+![CI](https://github.com/Gramir/LibroManager/actions/workflows/ci.yml/badge.svg)
+
 # LibroManager
 
 Library management system developed with .NET 8 and Blazor Server.

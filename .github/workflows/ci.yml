@@ -1,3 +1,4 @@
+
 name: CI
 
 on:
@@ -7,7 +8,8 @@ on:
     branches: [ "main", "Testing" ]
 
 jobs:
-  build:
+  unit:
+    name: Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -16,6 +18,40 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: LibroManager
+      - name: Build
+        run: dotnet build --no-restore
+        working-directory: LibroManager
+      - name: Test (Unit)
+        run: dotnet test --no-build --verbosity normal LibroManager.Tests.Unit/LibroManager.Tests.Unit.csproj
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: unit
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
       - name: Restore dependencies
         run: dotnet restore
         working-directory: LibroManager
@@ -27,10 +63,10 @@ jobs:
       - name: Install Playwright Browser (Chromium only)
         run: playwright install chromium
         working-directory: LibroManager.Tests.E2E
-      - name: Test
-        run: dotnet test --no-build --verbosity normal
-        working-directory: LibroManager
+      - name: Test (E2E)
+        run: dotnet test --no-build --verbosity normal LibroManager.Tests.E2E/LibroManager.Tests.E2E.csproj
       - name: Upload Playwright Artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-artifacts
