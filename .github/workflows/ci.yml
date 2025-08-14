@@ -24,8 +24,8 @@ jobs:
         working-directory: LibroManager
       - name: Install Playwright CLI
         run: dotnet tool install --global Microsoft.Playwright.CLI
-      - name: Install Playwright Browsers
-        run: playwright install
+      - name: Install Playwright Browser (Chromium only)
+        run: playwright install chromium
         working-directory: LibroManager.Tests.E2E
       - name: Test
         run: dotnet test --no-build --verbosity normal
