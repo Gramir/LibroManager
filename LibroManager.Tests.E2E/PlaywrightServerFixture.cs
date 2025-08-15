@@ -66,7 +66,7 @@ namespace LibroManager.Tests.E2E
             }
 
             PlaywrightInstance = await Microsoft.Playwright.Playwright.CreateAsync();
-            Browser = await PlaywrightInstance.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+            Browser = await PlaywrightInstance.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true, SlowMo = 500 });
         }
 
         // Este método lo llama xUnit automáticamente después de los tests
