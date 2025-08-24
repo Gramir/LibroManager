@@ -44,7 +44,7 @@ namespace LibroManager.Tests.E2E.Pages
             await NameInput.FillAsync(nombre);
             await PasswordInput.FillAsync(password);
             await ConfirmPasswordInput.FillAsync(password);
-            if (rol.ToLower().Contains("biblio"))
+            if (rol.Contains("biblio", StringComparison.CurrentCultureIgnoreCase))
                 await RoleRadio_Bibliotecario.CheckAsync();
             await SaveButton.ClickAsync();
             await SuccessMessage.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible });

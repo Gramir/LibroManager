@@ -1,21 +1,16 @@
 using LibroManager.Tests.E2E.Helpers;
 using Xunit.Abstractions;
+using Microsoft.Playwright;
 
 namespace LibroManager.Tests.E2E.MainPage
 {
     [Collection("PlaywrightServer")]
-    public class MainPageVisualRegressionTest : E2ETestBase
+    public class MainPageVisualRegressionTest(PlaywrightServerFixture fixture, ITestOutputHelper output) : E2ETestBase
     {
-        private readonly PlaywrightServerFixture _fixture;
-        private readonly ITestOutputHelper _output;
+        private readonly PlaywrightServerFixture _fixture = fixture;
+        private readonly ITestOutputHelper _output = output;
 
-        public MainPageVisualRegressionTest(PlaywrightServerFixture fixture, ITestOutputHelper output)
-        {
-            _fixture = fixture;
-            _output = output;
-        }
-
-        private async Task<(Microsoft.Playwright.IBrowserContext context, Pages.MainPage mainPage, Microsoft.Playwright.IPage page)> CreateMainPageAsync()
+        private async Task<(IBrowserContext context, Pages.MainPage mainPage, IPage page)> CreateMainPageAsync()
         {
             var (context, page) = await _fixture.CreateTestContextAndPageAsync();
             var mainPage = new Pages.MainPage(page, _fixture.BaseUrl);

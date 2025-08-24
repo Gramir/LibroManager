@@ -15,7 +15,7 @@ namespace LibroManager.Tests.E2E
         public IBrowser? Browser { get; private set; }
         public string BaseUrl { get; private set; }
         private readonly int _port;
-        private static readonly List<string> _allTempDbPaths = new();
+        private static readonly List<string> _allTempDbPaths = [];
         private string _testDbPath = string.Empty;
         private string _testConnectionString = string.Empty;
         private string? _snapshotPath;
@@ -133,7 +133,7 @@ namespace LibroManager.Tests.E2E
             {
                 var fullSnapshotPath = Path.Combine(snapshotsDir, snapshotFileName);
                 bool srcExists = File.Exists(fullSnapshotPath);
-                long srcSize = srcExists ? new FileInfo(fullSnapshotPath).Length : -1;
+                _ = srcExists ? new FileInfo(fullSnapshotPath).Length : -1;
                 if (!srcExists)
                 {
                     throw new FileNotFoundException($"Snapshot no encontrado: {fullSnapshotPath}");
@@ -142,7 +142,6 @@ namespace LibroManager.Tests.E2E
             }
             else
             {
-                _snapshotPath = null;
             }
             var tempDbName = $"LibroManager_E2E_{Guid.NewGuid()}.db";
             _testDbPath = Path.Combine(snapshotsDir, tempDbName);

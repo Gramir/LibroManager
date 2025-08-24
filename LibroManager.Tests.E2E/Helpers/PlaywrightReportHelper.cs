@@ -9,6 +9,7 @@ namespace LibroManager.Tests.E2E.Helpers
     {
         public static async Task SaveFailureReportAsync(IBrowserContext context, IPage page, string testName, Exception ex)
         {
+            ArgumentNullException.ThrowIfNull(context);
             Console.WriteLine($"[PlaywrightReportHelper] INICIO SaveFailureReportAsync para {testName}");
             string repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
             string reportsRoot = Path.Combine(repoRoot, "Reports");

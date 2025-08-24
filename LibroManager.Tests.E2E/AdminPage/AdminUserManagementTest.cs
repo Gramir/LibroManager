@@ -8,15 +8,10 @@ using System.IO;
 namespace LibroManager.Tests.E2E.AdminPage
 {
     [Collection("PlaywrightServer")]
-    public class AdminUserManagementTest : E2ETestBase
+    public class AdminUserManagementTest(PlaywrightServerFixture fixture) : E2ETestBase
     {
-        private readonly PlaywrightServerFixture _fixture;
+        private readonly PlaywrightServerFixture _fixture = fixture;
         private const string StorageStatePath = "playwright/.auth/admin-state.json";
-
-        public AdminUserManagementTest(PlaywrightServerFixture fixture)
-        {
-            _fixture = fixture;
-        }
 
         private async Task<(IBrowserContext context, IPage page)> CreateAdminContextAsync(bool useStorageState = false)
         {

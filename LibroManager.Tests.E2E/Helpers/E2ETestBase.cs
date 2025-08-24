@@ -6,7 +6,7 @@ namespace LibroManager.Tests.E2E.Helpers
 {
     public abstract class E2ETestBase
     {
-        protected async Task RunWithReportAsync(
+        protected static async Task RunWithReportAsync(
             IBrowserContext context,
             IPage page,
             string testName,
@@ -21,18 +21,16 @@ namespace LibroManager.Tests.E2E.Helpers
             {
                 testException = ex;
             }
-            finally
+
+            if (testException != null)
             {
-                if (testException != null)
-                {
-                    await PlaywrightReportHelper.SaveFailureReportAsync(context, page, testName, testException);
-                    await context.CloseAsync();
-                    throw testException;
-                }
-                else
-                {
-                    await context.CloseAsync();
-                }
+                await PlaywrightReportHelper.SaveFailureReportAsync(context, page, testName, testException);
+                await context.CloseAsync();
+                throw testException;
+            }
+            else
+            {
+                await context.CloseAsync();
             }
         }
     }
