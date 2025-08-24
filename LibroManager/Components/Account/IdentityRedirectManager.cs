@@ -13,6 +13,7 @@ namespace LibroManager.Components.Account
             HttpOnly = true,
             IsEssential = true,
             MaxAge = TimeSpan.FromSeconds(5),
+            SecurePolicy = CookieSecurePolicy.SameAsRequest, // Will be Secure in HTTPS
         };
 
         [DoesNotReturn]
@@ -20,16 +21,37 @@ namespace LibroManager.Components.Account
         {
             uri ??= "";
 
-            // Prevent open redirects.
-            if (!Uri.IsWellFormedUriString(uri, UriKind.Relative))
+            // Prevent open redirects with enhanced validation.
+            if (!IsValidRedirectUri(uri))
             {
-                uri = navigationManager.ToBaseRelativePath(uri);
+                uri = "/"; // Redirect to home page for invalid URIs
             }
 
             // During static rendering, NavigateTo throws a NavigationException which is handled by the framework as a redirect.
             // So as long as this is called from a statically rendered Identity component, the InvalidOperationException is never thrown.
             navigationManager.NavigateTo(uri);
             throw new InvalidOperationException($"{nameof(IdentityRedirectManager)} can only be used during static rendering.");
+        }
+
+        private bool IsValidRedirectUri(string uri)
+        {
+            // Ensure URI is relative and well-formed
+            if (!Uri.IsWellFormedUriString(uri, UriKind.Relative))
+            {
+                return false;
+            }
+
+            // Additional security checks
+            if (uri.StartsWith("//", StringComparison.OrdinalIgnoreCase) || 
+                uri.StartsWith("\\\\", StringComparison.OrdinalIgnoreCase) ||
+                uri.Contains("javascript:", StringComparison.OrdinalIgnoreCase) ||
+                uri.Contains("vbscript:", StringComparison.OrdinalIgnoreCase) ||
+                uri.Contains("data:", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         [DoesNotReturn]
