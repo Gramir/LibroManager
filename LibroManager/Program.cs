@@ -9,6 +9,7 @@ using LibroManager.Services;
 using LibroManager.Services.Interfaces;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
@@ -17,6 +18,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Add rate limiting for authentication endpoints
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("AuthPolicy", rateLimiterOptions =>
+    {
+        rateLimiterOptions.PermitLimit = 5;
+        rateLimiterOptions.Window = TimeSpan.FromMinutes(5);
+        rateLimiterOptions.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+        rateLimiterOptions.QueueLimit = 0;
+    });
+});
 
 // Add MudBlazor
 builder.Services.AddMudServices();
@@ -31,12 +44,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Configure Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
-    // Password settings - Simplificados para evitar problemas de validación
-    options.Password.RequireDigit = false;
-    options.Password.RequireLowercase = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 6;
+    // Password settings - Enhanced for security
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 8;
 
     // Lockout settings
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
@@ -54,7 +67,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
-    options.ExpireTimeSpan = TimeSpan.FromDays(1);
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Will be Secure in HTTPS
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.ExpireTimeSpan = TimeSpan.FromHours(8); // Reduced from 1 day to 8 hours
     options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.SlidingExpiration = true;
@@ -184,10 +199,30 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
+    
+    // Add security headers for production
+    app.Use(async (context, next) =>
+    {
+        context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+        context.Response.Headers.Append("X-Frame-Options", "DENY");
+        context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+        context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+        context.Response.Headers.Append("Content-Security-Policy", 
+            "default-src 'self'; " +
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data: https:; " +
+            "font-src 'self'; " +
+            "connect-src 'self'");
+        await next();
+    });
 }
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// Enable rate limiting
+app.UseRateLimiter();
 
 // Add authentication & authorization middleware
 app.UseAuthentication();
@@ -215,6 +250,9 @@ using (var scope = app.Services.CreateScope())
 
     if (adminUser == null)
     {
+        // Generate a secure random password for the default admin user
+        var securePassword = GenerateSecurePassword();
+        
         adminUser = new ApplicationUser
         {
             UserName = adminEmail,
@@ -224,12 +262,53 @@ using (var scope = app.Services.CreateScope())
             FechaCreacion = DateTime.UtcNow
         };
 
-        var result = await userManager.CreateAsync(adminUser, "Admin123!");
+        var result = await userManager.CreateAsync(adminUser, securePassword);
         if (result.Succeeded)
         {
             await userManager.AddToRoleAsync(adminUser, RoleConstants.AdminRole);
+            
+            // Log the generated password for first-time setup (remove in production)
+            var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning("Default admin user created with email: {AdminEmail}. " +
+                             "Initial password: {Password}. " + 
+                             "Change this password immediately after first login!", 
+                             adminEmail, securePassword);
         }
     }
+}
+
+// Helper method to generate secure passwords
+static string GenerateSecurePassword()
+{
+    const string lowercase = "abcdefghijklmnopqrstuvwxyz";
+    const string uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; 
+    const string digits = "0123456789";
+    const string special = "!@#$%^&*";
+    const string allChars = lowercase + uppercase + digits + special;
+    
+    var random = new Random();
+    var password = new char[12];
+    
+    // Ensure at least one character from each required category
+    password[0] = lowercase[random.Next(lowercase.Length)];
+    password[1] = uppercase[random.Next(uppercase.Length)];
+    password[2] = digits[random.Next(digits.Length)];
+    password[3] = special[random.Next(special.Length)];
+    
+    // Fill the rest with random characters
+    for (int i = 4; i < password.Length; i++)
+    {
+        password[i] = allChars[random.Next(allChars.Length)];
+    }
+    
+    // Shuffle the password array
+    for (int i = password.Length - 1; i > 0; i--)
+    {
+        int j = random.Next(i + 1);
+        (password[i], password[j]) = (password[j], password[i]);
+    }
+    
+    return new string(password);
 }
 
 app.MapAdditionalIdentityEndpoints();
