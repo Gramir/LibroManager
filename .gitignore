@@ -103,3 +103,4 @@ ServiceDependencies/
 *.sln.docstates
 LibroManager/LibroManager.db-wal
 LibroManager/LibroManager.db-shm
+feedback.md
