@@ -1,10 +1,9 @@
 using LibroManager.Tests.E2E.Helpers;
+using MainPagePO = LibroManager.Tests.E2E.POM.Pages.MainPage;
 using Microsoft.Playwright;
 
-namespace LibroManager.Tests.E2E.MainPage
+namespace LibroManager.Tests.E2E.POM.Tests.MainPage
 {
-    using LibroManager.Tests.E2E.Helpers;
-
     [Collection("PlaywrightServer")]
     public class MainPageTest : E2ETestBase
     {
@@ -16,10 +15,10 @@ namespace LibroManager.Tests.E2E.MainPage
             _fixture = fixture;
         }
 
-        private async Task<(IBrowserContext context, Pages.MainPage mainPage)> CreateMainPageAsync()
+        private async Task<(IBrowserContext context, MainPagePO mainPage)> CreateMainPageAsync()
         {
             var (context, page) = await _fixture.CreateTestContextAndPageAsync();
-            var mainPage = new Pages.MainPage(page, _fixture.BaseUrl);
+            var mainPage = new MainPagePO(page, _fixture.BaseUrl);
             await mainPage.GotoAsync();
             return (context, mainPage);
         }

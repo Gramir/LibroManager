@@ -1,6 +1,6 @@
 using Microsoft.Playwright;
 
-namespace LibroManager.Tests.E2E.Pages
+namespace LibroManager.Tests.E2E.POM.Pages
 {
     public class MainPage
     {

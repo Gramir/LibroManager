@@ -1,11 +1,11 @@
 using LibroManager.Tests.E2E.Helpers;
-using LibroManager.Tests.E2E.Pages;
+using LibroManager.Tests.E2E.POM.Pages;
 using Microsoft.Playwright;
 using Xunit;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace LibroManager.Tests.E2E.AdminPage
+namespace LibroManager.Tests.E2E.POM.Tests.AdminPage
 {
     [Collection("PlaywrightServer")]
     public class AdminUserManagementTest(PlaywrightServerFixture fixture) : E2ETestBase
@@ -30,7 +30,7 @@ namespace LibroManager.Tests.E2E.AdminPage
             else
             {
                 var (context, page) = await _fixture.CreateTestContextAndPageAsync();
-                var loginPage = new LibroManager.Tests.E2E.Pages.LoginPage(page, _fixture.BaseUrl);
+                var loginPage = new LibroManager.Tests.E2E.POM.Pages.LoginPage(page, _fixture.BaseUrl);
                 await loginPage.GotoAsync();
                 await loginPage.LoginAsync("admin@libromanager.com", "Admin123!");
                 await page.WaitForURLAsync(_fixture.BaseUrl + "/");
@@ -78,11 +78,11 @@ namespace LibroManager.Tests.E2E.AdminPage
                 nameof(Admin_Can_Create_Bibliotecario_And_Login) + "_LoginAsBiblio",
                 async () =>
                 {
-                    var loginPage = new LibroManager.Tests.E2E.Pages.LoginPage(page, _fixture.BaseUrl);
+                    var loginPage = new LibroManager.Tests.E2E.POM.Pages.LoginPage(page, _fixture.BaseUrl);
                     await loginPage.GotoAsync();
                     await loginPage.LoginAsync(email, password);
                     await page.WaitForURLAsync(_fixture.BaseUrl + "/");
-                    var mainPage = new LibroManager.Tests.E2E.Pages.MainPage(page, _fixture.BaseUrl);
+                    var mainPage = new LibroManager.Tests.E2E.POM.Pages.MainPage(page, _fixture.BaseUrl);
                     await mainPage.UserLogged.ToBeVisibleAsync();
                     string usuarioLogueado = await mainPage.UserLogged.InnerTextAsync();
                     Assert.Contains(nombre, usuarioLogueado, StringComparison.OrdinalIgnoreCase);

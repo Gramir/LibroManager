@@ -1,9 +1,9 @@
 using LibroManager.Tests.E2E.Helpers;
+using LoginPagePO = LibroManager.Tests.E2E.POM.Pages.LoginPage;
+using MainPagePO = LibroManager.Tests.E2E.POM.Pages.MainPage;
 
-namespace LibroManager.Tests.E2E.LoginPage
+namespace LibroManager.Tests.E2E.POM.Tests.LoginPage
 {
-    using LibroManager.Tests.E2E.Helpers;
-
     [Collection("PlaywrightServer")]
     public class LoginPageTest : E2ETestBase
     {
@@ -15,10 +15,10 @@ namespace LibroManager.Tests.E2E.LoginPage
             _fixture = fixture;
         }
 
-        private async Task<(Microsoft.Playwright.IBrowserContext context, Pages.LoginPage loginPage, Microsoft.Playwright.IPage page)> CreateLoginPageAsync()
+        private async Task<(Microsoft.Playwright.IBrowserContext context, LoginPagePO loginPage, Microsoft.Playwright.IPage page)> CreateLoginPageAsync()
         {
             var (context, page) = await _fixture.CreateTestContextAndPageAsync();
-            var loginPage = new Pages.LoginPage(page, _fixture.BaseUrl);
+            var loginPage = new LoginPagePO(page, _fixture.BaseUrl);
             await loginPage.GotoAsync();
             return (context, loginPage, page);
         }
@@ -37,7 +37,7 @@ namespace LibroManager.Tests.E2E.LoginPage
                 {
                     await loginPage.LoginAsync(adminEmail, adminPassword);
                     await page.WaitForURLAsync(_fixture.BaseUrl + "/");
-                    var mainPage = new Pages.MainPage(page, _fixture.BaseUrl);
+                    var mainPage = new MainPagePO(page, _fixture.BaseUrl);
                     await mainPage.NavbarTitle.ToBeVisibleAsync();
                     await mainPage.LoginLink.ToBeHiddenAsync();
                     await mainPage.UserLogged.ToBeVisibleAsync();

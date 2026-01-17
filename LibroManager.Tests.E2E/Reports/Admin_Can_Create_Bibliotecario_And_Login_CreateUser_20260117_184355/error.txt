@@ -1,0 +1,9 @@
+Mensaje: Actor 'Admin': failed to perform task 'Click'
+StackTrace:    at LibroManager.Tests.E2E.Screenplay.Core.Actors.Actor.AttemptsToAsync(ITask[] tasks) in F:\Users\Kylenz\Documents\Work\Automatic\Playwright\LibroManager With Playwright\LibroManager.Tests.E2E\Screenplay\Core\Actors\Actor.cs:line 134
+   at LibroManager.Tests.E2E.Screenplay.Tasks.CreateUser.PerformAsAsync(Actor actor) in F:\Users\Kylenz\Documents\Work\Automatic\Playwright\LibroManager With Playwright\LibroManager.Tests.E2E\Screenplay\Tasks\CreateUser.cs:line 65
+   at LibroManager.Tests.E2E.Screenplay.Core.Actors.Actor.AttemptsToAsync(ITask[] tasks) in F:\Users\Kylenz\Documents\Work\Automatic\Playwright\LibroManager With Playwright\LibroManager.Tests.E2E\Screenplay\Core\Actors\Actor.cs:line 124
+   at LibroManager.Tests.E2E.Screenplay.Tests.AdminUserManagementScreenplayTest.<>c__DisplayClass3_0.<<Admin_Can_Create_Bibliotecario_And_Login>b__0>d.MoveNext() in F:\Users\Kylenz\Documents\Work\Automatic\Playwright\LibroManager With Playwright\LibroManager.Tests.E2E\Screenplay\Tests\AdminUserManagementScreenplayTest.cs:line 133
+--- End of stack trace from previous location ---
+   at LibroManager.Tests.E2E.Helpers.E2ETestBase.RunWithReportAsync(IBrowserContext context, IPage page, String testName, Func`1 testBody) in F:\Users\Kylenz\Documents\Work\Automatic\Playwright\LibroManager With Playwright\LibroManager.Tests.E2E\Helpers\E2ETestBase.cs:line 18
+Screenshot: F:\Users\Kylenz\Documents\Work\Automatic\Playwright\LibroManager With Playwright\LibroManager.Tests.E2E\Reports\Admin_Can_Create_Bibliotecario_And_Login_CreateUser_20260117_184355\screenshot.png
+page.Video es null. No se grabó video.

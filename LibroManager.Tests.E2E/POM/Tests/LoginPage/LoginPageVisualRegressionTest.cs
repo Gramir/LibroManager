@@ -1,7 +1,8 @@
 using LibroManager.Tests.E2E.Helpers;
+using LoginPagePO = LibroManager.Tests.E2E.POM.Pages.LoginPage;
 using Xunit.Abstractions;
 
-namespace LibroManager.Tests.E2E.LoginPage
+namespace LibroManager.Tests.E2E.POM.Tests.LoginPage
 {
     [Collection("PlaywrightServer")]
     public class LoginPageVisualRegressionTest(PlaywrightServerFixture fixture, ITestOutputHelper output) : E2ETestBase
@@ -9,10 +10,10 @@ namespace LibroManager.Tests.E2E.LoginPage
         private readonly PlaywrightServerFixture _fixture = fixture;
         private readonly ITestOutputHelper _output = output;
 
-        private async Task<(Microsoft.Playwright.IBrowserContext context, Pages.LoginPage loginPage, Microsoft.Playwright.IPage page)> CreateLoginPageAsync()
+        private async Task<(Microsoft.Playwright.IBrowserContext context, LoginPagePO loginPage, Microsoft.Playwright.IPage page)> CreateLoginPageAsync()
         {
             var (context, page) = await _fixture.CreateTestContextAndPageAsync();
-            var loginPage = new Pages.LoginPage(page, _fixture.BaseUrl);
+            var loginPage = new LoginPagePO(page, _fixture.BaseUrl);
             await loginPage.GotoAsync();
             return (context, loginPage, page);
         }

@@ -1,0 +1,12 @@
+Mensaje: Timeout 30000ms exceeded.
+Call log:
+  - waiting for GetByText("Usuario creado exitosamente") to be visible
+StackTrace:    at Microsoft.Playwright.Transport.Connection.InnerSendMessageToServerAsync[T](ChannelOwner object, String method, Dictionary`2 dictionary, Boolean keepNulls) in /_/src/Playwright/Transport/Connection.cs:line 201
+   at Microsoft.Playwright.Transport.Connection.WrapApiCallAsync[T](Func`1 action, Boolean isInternal, String title) in /_/src/Playwright/Transport/Connection.cs:line 499
+   at LibroManager.Tests.E2E.POM.Pages.UserManagementPage.CreateUserAsync(String nombre, String email, String password, String rol) in F:\Users\Kylenz\Documents\Work\Automatic\Playwright\LibroManager With Playwright\LibroManager.Tests.E2E\POM\Pages\UserManagementPage.cs:line 50
+   at LibroManager.Tests.E2E.POM.Tests.AdminPage.AdminUserManagementTest.<>c__DisplayClass4_0.<<Admin_Can_Create_Bibliotecario_And_Login>b__0>d.MoveNext() in F:\Users\Kylenz\Documents\Work\Automatic\Playwright\LibroManager With Playwright\LibroManager.Tests.E2E\POM\Tests\AdminPage\AdminUserManagementTest.cs:line 61
+--- End of stack trace from previous location ---
+   at LibroManager.Tests.E2E.Helpers.E2ETestBase.RunWithReportAsync(IBrowserContext context, IPage page, String testName, Func`1 testBody) in F:\Users\Kylenz\Documents\Work\Automatic\Playwright\LibroManager With Playwright\LibroManager.Tests.E2E\Helpers\E2ETestBase.cs:line 18
+Screenshot: F:\Users\Kylenz\Documents\Work\Automatic\Playwright\LibroManager With Playwright\LibroManager.Tests.E2E\Reports\Admin_Can_Create_Bibliotecario_And_Login_CreateUser_20260117_191529\screenshot.png
+VideoPath: F:\Users\Kylenz\Documents\Work\Automatic\Playwright\LibroManager With Playwright\LibroManager.Tests.E2E\bin\Debug\net8.0\Reports\Videos\d4cd50e080a821474e059e0da883e23a.webm
+Video copiado correctamente.

@@ -1,7 +1,7 @@
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-namespace LibroManager.Tests.E2E.Pages
+namespace LibroManager.Tests.E2E.POM.Pages
 {
     public class UserManagementPage
     {
