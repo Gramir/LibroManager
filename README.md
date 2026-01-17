@@ -9,6 +9,8 @@ Library management system developed with .NET 8 and Blazor Server.
 
 LibroManager is a modern web application for library management, allowing you to manage books, authors, categories, students, and loans. Built with the latest Microsoft technologies, it offers an intuitive interface and complete features for library operations.
 
+**Unique Feature**: This project demonstrates a dual E2E testing architecture, implementing both traditional Page Object Model (POM) and modern Screenplay Pattern approaches side-by-side for direct comparison and learning purposes.
+
 ## Main Features
 
 - Complete book management with copy control
@@ -26,6 +28,7 @@ LibroManager is a modern web application for library management, allowing you to
 - Entity Framework Core 9.0.2
 - SQL Server
 - xUnit for unit testing
+- **Playwright** for E2E testing (both POM and Screenplay patterns)
 
 ## Project Structure
 
@@ -34,7 +37,11 @@ LibroManager is a modern web application for library management, allowing you to
 - `Repositories/`: Repository pattern implementation
 - `Services/`: Business logic
 - `Tests/`: Unit and automated tests with Playwright
-  - `Playwright/`: End-to-end automated tests
+  - `LibroManager.Tests.Unit/`: Unit tests
+  - `LibroManager.Tests.E2E/`: End-to-end tests
+    - `POM/`: Page Object Model implementation
+    - `Screenplay/`: Screenplay Pattern implementation
+    - `Helpers/`: Shared test utilities
 
 ## Main Models
 
@@ -127,6 +134,94 @@ The project includes end-to-end automated tests using [Microsoft Playwright](htt
 
 Check the `Tests/Playwright` folder for test files and automated pages.
 
+## Screenplay Pattern Implementation
+
+This project features a unique dual-architecture approach for E2E testing, implementing both the traditional **Page Object Model (POM)** and the modern **Screenplay Pattern** side-by-side. This allows for direct comparison between both architectural approaches.
+
+### What is the Screenplay Pattern?
+
+The Screenplay Pattern is a modern approach to automated testing that focuses on **user behavior** rather than technical implementation details. It treats tests as **stories** where:
+
+- **Actors** (users) perform **Tasks** (actions)
+- **Actors** ask **Questions** (assertions) about the application state
+- **Abilities** provide the technical capabilities (like browsing the web)
+- **UI Models** define the interface elements
+
+### Benefits of Screenplay Pattern
+
+- **Business-focused**: Tests read like user stories
+- **Reusable**: Tasks and Questions can be composed and reused
+- **Maintainable**: Changes to UI don't break multiple tests
+- **Extensible**: Easy to add new capabilities and behaviors
+- **Type-safe**: Strong typing prevents runtime errors
+
+### Screenplay Architecture
+
+```
+Screenplay/
+├── Core/                          # Core framework
+│   ├── Abilities/                 # Actor capabilities (BrowseTheWeb)
+│   ├── Actors/                    # Actor implementation
+│   ├── Exceptions/                # Custom exceptions
+│   ├── Interactions/              # Tasks and Questions
+│   │   ├── Tasks/                 # Atomic actions
+│   │   └── Questions/             # Assertions
+│   └── Logging/                   # Action logging
+├── Tasks/                         # High-level business tasks
+├── UI/                            # UI element definitions
+└── Tests/                         # Screenplay test implementations
+```
+
+### Running Screenplay Tests
+
+All Screenplay tests are marked with "(Screenplay)" in their display names:
+
+```bash
+# Run all tests (POM + Screenplay)
+dotnet test LibroManager.Tests.E2E
+
+# Run only Screenplay tests
+dotnet test LibroManager.Tests.E2E --filter "DisplayName~Screenplay"
+
+# Run only POM tests
+dotnet test LibroManager.Tests.E2E --filter "DisplayName!~Screenplay"
+```
+
+### Screenplay Test Example
+
+```csharp
+[Fact(DisplayName = "Admin can login successfully (Screenplay)")]
+public async Task Admin_Can_Login_Successfully()
+{
+    await RunScreenplayTestWithPageAsync(
+        actorName: "Admin",
+        testName: nameof(Admin_Can_Login_Successfully),
+        screenplay: async (actor, page) =>
+        {
+            // WHEN: Admin logs in
+            await actor.AttemptsToAsync(LoginAsUser.AsAdmin());
+            
+            // THEN: Should be logged in
+            await actor.AsksForAsync(TheVisibility.Of(MainPageUI.UserLogged(page)));
+        });
+}
+```
+
+### Comparison: POM vs Screenplay
+
+| Aspect | Page Object Model | Screenplay Pattern |
+|--------|------------------|-------------------|
+| Focus | Technical implementation | Business behavior |
+| Test readability | `page.Login("admin", "pass")` | `actor.AttemptsTo(LoginAsUser.AsAdmin())` |
+| Reusability | Page methods | Composable Tasks/Questions |
+| Maintenance | UI changes break tests | UI changes isolated |
+| Learning curve | Low | Medium |
+
+Both approaches coexist in this project, allowing teams to:
+- Compare implementation approaches
+- Migrate gradually from POM to Screenplay
+- Choose the best pattern for different scenarios
+
 ## Development Features
 
 - Dependency injection
@@ -134,6 +229,7 @@ Check the `Tests/Playwright` folder for test files and automated pages.
 - AutoMapper for object mapping
 - Custom validations
 - Extensive unit tests
+- **Dual E2E testing architecture**: Page Object Model (POM) and Screenplay Pattern
 - End-to-end tests with Playwright
 - Hot Reload enabled
 
@@ -200,6 +296,8 @@ Sistema de gestión de biblioteca desarrollado con .NET 8 y Blazor Server.
 
 LibroManager es una aplicación web moderna para la gestión de bibliotecas que permite administrar libros, autores, categorías, estudiantes y préstamos. Desarrollada con las últimas tecnologías de Microsoft, ofrece una interfaz intuitiva y funcionalidades completas para el manejo de una biblioteca.
 
+**Característica Única**: Este proyecto demuestra una arquitectura dual de pruebas E2E, implementando tanto el tradicional Page Object Model (POM) como el moderno Patrón Screenplay lado a lado para comparación directa y fines de aprendizaje.
+
 ## Características Principales
 
 - Gestión completa de libros con control de ejemplares
@@ -217,6 +315,7 @@ LibroManager es una aplicación web moderna para la gestión de bibliotecas que 
 - Entity Framework Core 9.0.2
 - SQL Server
 - xUnit para pruebas unitarias
+- **Playwright** para pruebas E2E (patrones POM y Screenplay)
 
 ## Estructura del Proyecto
 
@@ -225,7 +324,11 @@ LibroManager es una aplicación web moderna para la gestión de bibliotecas que 
 - `Repositories/`: Implementación del patrón repositorio
 - `Services/`: Lógica de negocio
 - `Tests/`: Pruebas unitarias y pruebas automatizadas con Playwright
-  - `Playwright/`: Pruebas end-to-end automatizadas
+  - `LibroManager.Tests.Unit/`: Pruebas unitarias
+  - `LibroManager.Tests.E2E/`: Pruebas end-to-end
+    - `POM/`: Implementación Page Object Model
+    - `Screenplay/`: Implementación Patrón Screenplay
+    - `Helpers/`: Utilidades compartidas de pruebas
 
 ## Modelos Principales
 
@@ -318,6 +421,94 @@ El proyecto incluye pruebas end-to-end automatizadas utilizando [Microsoft Playw
 
 Consulta la carpeta `Tests/Playwright` para ver los archivos de las pruebas y las páginas automatizadas.
 
+## Implementación del Patrón Screenplay
+
+Este proyecto cuenta con un enfoque único de arquitectura dual para pruebas E2E, implementando tanto el tradicional **Page Object Model (POM)** como el moderno **Patrón Screenplay** lado a lado. Esto permite comparar directamente ambos enfoques arquitectónicos.
+
+### ¿Qué es el Patrón Screenplay?
+
+El Patrón Screenplay es un enfoque moderno para las pruebas automatizadas que se centra en el **comportamiento del usuario** en lugar de los detalles técnicos de implementación. Trata las pruebas como **historias** donde:
+
+- **Actores** (usuarios) realizan **Tareas** (acciones)
+- **Actores** preguntan **Preguntas** (afirmaciones) sobre el estado de la aplicación
+- **Habilidades** proporcionan las capacidades técnicas (como navegar por la web)
+- **Modelos de UI** definen los elementos de interfaz
+
+### Beneficios del Patrón Screenplay
+
+- **Enfocado en negocio**: Las pruebas se leen como historias de usuario
+- **Reutilizable**: Las Tareas y Preguntas se pueden componer y reutilizar
+- **Mantenible**: Los cambios en la UI no rompen múltiples pruebas
+- **Extensible**: Fácil agregar nuevas capacidades y comportamientos
+- **Type-safe**: Tipado fuerte previene errores en tiempo de ejecución
+
+### Arquitectura Screenplay
+
+```
+Screenplay/
+├── Core/                          # Framework central
+│   ├── Abilities/                 # Capacidades de actores (BrowseTheWeb)
+│   ├── Actors/                    # Implementación de actores
+│   ├── Exceptions/                # Excepciones personalizadas
+│   ├── Interactions/              # Tareas y Preguntas
+│   │   ├── Tasks/                 # Acciones atómicas
+│   │   └── Questions/             # Afirmaciones
+│   └── Logging/                   # Registro de acciones
+├── Tasks/                         # Tareas de alto nivel de negocio
+├── UI/                            # Definiciones de elementos UI
+└── Tests/                         # Implementaciones de pruebas Screenplay
+```
+
+### Ejecución de Pruebas Screenplay
+
+Todas las pruebas Screenplay están marcadas con "(Screenplay)" en sus nombres:
+
+```bash
+# Ejecutar todas las pruebas (POM + Screenplay)
+dotnet test LibroManager.Tests.E2E
+
+# Ejecutar solo pruebas Screenplay
+dotnet test LibroManager.Tests.E2E --filter "DisplayName~Screenplay"
+
+# Ejecutar solo pruebas POM
+dotnet test LibroManager.Tests.E2E --filter "DisplayName!~Screenplay"
+```
+
+### Ejemplo de Prueba Screenplay
+
+```csharp
+[Fact(DisplayName = "El admin puede iniciar sesión correctamente (Screenplay)")]
+public async Task Admin_Can_Login_Successfully()
+{
+    await RunScreenplayTestWithPageAsync(
+        actorName: "Admin",
+        testName: nameof(Admin_Can_Login_Successfully),
+        screenplay: async (actor, page) =>
+        {
+            // CUANDO: El admin inicia sesión
+            await actor.AttemptsToAsync(LoginAsUser.AsAdmin());
+            
+            // ENTONCES: Debería estar logueado
+            await actor.AsksForAsync(TheVisibility.Of(MainPageUI.UserLogged(page)));
+        });
+}
+```
+
+### Comparación: POM vs Screenplay
+
+| Aspecto | Page Object Model | Patrón Screenplay |
+|---------|------------------|-------------------|
+| Enfoque | Implementación técnica | Comportamiento de negocio |
+| Legibilidad | `page.Login("admin", "pass")` | `actor.AttemptsTo(LoginAsUser.AsAdmin())` |
+| Reutilización | Métodos de página | Tareas/Preguntas componibles |
+| Mantenimiento | Cambios UI rompen tests | Cambios UI aislados |
+| Curva de aprendizaje | Baja | Media |
+
+Ambos enfoques coexisten en este proyecto, permitiendo a los equipos:
+- Comparar enfoques de implementación
+- Migrar gradualmente de POM a Screenplay
+- Elegir el mejor patrón para diferentes escenarios
+
 ## Características de Desarrollo
 
 - Inyección de dependencias
@@ -325,6 +516,7 @@ Consulta la carpeta `Tests/Playwright` para ver los archivos de las pruebas y la
 - AutoMapper para mapeo de objetos
 - Validaciones personalizadas
 - Pruebas unitarias extensivas
+- **Arquitectura dual de pruebas E2E**: Page Object Model (POM) y Patrón Screenplay
 - Pruebas end-to-end con Playwright
 - Hot Reload habilitado
 
